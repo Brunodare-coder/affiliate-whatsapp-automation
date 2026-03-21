@@ -1,4 +1,5 @@
 import AppLayout from "@/components/AppLayout";
+import MercadoLivreConfigModal from "@/components/MercadoLivreConfigModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +11,13 @@ import {
   CheckCircle2,
   Link2,
   MessageSquare,
-  RefreshCw,
+  Settings,
+  ShoppingCart,
   Smartphone,
   XCircle,
   Zap,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +28,8 @@ export default function Dashboard() {
   const { data: campaigns } = trpc.campaigns.list.useQuery();
   const { data: automations } = trpc.automations.list.useQuery();
   const { data: recentLogs } = trpc.logs.list.useQuery({ limit: 5, offset: 0 });
+  const { data: mlConfig } = trpc.mercadoLivre.getConfig.useQuery();
+  const [showMlModal, setShowMlModal] = useState(false);
 
   const connectedInstances = instances?.filter((i) => i.status === "connected") || [];
   const activeAutomations = automations?.filter((a) => a.isActive) || [];
@@ -220,6 +225,47 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Mercado Livre Integration Card */}
+        <Card className="border-yellow-500/20 bg-gradient-to-r from-yellow-500/5 to-transparent">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart className="w-5 h-5 text-black" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Mercado Livre Afiliados</p>
+                  <p className="text-xs text-muted-foreground">
+                    {mlConfig?.tag
+                      ? `Tag: ${mlConfig.tag} — links ML substituídos automaticamente`
+                      : "Configure sua tag para substituir links ML automaticamente"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {mlConfig?.tag ? (
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Configurado
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    Não configurado
+                  </Badge>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowMlModal(true)}
+                  className="border-yellow-500/30 hover:border-yellow-500/60 hover:bg-yellow-500/10 text-yellow-400 hover:text-yellow-300"
+                >
+                  <Settings className="w-3 h-3 mr-1.5" />
+                  {mlConfig?.tag ? "Editar" : "Configurar"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Recent Logs */}
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -300,6 +346,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      <MercadoLivreConfigModal open={showMlModal} onClose={() => setShowMlModal(false)} />
     </AppLayout>
   );
 }

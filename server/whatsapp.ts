@@ -15,6 +15,7 @@ import {
   getAutomationTargets,
   getSendTargets,
   getActiveAffiliateLinks,
+  getMercadoLivreConfig,
   createPostLog,
   updatePostLog,
   createSendLog,
@@ -262,8 +263,11 @@ export class WhatsAppManager extends EventEmitter {
       // Get active affiliate links
       const links = await getActiveAffiliateLinks(userId);
 
+      // Get Mercado Livre config for ML link replacement
+      const mlConfig = await getMercadoLivreConfig(userId);
+
       for (const automation of matchingAutomations) {
-        await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid);
+        await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null);
       }
     } catch (err) {
       console.error("[WhatsApp] Error handling incoming message:", err);
@@ -279,7 +283,8 @@ export class WhatsAppManager extends EventEmitter {
     mediaType: string,
     mediaUrl: string | null,
     links: any[],
-    sourceGroupJid: string
+    sourceGroupJid: string,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean } | null = null
   ): Promise<void> {
     const groupMeta = await this.getGroupName(instanceId, sourceGroupJid);
 
@@ -327,12 +332,22 @@ export class WhatsAppManager extends EventEmitter {
         ? links.filter((l) => l.campaignId === selectedCampaignId)
         : links;
 
-      // Replace links in text
+      // Replace links in text (affiliate links)
       if (text && campaignLinks.length > 0) {
         const result = replaceLinksInText(text, campaignLinks);
         processedText = result.text;
         linksFound = result.linksFound;
         linksReplaced = result.linksReplaced;
+      }
+
+      // Replace Mercado Livre links with affiliate tag
+      if (mlConfig && mlConfig.isActive && mlConfig.tag && processedText) {
+        const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
+        if (mlResult.replaced > 0) {
+          processedText = mlResult.text;
+          linksFound = Math.max(linksFound, mlResult.found);
+          linksReplaced += mlResult.replaced;
+        }
       }
 
       // If no links found/replaced, skip
@@ -472,3 +487,32 @@ export function replaceLinksInText(
 
 // Singleton instance
 export const whatsappManager = new WhatsAppManager();
+
+// Substitui links do Mercado Livre adicionando tag de afiliado
+export function replaceMercadoLivreLinks(
+  text: string,
+  config: { tag?: string | null; mattToolId?: string | null }
+): { text: string; found: number; replaced: number } {
+  // Padrão único abrangente para todos os subdomínios do Mercado Livre
+  const mlPattern = /https?:\/\/[a-z0-9-]*\.?mercadolivre\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+
+  const matches = text.match(mlPattern) || [];
+  const found = matches.length;
+  let replaced = 0;
+
+  const processedText = text.replace(mlPattern, (url) => {
+    try {
+      const urlObj = new URL(url);
+      // Adiciona tag de rastreamento
+      if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
+      // Adiciona Matt Tool ID se disponível
+      if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+      replaced++;
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  });
+
+  return { text: processedText, found, replaced };
+}

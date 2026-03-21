@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `mercado_livre_config` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`tag` varchar(255),\n\t`cookieSsid` text,\n\t`mattToolId` varchar(100),\n\t`socialTag` varchar(255),\n\t`isActive` boolean NOT NULL DEFAULT true,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `mercado_livre_config_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `mercado_livre_config_userId_unique` UNIQUE(`userId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute CREATE TABLE `mercado_livre_config` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`tag` varchar(255),\n\t`cookieSsid` text,\n\t`mattToolId` varchar(100),\n\t`socialTag` varchar(255),\n\t`isActive` boolean NOT NULL DEFAULT true,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `mercado_livre_config_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `mercado_livre_config_userId_unique` UNIQUE(`userId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 737
+}

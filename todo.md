@@ -65,3 +65,11 @@
 ## Testes
 - [x] Testes unitários para lógica de substituição de links
 - [x] Testes para auth.logout
+
+## Integração Mercado Livre Afiliados
+- [x] Tabela de configurações ML por usuário (tag, cookie ssid, matt_tool_id, social_tag)
+- [x] Procedure para salvar/ler configurações ML
+- [x] Lógica de geração de links ML afiliado (substituição de links ML nos posts)
+- [x] Modal de configurações ML igual ao ProAfiliados (campos: Tag, Cookie ssid, Matt Tool ID, Tag Perfil Social)
+- [x] Botão "Configurar Mercado Livre" no Dashboard/Campanhas
+- [x] Indicador de status da integração ML no Dashboard

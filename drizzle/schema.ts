@@ -178,3 +178,19 @@ export const sendLogs = mysqlTable("send_logs", {
 
 export type SendLog = typeof sendLogs.$inferSelect;
 export type InsertSendLog = typeof sendLogs.$inferInsert;
+
+// Configurações do Mercado Livre Afiliados por usuário
+export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  tag: varchar("tag", { length: 255 }),                    // Tag de rastreamento (ex: bq20260201142328)
+  cookieSsid: text("cookieSsid"),                          // Cookie ssid para autenticação
+  mattToolId: varchar("mattToolId", { length: 100 }),      // Matt Tool ID (para links de listas/ofertas)
+  socialTag: varchar("socialTag", { length: 255 }),        // Tag do Perfil Social (/social/SLUG)
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MercadoLivreConfig = typeof mercadoLivreConfig.$inferSelect;
+export type InsertMercadoLivreConfig = typeof mercadoLivreConfig.$inferInsert;

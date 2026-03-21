@@ -9,12 +9,14 @@ import {
   InsertAutomation,
   InsertAutomationTarget,
   InsertCampaign,
+  InsertMercadoLivreConfig,
   InsertMonitoredGroup,
   InsertPostLog,
   InsertSendLog,
   InsertSendTarget,
   InsertUser,
   InsertWhatsappInstance,
+  MercadoLivreConfig,
   MonitoredGroup,
   PostLog,
   SendLog,
@@ -24,6 +26,7 @@ import {
   automationTargets,
   automations,
   campaigns,
+  mercadoLivreConfig,
   monitoredGroups,
   postLogs,
   sendLogs,
@@ -373,4 +376,27 @@ export async function updateSendLog(id: number, data: Partial<InsertSendLog>): P
   const db = await getDb();
   if (!db) return;
   await db.update(sendLogs).set(data).where(eq(sendLogs.id, id));
+}
+
+// ── Mercado Livre Config ───────────────────────────────────────────────────
+
+export async function getMercadoLivreConfig(userId: number): Promise<MercadoLivreConfig | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(mercadoLivreConfig).where(eq(mercadoLivreConfig.userId, userId)).limit(1);
+  return result[0];
+}
+
+export async function upsertMercadoLivreConfig(userId: number, data: Omit<InsertMercadoLivreConfig, "userId">): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(mercadoLivreConfig).values({ userId, ...data }).onDuplicateKeyUpdate({
+    set: {
+      tag: data.tag,
+      cookieSsid: data.cookieSsid,
+      mattToolId: data.mattToolId,
+      socialTag: data.socialTag,
+      isActive: data.isActive,
+    },
+  });
 }

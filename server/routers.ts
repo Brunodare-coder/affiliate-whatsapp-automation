@@ -38,6 +38,8 @@ import {
   updateSendTarget,
   updateWhatsappInstance,
   createCampaign,
+  getMercadoLivreConfig,
+  upsertMercadoLivreConfig,
 } from "./db";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
@@ -367,6 +369,61 @@ export const appRouter = router({
 
     stats: protectedProcedure.query(({ ctx }) => getPostLogStats(ctx.user.id)),
   }),
+
+  // ── Mercado Livre Config ─────────────────────────────────────────────────────────
+  mercadoLivre: router({
+    getConfig: protectedProcedure.query(({ ctx }) => getMercadoLivreConfig(ctx.user.id)),
+
+    saveConfig: protectedProcedure
+      .input(
+        z.object({
+          tag: z.string().optional(),
+          cookieSsid: z.string().optional(),
+          mattToolId: z.string().optional(),
+          socialTag: z.string().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await upsertMercadoLivreConfig(ctx.user.id, {
+          tag: input.tag || null,
+          cookieSsid: input.cookieSsid || null,
+          mattToolId: input.mattToolId || null,
+          socialTag: input.socialTag || null,
+          isActive: input.isActive ?? true,
+        });
+        return { success: true };
+      }),
+
+    // Gera um link de afiliado ML a partir de uma URL de produto
+    generateLink: protectedProcedure
+      .input(z.object({ productUrl: z.string().url() }))
+      .mutation(async ({ ctx, input }) => {
+        const config = await getMercadoLivreConfig(ctx.user.id);
+        if (!config || !config.tag) {
+          throw new Error("Configure sua Tag do Mercado Livre primeiro.");
+        }
+        const affiliateUrl = buildMercadoLivreAffiliateUrl(input.productUrl, config);
+        return { affiliateUrl };
+      }),
+  }),
 });
+
+// Gera URL de afiliado do Mercado Livre com tag e parâmetros corretos
+function buildMercadoLivreAffiliateUrl(
+  productUrl: string,
+  config: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null }
+): string {
+  try {
+    const url = new URL(productUrl);
+    // Adiciona tag de rastreamento
+    if (config.tag) url.searchParams.set("matt_from", config.tag);
+    // Adiciona Matt Tool ID se disponível
+    if (config.mattToolId) url.searchParams.set("matt_tool", config.mattToolId);
+    return url.toString();
+  } catch {
+    return productUrl;
+  }
+}
 
 export type AppRouter = typeof appRouter;
