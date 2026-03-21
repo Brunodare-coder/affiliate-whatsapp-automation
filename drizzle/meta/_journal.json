@@ -22,6 +22,13 @@
       "when": 1774122292625,
       "tag": "0002_medical_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1774124453910,
+      "tag": "0003_next_boomerang",
+      "breakpoints": true
     }
   ]
 }

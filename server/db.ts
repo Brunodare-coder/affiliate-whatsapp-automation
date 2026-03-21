@@ -5,10 +5,12 @@ import {
   Automation,
   AutomationTarget,
   Campaign,
+  GroupTarget,
   InsertAffiliateLink,
   InsertAutomation,
   InsertAutomationTarget,
   InsertCampaign,
+  InsertGroupTarget,
   InsertMercadoLivreConfig,
   InsertMonitoredGroup,
   InsertPostLog,
@@ -26,6 +28,7 @@ import {
   automationTargets,
   automations,
   campaigns,
+  groupTargets,
   mercadoLivreConfig,
   monitoredGroups,
   postLogs,
@@ -234,6 +237,27 @@ export async function deleteMonitoredGroup(id: number, userId: number): Promise<
   const db = await getDb();
   if (!db) return;
   await db.delete(monitoredGroups).where(and(eq(monitoredGroups.id, id), eq(monitoredGroups.userId, userId)));
+}
+
+// ── Group Targets (alvos de disparo por grupo de origem) ──────────────────
+
+export async function getGroupTargets(userId: number, sourceGroupId?: number): Promise<GroupTarget[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(groupTargets.userId, userId)];
+  if (sourceGroupId) conditions.push(eq(groupTargets.sourceGroupId, sourceGroupId));
+  return db.select().from(groupTargets).where(and(...conditions));
+}
+
+export async function setGroupTargets(userId: number, sourceGroupId: number, targetGroupIds: number[]): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Remove existing targets for this source group
+  await db.delete(groupTargets).where(and(eq(groupTargets.userId, userId), eq(groupTargets.sourceGroupId, sourceGroupId)));
+  // Insert new targets
+  if (targetGroupIds.length > 0) {
+    await db.insert(groupTargets).values(targetGroupIds.map((targetGroupId) => ({ userId, sourceGroupId, targetGroupId })));
+  }
 }
 
 // ── Send Targets ───────────────────────────────────────────────────────────

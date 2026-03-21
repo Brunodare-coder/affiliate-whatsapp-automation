@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `group_targets` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`sourceGroupId` int NOT NULL,\n\t`targetGroupId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `group_targets_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `monitored_groups` ADD `buscarOfertas` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `espelharConteudo` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `enviarOfertas` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `substituirImagem` boolean DEFAULT false NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute CREATE TABLE `group_targets` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`sourceGroupId` int NOT NULL,\n\t`targetGroupId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `group_targets_id` PRIMARY KEY(`id`)\n);\n\nALTER TABLE `monitored_groups` ADD `buscarOfertas` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `espelharConteudo` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `enviarOfertas` boolean DEFAULT false NOT NULL;\nALTER TABLE `monitored_groups` ADD `substituirImagem` boolean DEFAULT false NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3268
+}

@@ -1,415 +1,401 @@
 import AppLayout from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
-import { Eye, EyeOff, Loader2, Plus, Radio, Send, Trash2, Users } from "lucide-react";
-import { useState } from "react";
+import {
+  Info,
+  Loader2,
+  RefreshCw,
+  Search,
+  Smartphone,
+  Target,
+  Users,
+  X,
+} from "lucide-react";
+import { useState, useMemo } from "react";
+import { Link } from "wouter";
 import { toast } from "sonner";
 
-export default function Groups() {
-  const utils = trpc.useUtils();
-  const { data: instances } = trpc.whatsapp.listInstances.useQuery();
-  const connectedInstances = instances?.filter((i) => i.status === "connected") || [];
+type GroupFlag = "buscarOfertas" | "espelharConteudo" | "enviarOfertas" | "substituirImagem";
 
-  const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(null);
-  const instanceId = selectedInstanceId ?? connectedInstances[0]?.id;
+const FLAG_INFO: Record<GroupFlag, { label: string; description: string; color: string; icon: string }> = {
+  buscarOfertas: {
+    label: "Buscar Ofertas",
+    description:
+      "Quando ativada, o sistema monitora e busca links nas mensagens recebidas neste grupo. Se estiver desativada, as mensagens são ignoradas. Ative nos grupos de onde você quer capturar mensagens com links de produtos (Shopee, AliExpress, Mercado Livre, Amazon, Magazine Luiza).",
+    color: "text-green-400",
+    icon: "🔍",
+  },
+  espelharConteudo: {
+    label: "Espelhar Conteúdo",
+    description:
+      "NÃO converte links! Quando ativado, replica todas as mensagens do grupo/canal para os grupos de disparo, sem processar ou converter links de lojas. Ideal para espelhar conteúdo de um canal para outro (ex: notícias, avisos, etc). Mensagens com links são ignoradas.",
+    color: "text-blue-400",
+    icon: "🔄",
+  },
+  enviarOfertas: {
+    label: "Enviar Ofertas",
+    description:
+      "Quando ativada, este grupo receberá as mensagens processadas dos grupos monitorados. Converte links encontrados nas mensagens monitoradas para links de afiliados (Shopee, AliExpress, Mercado Livre, Amazon, Magazine Luiza). Ative nos grupos onde você quer receber as mensagens formatadas.",
+    color: "text-purple-400",
+    icon: "📤",
+  },
+  substituirImagem: {
+    label: "Substituir Imagem",
+    description:
+      "Quando ativada, o sistema busca imagens do site da loja e prioriza essas imagens sobre a imagem original da mensagem. Ative quando quiser garantir que a imagem do produto seja a do site oficial.",
+    color: "text-orange-400",
+    icon: "🖼️",
+  },
+};
 
-  const { data: monitoredGroups, isLoading: monLoading } = trpc.whatsapp.listMonitoredGroups.useQuery(
-    { instanceId },
-    { enabled: !!instanceId }
-  );
-  const { data: sendTargets, isLoading: targetsLoading } = trpc.whatsapp.listSendTargets.useQuery(
-    { instanceId },
-    { enabled: !!instanceId }
-  );
-  const { data: availableGroups, isLoading: groupsLoading } = trpc.whatsapp.getGroups.useQuery(
-    { instanceId: instanceId! },
-    { enabled: !!instanceId }
-  );
-
-  // Monitored group dialog
-  const [showAddMonitor, setShowAddMonitor] = useState(false);
-  const [monitorForm, setMonitorForm] = useState({ groupJid: "", groupName: "" });
-
-  // Send target dialog
-  const [showAddTarget, setShowAddTarget] = useState(false);
-  const [targetForm, setTargetForm] = useState({ targetJid: "", targetName: "", targetType: "group" as "group" | "contact" });
-
-  const addMonitorMutation = trpc.whatsapp.addMonitoredGroup.useMutation({
-    onSuccess: () => {
-      utils.whatsapp.listMonitoredGroups.invalidate();
-      setShowAddMonitor(false);
-      setMonitorForm({ groupJid: "", groupName: "" });
-      toast.success("Grupo adicionado para monitoramento!");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const removeMonitorMutation = trpc.whatsapp.removeMonitoredGroup.useMutation({
-    onSuccess: () => {
-      utils.whatsapp.listMonitoredGroups.invalidate();
-      toast.success("Grupo removido do monitoramento!");
-    },
-  });
-
-  const toggleMonitorMutation = trpc.whatsapp.updateMonitoredGroup.useMutation({
-    onSuccess: () => utils.whatsapp.listMonitoredGroups.invalidate(),
-  });
-
-  const addTargetMutation = trpc.whatsapp.addSendTarget.useMutation({
-    onSuccess: () => {
-      utils.whatsapp.listSendTargets.invalidate();
-      setShowAddTarget(false);
-      setTargetForm({ targetJid: "", targetName: "", targetType: "group" });
-      toast.success("Destino adicionado!");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const removeTargetMutation = trpc.whatsapp.removeSendTarget.useMutation({
-    onSuccess: () => {
-      utils.whatsapp.listSendTargets.invalidate();
-      toast.success("Destino removido!");
-    },
-  });
-
-  const toggleTargetMutation = trpc.whatsapp.updateSendTarget.useMutation({
-    onSuccess: () => utils.whatsapp.listSendTargets.invalidate(),
-  });
-
-  if (connectedInstances.length === 0) {
-    return (
-      <AppLayout title="Grupos & Destinos">
-        <div className="p-6">
-          <div className="text-center py-16 border border-dashed border-border rounded-xl">
-            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum WhatsApp conectado</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Conecte sua conta do WhatsApp primeiro para gerenciar grupos.
-            </p>
-            <Button asChild variant="outline">
-              <a href="/whatsapp">Conectar WhatsApp</a>
-            </Button>
+function FlagInfoModal({ flag, onClose }: { flag: GroupFlag | null; onClose: () => void }) {
+  if (!flag) return null;
+  const info = FLAG_INFO[flag];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{info.icon}</span>
+            <h3 className={`font-bold text-lg ${info.color}`}>{info.label}</h3>
           </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </AppLayout>
-    );
-  }
+        <p className="text-sm text-muted-foreground leading-relaxed">{info.description}</p>
+        <Button onClick={onClose} className="w-full mt-4">Entendi</Button>
+      </div>
+    </div>
+  );
+}
+
+function ConfigureTargetsModal({
+  sourceGroup,
+  allGroups,
+  currentTargetIds,
+  onSave,
+  onClose,
+}: {
+  sourceGroup: { id: number; groupName: string | null; groupJid: string };
+  allGroups: Array<{ id: number; groupName: string | null; groupJid: string; enviarOfertas: boolean }>;
+  currentTargetIds: number[];
+  onSave: (ids: number[]) => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(new Set(currentTargetIds));
+  const targets = allGroups.filter((g) => g.enviarOfertas && g.id !== sourceGroup.id);
+
+  const toggle = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
-    <AppLayout title="Grupos & Destinos">
-      <div className="p-6 space-y-6">
-        {/* Instance selector */}
-        {connectedInstances.length > 1 && (
-          <div className="flex items-center gap-3">
-            <Label className="text-sm">Instância:</Label>
-            <Select
-              value={String(instanceId)}
-              onValueChange={(v) => setSelectedInstanceId(parseInt(v))}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {connectedInstances.map((i) => (
-                  <SelectItem key={i.id} value={String(i.id)}>{i.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h3 className="font-bold text-base">Configurar Alvos</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Origem: <strong>{sourceGroup.groupName || sourceGroup.groupJid}</strong>
+            </p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5">
+          {targets.length === 0 ? (
+            <div className="text-center py-8 space-y-2">
+              <Users className="w-8 h-8 text-muted-foreground mx-auto" />
+              <p className="text-sm text-muted-foreground">Nenhum grupo com <strong>Enviar Ofertas</strong> ativo ainda.</p>
+              <p className="text-xs text-muted-foreground">Ative "Enviar Ofertas" em pelo menos um grupo para configurar os alvos.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              <p className="text-xs text-muted-foreground mb-3">
+                Selecione os grupos que receberão as mensagens deste grupo. Se nenhum for selecionado, as mensagens serão enviadas para todos os grupos de disparo.
+              </p>
+              {targets.map((g) => (
+                <label key={g.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary hover:bg-secondary/80 cursor-pointer transition-colors">
+                  <input type="checkbox" checked={selected.has(g.id)} onChange={() => toggle(g.id)} className="w-4 h-4 accent-primary" />
+                  <span className="text-sm font-medium">{g.groupName || g.groupJid}</span>
+                  <Badge variant="secondary" className="ml-auto text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">Enviar Ofertas</Badge>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3 p-5 border-t border-border">
+          <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button onClick={() => onSave(Array.from(selected))} className="flex-1">
+            Salvar Alvos {selected.size > 0 && `(${selected.size})`}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Groups() {
+  const { data: instances } = trpc.whatsapp.listInstances.useQuery();
+  const [selectedInstanceId, setSelectedInstanceId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [infoFlag, setInfoFlag] = useState<GroupFlag | null>(null);
+  const [targetSourceGroup, setTargetSourceGroup] = useState<{ id: number; groupName: string | null; groupJid: string } | null>(null);
+
+  const connectedInstances = instances?.filter((i) => i.status === "connected") || [];
+  const activeInstanceId = selectedInstanceId ?? connectedInstances[0]?.id ?? null;
+
+  const { data: waGroups, isLoading: loadingGroups, refetch: refetchGroups } = trpc.whatsapp.getGroups.useQuery(
+    { instanceId: activeInstanceId! },
+    { enabled: !!activeInstanceId }
+  );
+
+  const { data: savedGroups, refetch: refetchSaved } = trpc.whatsapp.listMonitoredGroups.useQuery(
+    { instanceId: activeInstanceId ?? undefined },
+    { enabled: !!activeInstanceId }
+  );
+
+  const { data: groupTargets, refetch: refetchTargets } = trpc.whatsapp.getGroupTargets.useQuery(
+    { sourceGroupId: undefined },
+    { enabled: !!activeInstanceId }
+  );
+
+  const addGroup = trpc.whatsapp.addMonitoredGroup.useMutation({ onSuccess: () => refetchSaved() });
+  const updateGroup = trpc.whatsapp.updateMonitoredGroup.useMutation({ onSuccess: () => refetchSaved() });
+  const setTargets = trpc.whatsapp.setGroupTargets.useMutation({ onSuccess: () => refetchTargets() });
+
+  const mergedGroups = useMemo(() => {
+    if (!waGroups) return [];
+    return waGroups.map((waGroup) => {
+      const saved = savedGroups?.find((sg) => sg.groupJid === waGroup.id);
+      return {
+        jid: waGroup.id,
+        name: waGroup.subject || waGroup.id,
+        participantCount: waGroup.participantCount || 0,
+        savedId: saved?.id ?? null,
+        buscarOfertas: saved?.buscarOfertas ?? false,
+        espelharConteudo: saved?.espelharConteudo ?? false,
+        enviarOfertas: saved?.enviarOfertas ?? false,
+        substituirImagem: saved?.substituirImagem ?? false,
+      };
+    });
+  }, [waGroups, savedGroups]);
+
+  const filteredGroups = useMemo(
+    () => mergedGroups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase())),
+    [mergedGroups, search]
+  );
+
+  const handleToggle = async (group: (typeof mergedGroups)[0], flag: GroupFlag, value: boolean) => {
+    try {
+      if (!group.savedId) {
+        const result = await addGroup.mutateAsync({ instanceId: activeInstanceId!, groupJid: group.jid, groupName: group.name });
+        await updateGroup.mutateAsync({ id: result.id, [flag]: value });
+      } else {
+        await updateGroup.mutateAsync({ id: group.savedId, [flag]: value });
+      }
+      toast.success(`${FLAG_INFO[flag].label} ${value ? "ativado" : "desativado"}`);
+    } catch {
+      toast.error("Erro ao atualizar configuração");
+    }
+  };
+
+  const handleSaveTargets = async (targetIds: number[]) => {
+    if (!targetSourceGroup) return;
+    await setTargets.mutateAsync({ sourceGroupId: targetSourceGroup.id, targetGroupIds: targetIds });
+    toast.success("Alvos configurados com sucesso!");
+    setTargetSourceGroup(null);
+  };
+
+  const getTargetCount = (sourceId: number) =>
+    groupTargets?.filter((t) => t.sourceGroupId === sourceId).length ?? 0;
+
+  const targetModalGroups = savedGroups?.map((sg) => ({
+    id: sg.id,
+    groupName: sg.groupName ?? null,
+    groupJid: sg.groupJid,
+    enviarOfertas: sg.enviarOfertas,
+  })) ?? [];
+
+  const targetCurrentIds = targetSourceGroup
+    ? groupTargets?.filter((t) => t.sourceGroupId === targetSourceGroup.id).map((t) => t.targetGroupId) ?? []
+    : [];
+
+  return (
+    <AppLayout title="Grupos">
+      <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold">Grupos do WhatsApp</h1>
+            <p className="text-sm text-muted-foreground">Configure como cada grupo participa da automação</p>
+          </div>
+          {activeInstanceId && (
+            <Button variant="outline" size="sm" onClick={() => refetchGroups()} className="gap-2">
+              <RefreshCw className="w-3.5 h-3.5" /> Atualizar
+            </Button>
+          )}
+        </div>
+
+        {connectedInstances.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+              <Smartphone className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold">Nenhum WhatsApp conectado</p>
+              <p className="text-sm text-muted-foreground">Conecte seu WhatsApp para ver e configurar seus grupos.</p>
+            </div>
+            <Button asChild className="bg-green-500 hover:bg-green-400 text-black font-semibold">
+              <Link href="/whatsapp">Conectar WhatsApp</Link>
+            </Button>
           </div>
         )}
 
-        <Tabs defaultValue="monitor">
-          <TabsList>
-            <TabsTrigger value="monitor" className="gap-2">
-              <Radio className="w-4 h-4" /> Grupos Monitorados
-            </TabsTrigger>
-            <TabsTrigger value="targets" className="gap-2">
-              <Send className="w-4 h-4" /> Destinos de Envio
-            </TabsTrigger>
-          </TabsList>
+        {connectedInstances.length > 1 && (
+          <div className="flex gap-2 flex-wrap">
+            {connectedInstances.map((inst) => (
+              <button
+                key={inst.id}
+                onClick={() => setSelectedInstanceId(inst.id)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                  activeInstanceId === inst.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {inst.name}
+              </button>
+            ))}
+          </div>
+        )}
 
-          {/* Monitored Groups Tab */}
-          <TabsContent value="monitor" className="space-y-4 mt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Grupos cujas mensagens serão monitoradas para substituição de links.
-              </p>
-              <Button size="sm" onClick={() => setShowAddMonitor(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Adicionar Grupo
-              </Button>
-            </div>
+        {activeInstanceId && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar grupo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
+            />
+          </div>
+        )}
 
-            {monLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : monitoredGroups?.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-border rounded-xl">
-                <Radio className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum grupo monitorado ainda.</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowAddMonitor(true)}>
-                  Adicionar grupo
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {monitoredGroups?.map((group) => (
-                  <div key={group.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${group.isActive ? "bg-green-400" : "bg-muted-foreground"}`} />
-                      <div>
-                        <p className="text-sm font-medium">{group.groupName || group.groupJid}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{group.groupJid}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={group.isActive ? "default" : "secondary"} className="text-xs">
-                        {group.isActive ? "Ativo" : "Pausado"}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => toggleMonitorMutation.mutate({ id: group.id, isActive: !group.isActive })}
-                      >
-                        {group.isActive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => removeMonitorMutation.mutate({ id: group.id })}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+        {loadingGroups && activeInstanceId && (
+          <div className="flex items-center justify-center py-16 gap-3 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">Carregando grupos...</span>
+          </div>
+        )}
+
+        {!loadingGroups && activeInstanceId && filteredGroups.length === 0 && (
+          <div className="text-center py-16 space-y-2">
+            <Users className="w-8 h-8 text-muted-foreground mx-auto" />
+            <p className="text-sm text-muted-foreground">
+              {search ? "Nenhum grupo encontrado para esta busca." : "Nenhum grupo encontrado nesta instância."}
+            </p>
+          </div>
+        )}
+
+        {!loadingGroups && filteredGroups.length > 0 && (
+          <div className="space-y-2">
+            {filteredGroups.map((group) => (
+              <div key={group.jid} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="flex items-center gap-3 p-4 border-b border-border/50">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Send Targets Tab */}
-          <TabsContent value="targets" className="space-y-4 mt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Grupos e contatos para onde os posts modificados serão enviados.
-              </p>
-              <Button size="sm" onClick={() => setShowAddTarget(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Adicionar Destino
-              </Button>
-            </div>
-
-            {targetsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : sendTargets?.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-border rounded-xl">
-                <Send className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum destino configurado.</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowAddTarget(true)}>
-                  Adicionar destino
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {sendTargets?.map((target) => (
-                  <div key={target.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${target.isActive ? "bg-blue-400" : "bg-muted-foreground"}`} />
-                      <div>
-                        <p className="text-sm font-medium">{target.targetName || target.targetJid}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{target.targetJid}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {target.targetType === "group" ? "Grupo" : "Contato"}
-                      </Badge>
-                      <Badge variant={target.isActive ? "default" : "secondary"} className="text-xs">
-                        {target.isActive ? "Ativo" : "Pausado"}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => toggleTargetMutation.mutate({ id: target.id, isActive: !target.isActive })}
-                      >
-                        {target.isActive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => removeTargetMutation.mutate({ id: target.id })}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{group.name}</p>
+                    {group.participantCount > 0 && (
+                      <p className="text-xs text-muted-foreground">{group.participantCount} participantes</p>
+                    )}
                   </div>
-                ))}
+                  <div className="flex gap-1 flex-wrap justify-end">
+                    {group.buscarOfertas && (
+                      <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">Buscar</Badge>
+                    )}
+                    {group.espelharConteudo && (
+                      <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">Espelhar</Badge>
+                    )}
+                    {group.enviarOfertas && (
+                      <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">Enviar</Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="divide-y divide-border/50">
+                  {(["buscarOfertas", "espelharConteudo", "enviarOfertas", "substituirImagem"] as GroupFlag[]).map((flag, idx) => {
+                    const info = FLAG_INFO[flag];
+                    const isActive = group[flag];
+                    return (
+                      <div key={flag} className="flex items-center gap-3 px-4 py-3">
+                        <span className="text-base w-6 text-center">{info.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-sm font-medium ${isActive ? info.color : "text-foreground"}`}>{idx + 1}</span>
+                            <span className={`text-sm font-medium ${isActive ? info.color : "text-foreground"}`}>{info.label}</span>
+                            <button onClick={() => setInfoFlag(flag)} className="text-muted-foreground hover:text-foreground transition-colors">
+                              <Info className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        {flag === "buscarOfertas" && isActive && group.savedId && (
+                          <button
+                            onClick={() => setTargetSourceGroup({ id: group.savedId!, groupName: group.name, groupJid: group.jid })}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors mr-2"
+                          >
+                            <Target className="w-3 h-3" />
+                            Alvos {getTargetCount(group.savedId) > 0 && `(${getTargetCount(group.savedId)})`}
+                          </button>
+                        )}
+                        <Switch
+                          checked={isActive}
+                          onCheckedChange={(v) => handleToggle(group, flag, v)}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            ))}
+          </div>
+        )}
+
+        {filteredGroups.length > 0 && (
+          <div className="rounded-xl bg-card border border-border p-4 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Como funciona</p>
+            <div className="space-y-1.5 text-xs text-muted-foreground">
+              <p>🔍 <strong className="text-foreground">Buscar Ofertas</strong> — captura links de produtos neste grupo</p>
+              <p>🔄 <strong className="text-foreground">Espelhar Conteúdo</strong> — replica mensagens sem converter links</p>
+              <p>📤 <strong className="text-foreground">Enviar Ofertas</strong> — recebe mensagens processadas com seus links de afiliado</p>
+              <p>🖼️ <strong className="text-foreground">Substituir Imagem</strong> — usa imagem oficial do produto no lugar da original</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Add Monitor Dialog */}
-      <Dialog open={showAddMonitor} onOpenChange={setShowAddMonitor}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Grupo para Monitorar</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {availableGroups && availableGroups.length > 0 && (
-              <div className="space-y-2">
-                <Label>Selecionar grupo existente</Label>
-                <Select onValueChange={(v) => {
-                  const group = availableGroups.find((g) => g.id === v);
-                  if (group) setMonitorForm({ groupJid: group.id, groupName: group.subject });
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um grupo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableGroups.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.subject} ({g.participantCount} membros)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label>JID do Grupo *</Label>
-              <Input
-                placeholder="Ex: 120363000000000000@g.us"
-                value={monitorForm.groupJid}
-                onChange={(e) => setMonitorForm({ ...monitorForm, groupJid: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">
-                O JID é o identificador único do grupo no WhatsApp (termina em @g.us).
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label>Nome do Grupo</Label>
-              <Input
-                placeholder="Nome para identificação"
-                value={monitorForm.groupName}
-                onChange={(e) => setMonitorForm({ ...monitorForm, groupName: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddMonitor(false)}>Cancelar</Button>
-            <Button
-              onClick={() => addMonitorMutation.mutate({
-                instanceId: instanceId!,
-                groupJid: monitorForm.groupJid,
-                groupName: monitorForm.groupName || undefined,
-              })}
-              disabled={!monitorForm.groupJid.trim() || addMonitorMutation.isPending}
-            >
-              {addMonitorMutation.isPending ? "Adicionando..." : "Adicionar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Target Dialog */}
-      <Dialog open={showAddTarget} onOpenChange={setShowAddTarget}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Destino de Envio</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {availableGroups && availableGroups.length > 0 && (
-              <div className="space-y-2">
-                <Label>Selecionar grupo existente</Label>
-                <Select onValueChange={(v) => {
-                  const group = availableGroups.find((g) => g.id === v);
-                  if (group) setTargetForm({ ...targetForm, targetJid: group.id, targetName: group.subject });
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um grupo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableGroups.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.subject} ({g.participantCount} membros)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label>Tipo</Label>
-              <Select
-                value={targetForm.targetType}
-                onValueChange={(v) => setTargetForm({ ...targetForm, targetType: v as "group" | "contact" })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="group">Grupo</SelectItem>
-                  <SelectItem value="contact">Contato</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>JID do Destino *</Label>
-              <Input
-                placeholder={targetForm.targetType === "group" ? "120363000000000000@g.us" : "5511999999999@s.whatsapp.net"}
-                value={targetForm.targetJid}
-                onChange={(e) => setTargetForm({ ...targetForm, targetJid: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input
-                placeholder="Nome para identificação"
-                value={targetForm.targetName}
-                onChange={(e) => setTargetForm({ ...targetForm, targetName: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddTarget(false)}>Cancelar</Button>
-            <Button
-              onClick={() => addTargetMutation.mutate({
-                instanceId: instanceId!,
-                targetJid: targetForm.targetJid,
-                targetName: targetForm.targetName || undefined,
-                targetType: targetForm.targetType,
-              })}
-              disabled={!targetForm.targetJid.trim() || addTargetMutation.isPending}
-            >
-              {addTargetMutation.isPending ? "Adicionando..." : "Adicionar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <FlagInfoModal flag={infoFlag} onClose={() => setInfoFlag(null)} />
+      {targetSourceGroup && (
+        <ConfigureTargetsModal
+          sourceGroup={targetSourceGroup}
+          allGroups={targetModalGroups}
+          currentTargetIds={targetCurrentIds}
+          onSave={handleSaveTargets}
+          onClose={() => setTargetSourceGroup(null)}
+        />
+      )}
     </AppLayout>
   );
 }

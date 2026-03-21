@@ -40,6 +40,8 @@ import {
   createCampaign,
   getMercadoLivreConfig,
   upsertMercadoLivreConfig,
+  getGroupTargets,
+  setGroupTargets,
 } from "./db";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
@@ -229,6 +231,10 @@ export const appRouter = router({
           id: z.number(),
           groupName: z.string().optional(),
           isActive: z.boolean().optional(),
+          buscarOfertas: z.boolean().optional(),
+          espelharConteudo: z.boolean().optional(),
+          enviarOfertas: z.boolean().optional(),
+          substituirImagem: z.boolean().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -241,6 +247,18 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await deleteMonitoredGroup(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Group Targets (alvos de disparo por grupo de origem)
+    getGroupTargets: protectedProcedure
+      .input(z.object({ sourceGroupId: z.number().optional() }))
+      .query(({ ctx, input }) => getGroupTargets(ctx.user.id, input.sourceGroupId)),
+
+    setGroupTargets: protectedProcedure
+      .input(z.object({ sourceGroupId: z.number(), targetGroupIds: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        await setGroupTargets(ctx.user.id, input.sourceGroupId, input.targetGroupIds);
         return { success: true };
       }),
 

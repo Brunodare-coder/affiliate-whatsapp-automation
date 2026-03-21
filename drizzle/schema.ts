@@ -83,12 +83,29 @@ export const monitoredGroups = mysqlTable("monitored_groups", {
   groupJid: varchar("groupJid", { length: 255 }).notNull(), // JID do grupo no WhatsApp
   groupName: varchar("groupName", { length: 255 }),
   isActive: boolean("isActive").default(true).notNull(),
+  // Flags de comportamento por grupo
+  buscarOfertas: boolean("buscarOfertas").default(false).notNull(),   // monitorar links neste grupo
+  espelharConteudo: boolean("espelharConteudo").default(false).notNull(), // replicar sem converter
+  enviarOfertas: boolean("enviarOfertas").default(false).notNull(),   // receber mensagens processadas
+  substituirImagem: boolean("substituirImagem").default(false).notNull(), // buscar imagem da loja
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type MonitoredGroup = typeof monitoredGroups.$inferSelect;
 export type InsertMonitoredGroup = typeof monitoredGroups.$inferInsert;
+
+// Alvos de disparo: grupo de origem → grupo de destino
+export const groupTargets = mysqlTable("group_targets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  sourceGroupId: int("sourceGroupId").notNull(), // grupo com buscarOfertas ativo
+  targetGroupId: int("targetGroupId").notNull(), // grupo com enviarOfertas ativo
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type GroupTarget = typeof groupTargets.$inferSelect;
+export type InsertGroupTarget = typeof groupTargets.$inferInsert;
 
 // Destinos de envio (grupos/contatos para onde enviar)
 export const sendTargets = mysqlTable("send_targets", {

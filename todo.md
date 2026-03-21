@@ -81,3 +81,12 @@
 - [x] Guia de 4 passos (Configurar Afiliados → Conectar WhatsApp → Adicionar Grupos → Bot no Ar!)
 - [x] Cards de ação rápida: Configurar Ofertas, Envio Manual, Envio em Massa, Postar no Status
 - [x] Remover layout antigo de métricas e substituir pelo novo design
+
+## Refatoração Página de Grupos (estilo ProAfiliados)
+- [x] Adicionar colunas ao schema: buscarOfertas, espelharConteudo, enviarOfertas, substituirImagem
+- [x] Procedure para listar grupos do WhatsApp conectado em tempo real
+- [x] Procedure para salvar configuração de flags por grupo
+- [x] Procedure para configurar alvos (quais grupos de envio recebem de qual grupo de origem)
+- [x] Página de Grupos: lista todos os grupos do WA com toggles por grupo
+- [x] Modal "Configurar Alvos" para grupos com Buscar Ofertas ativo
+- [x] Atualizar lógica de processamento de mensagens para usar as novas flags
