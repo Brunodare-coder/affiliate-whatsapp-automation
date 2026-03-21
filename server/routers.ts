@@ -372,7 +372,10 @@ export const appRouter = router({
 
   // ── Mercado Livre Config ─────────────────────────────────────────────────────────
   mercadoLivre: router({
-    getConfig: protectedProcedure.query(({ ctx }) => getMercadoLivreConfig(ctx.user.id)),
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getMercadoLivreConfig(ctx.user.id);
+      return config ?? null;
+    }),
 
     saveConfig: protectedProcedure
       .input(
