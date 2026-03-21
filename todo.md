@@ -90,3 +90,11 @@
 - [x] Página de Grupos: lista todos os grupos do WA com toggles por grupo
 - [x] Modal "Configurar Alvos" para grupos com Buscar Ofertas ativo
 - [x] Atualizar lógica de processamento de mensagens para usar as novas flags
+
+## Correção Fluxo Grupos e Automações
+- [x] Grupos: permitir adicionar grupos manualmente (JID ou nome) sem precisar do WA conectado
+- [x] Grupos: mostrar grupos salvos no DB mesmo sem WA conectado
+- [x] Grupos: botão "Sincronizar do WhatsApp" para puxar grupos quando conectado
+- [x] Automações: corrigir seletor de grupo de origem para usar grupos salvos no DB
+- [x] Automações: corrigir seletor de destinos para usar grupos com enviarOfertas ativo
+- [x] Automações: simplificar formulário de criação

@@ -215,14 +215,33 @@ export const appRouter = router({
     addMonitoredGroup: protectedProcedure
       .input(
         z.object({
-          instanceId: z.number(),
+          instanceId: z.number().optional().default(0),
           groupJid: z.string(),
           groupName: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const id = await createMonitoredGroup({ ...input, userId: ctx.user.id, isActive: true });
+        const id = await createMonitoredGroup({ ...input, instanceId: input.instanceId ?? 0, userId: ctx.user.id, isActive: true });
         return { id };
+      }),
+
+    // Sync groups from WA into DB
+    syncGroupsFromWA: protectedProcedure
+      .input(z.object({ instanceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const instance = await getWhatsappInstanceById(input.instanceId, ctx.user.id);
+        if (!instance) throw new Error("Instance not found");
+        const waGroups = await whatsappManager.getGroups(input.instanceId);
+        const existing = await getMonitoredGroups(ctx.user.id, input.instanceId);
+        const existingJids = new Set(existing.map((g) => g.groupJid));
+        let added = 0;
+        for (const g of waGroups) {
+          if (!existingJids.has(g.id)) {
+            await createMonitoredGroup({ instanceId: input.instanceId, userId: ctx.user.id, groupJid: g.id, groupName: g.subject, isActive: true });
+            added++;
+          }
+        }
+        return { added, total: waGroups.length };
       }),
 
     updateMonitoredGroup: protectedProcedure
