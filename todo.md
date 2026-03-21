@@ -73,3 +73,11 @@
 - [x] Modal de configurações ML igual ao ProAfiliados (campos: Tag, Cookie ssid, Matt Tool ID, Tag Perfil Social)
 - [x] Botão "Configurar Mercado Livre" no Dashboard/Campanhas
 - [x] Indicador de status da integração ML no Dashboard
+
+## Redesign Dashboard (estilo ProAfiliados)
+- [x] Card "Status do Bot" com indicador Online/Offline e link para detalhes
+- [x] Card "Logs de Envio" com acesso rápido
+- [x] Seção "Conexão WhatsApp" com QR code integrado no dashboard
+- [x] Guia de 4 passos (Configurar Afiliados → Conectar WhatsApp → Adicionar Grupos → Bot no Ar!)
+- [x] Cards de ação rápida: Configurar Ofertas, Envio Manual, Envio em Massa, Postar no Status
+- [x] Remover layout antigo de métricas e substituir pelo novo design
