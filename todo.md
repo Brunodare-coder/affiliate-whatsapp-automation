@@ -363,3 +363,8 @@
 - [x] Verificar que getGroupTargets filtra por userId — OK
 - [x] Verificar que todas as mutations (add, update, remove) validam que o grupo pertence ao userId — OK
 - [x] Confirmar que o modal Grupos de Disparo mostra apenas grupos do usuário logado — OK (query usa ctx.user.id)
+
+## Correção UX Grupos de Disparo (Fase 21)
+- [x] Ocultar botão "Grupos de Disparo" em grupos com Enviar Ofertas ativo (grupos de disparo não precisam configurar alvos)
+- [x] Mostrar botão "Grupos de Disparo" apenas quando Buscar Ofertas está ativo
+- [x] Mostrar info azul "Este grupo recebe ofertas de outros grupos de origem" quando só Enviar Ofertas está ativo

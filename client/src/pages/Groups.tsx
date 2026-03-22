@@ -710,21 +710,29 @@ function GroupsTab() {
                       </button>
                     </div>
                   )}
-                  <GroupOptionRow
-                    icon={<Target className="w-4 h-4 text-orange-400" />}
-                    label="Grupos de Disparo"
-                    sublabel={targetCount > 0 ? `${targetCount} grupo(s) de disparo` : "Clique para configurar destinos"}
-                    sublabelColor={targetCount > 0 ? "text-orange-300" : "text-muted-foreground"}
-                    highlight
-                    targetCount={targetCount > 0 ? targetCount : undefined}
-                    onClick={() =>
-                      setTargetSourceGroup({
-                        id: group.id,
-                        groupName: group.groupName ?? null,
-                        groupJid: group.groupJid,
-                      })
-                    }
-                  />
+                  {group.buscarOfertas && (
+                    <GroupOptionRow
+                      icon={<Target className="w-4 h-4 text-orange-400" />}
+                      label="Grupos de Disparo"
+                      sublabel={targetCount > 0 ? `${targetCount} grupo(s) configurado(s)` : "Clique para definir destinos"}
+                      sublabelColor={targetCount > 0 ? "text-orange-300" : "text-amber-500"}
+                      highlight
+                      targetCount={targetCount > 0 ? targetCount : undefined}
+                      onClick={() =>
+                        setTargetSourceGroup({
+                          id: group.id,
+                          groupName: group.groupName ?? null,
+                          groupJid: group.groupJid,
+                        })
+                      }
+                    />
+                  )}
+                  {!group.buscarOfertas && group.enviarOfertas && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "oklch(0.14 0.04 250 / 0.3)", border: "1px solid oklch(0.5 0.15 250 / 0.2)" }}>
+                      <Target className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                      <p className="text-xs text-blue-300">Este grupo recebe ofertas de outros grupos de origem.</p>
+                    </div>
+                  )}
                   <GroupOptionRow
                     icon={<Copy className="w-4 h-4" />}
                     label="Espelhar"
