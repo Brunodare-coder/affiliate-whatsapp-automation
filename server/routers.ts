@@ -155,8 +155,15 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const user = await getUserByEmail(input.email);
-        if (!user || !user.passwordHash) {
+        if (!user) {
           throw new Error("E-mail ou senha incorretos");
+        }
+        // Account exists but was created via OAuth (no password set yet)
+        if (!user.passwordHash) {
+          throw new Error(
+            `Esta conta foi criada via ${user.loginMethod ?? "login externo"}. ` +
+            "Use a opção \"Esqueci minha senha\" para definir uma senha e acessar por e-mail."
+          );
         }
         const valid = await verifyPassword(input.password, user.passwordHash);
         if (!valid) {
@@ -179,17 +186,23 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const user = await getUserByEmail(input.email);
         // Always return success to avoid email enumeration
-        if (!user || !user.passwordHash) {
+        if (!user) {
           return { success: true };
         }
         const token = generateResetToken();
         const expiresAt = getResetTokenExpiry();
         await updateUserResetToken(user.id, token, expiresAt);
         // Notify owner with the reset link (since we don't have SMTP)
-        const resetUrl = `${process.env.VITE_FRONTEND_FORGE_API_URL ? '' : ''}/reset-password?token=${token}`;
+        const isOAuthAccount = !user.passwordHash;
         await notifyOwner({
           title: `Recuperação de senha solicitada`,
-          content: `Usuário ${user.email} solicitou recuperação de senha.\n\nToken: ${token}\n\nEnvie este link para o usuário: /reset-password?token=${token}`,
+          content: [
+            `Usuário: ${user.name ?? "sem nome"} (${user.email})`,
+            isOAuthAccount ? `\u26a0️ Conta criada via ${user.loginMethod ?? "OAuth"} — primeira definição de senha.` : "",
+            ``,
+            `Link de redefinição (válido por 1 hora):`,
+            `/reset-password?token=${token}`,
+          ].filter(Boolean).join("\n"),
         });
         return { success: true };
       }),

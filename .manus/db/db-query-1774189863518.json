@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, openId, email, name, loginMethod, LEFT(passwordHash, 20) as hashPreview, emailVerified FROM users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, openId, email, name, loginMethod, LEFT(passwordHash, 20) as hashPreview, emailVerified FROM users LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "RcsoD2QCgZgZYBTowvwydV",
+      "email": "brunodare34@gmail.com",
+      "name": "Bruno",
+      "loginMethod": "google",
+      "hashPreview": "NULL",
+      "emailVerified": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\temail\tname\tloginMethod\thashPreview\temailVerified\n1\tRcsoD2QCgZgZYBTowvwydV\tbrunodare34@gmail.com\tBruno\tgoogle\tNULL\t0\n",
+  "stderr": "",
+  "execution_time_ms": 367
+}

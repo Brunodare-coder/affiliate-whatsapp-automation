@@ -13,21 +13,31 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showForgotHint, setShowForgotHint] = useState(false);
 
   const utils = trpc.useUtils();
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
+      setErrorMsg(null);
       await utils.auth.me.invalidate();
       navigate("/dashboard");
     },
     onError: (err) => {
-      toast.error(err.message || "E-mail ou senha incorretos");
+      const msg = err.message || "E-mail ou senha incorretos";
+      setErrorMsg(msg);
+      // If account was created via OAuth, show hint to use forgot password
+      if (msg.includes("criada via") || msg.includes("login externo")) {
+        setShowForgotHint(true);
+      }
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
+    setShowForgotHint(false);
     if (!email || !password) {
       toast.error("Preencha todos os campos");
       return;
@@ -113,6 +123,18 @@ export default function Login() {
                   </button>
                 </div>
               </div>
+
+              {/* Error message */}
+              {errorMsg && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-300">
+                  <p>{errorMsg}</p>
+                  {showForgotHint && (
+                    <Link href="/forgot-password" className="mt-2 inline-flex items-center gap-1 text-green-400 hover:text-green-300 font-medium transition-colors">
+                      → Definir senha agora
+                    </Link>
+                  )}
+                </div>
+              )}
 
               <Button
                 type="submit"
