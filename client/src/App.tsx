@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -26,28 +27,56 @@ import ResetPassword from "./pages/ResetPassword";
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
       <Route path="/" component={Home} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/campaigns" component={Campaigns} />
-      <Route path="/campaigns/:id" component={CampaignDetail} />
-      <Route path="/whatsapp" component={WhatsAppConnect} />
-      <Route path="/groups" component={Groups} />
-      <Route path="/automations" component={Automations} />
-      <Route path="/logs" component={Logs} />
-      <Route path="/logs/:id" component={LogDetail} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/feed-global" component={FeedGlobal} />
-      <Route path="/subscription" component={Subscription} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/support" component={Support} />
-      <Route path="/suporte" component={Support} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/cadastro" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/esqueci-senha" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/support" component={Support} />
+      <Route path="/suporte" component={Support} />
       <Route path="/404" component={NotFound} />
+
+      {/* Protected routes — require authentication */}
+      <Route path="/dashboard">
+        <ProtectedRoute><Dashboard /></ProtectedRoute>
+      </Route>
+      <Route path="/campaigns">
+        <ProtectedRoute><Campaigns /></ProtectedRoute>
+      </Route>
+      <Route path="/campaigns/:id">
+        <ProtectedRoute><CampaignDetail /></ProtectedRoute>
+      </Route>
+      <Route path="/whatsapp">
+        <ProtectedRoute><WhatsAppConnect /></ProtectedRoute>
+      </Route>
+      <Route path="/groups">
+        <ProtectedRoute><Groups /></ProtectedRoute>
+      </Route>
+      <Route path="/automations">
+        <ProtectedRoute><Automations /></ProtectedRoute>
+      </Route>
+      <Route path="/logs">
+        <ProtectedRoute><Logs /></ProtectedRoute>
+      </Route>
+      <Route path="/logs/:id">
+        <ProtectedRoute><LogDetail /></ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute><Settings /></ProtectedRoute>
+      </Route>
+      <Route path="/feed-global">
+        <ProtectedRoute><FeedGlobal /></ProtectedRoute>
+      </Route>
+      <Route path="/subscription">
+        <ProtectedRoute><Subscription /></ProtectedRoute>
+      </Route>
+      <Route path="/admin">
+        <ProtectedRoute><Admin /></ProtectedRoute>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

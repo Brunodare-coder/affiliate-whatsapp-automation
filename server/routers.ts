@@ -74,6 +74,7 @@ import { generatePixQRCode, generateTxid } from "./pix";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 import { invalidateUserCache } from "./cache";
+import { sendPasswordResetEmail } from "./email";
 import {
   createLocalSessionToken,
   verifyPassword,
@@ -86,6 +87,7 @@ import {
 } from "./auth-local";
 import {
   getUserByEmail,
+  getUserById,
   getUserByResetToken,
   updateUserResetToken,
   updateUserPassword,
@@ -120,6 +122,31 @@ const adminRouter = router({
     .mutation(async ({ input }) => {
       await adminRevokeSubscription(input.userId);
       return { success: true };
+    }),
+
+  // ── Set user password (admin can reset any user's password) ──────────────
+  setUserPassword: adminProcedure
+    .input(z.object({
+      userId: z.number(),
+      newPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    }))
+    .mutation(async ({ input }) => {
+      const newHash = await hashPassword(input.newPassword);
+      await updateUserPassword(input.userId, newHash);
+      return { success: true };
+    }),
+
+  // ── Send password reset link to user email ───────────────────────────────
+  sendPasswordResetLink: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ input }) => {
+      const user = await getUserById(input.userId);
+      if (!user || !user.email) throw new Error("Usuário não encontrado ou sem e-mail");
+      const token = generateResetToken();
+      const expiresAt = getResetTokenExpiry();
+      await updateUserResetToken(user.id, token, expiresAt);
+      const result = await sendPasswordResetEmail({ to: user.email, name: user.name, token });
+      return { success: true, emailSent: result.sent, fallback: result.fallback };
     }),
 });
 
@@ -185,26 +212,22 @@ export const appRouter = router({
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const user = await getUserByEmail(input.email);
-        // Always return success to avoid email enumeration
+        // Always return success to avoid email enumeration (prevent user discovery)
         if (!user) {
-          return { success: true };
+          return { success: true, emailSent: false };
         }
         const token = generateResetToken();
         const expiresAt = getResetTokenExpiry();
         await updateUserResetToken(user.id, token, expiresAt);
-        // Notify owner with the reset link (since we don't have SMTP)
-        const isOAuthAccount = !user.passwordHash;
-        await notifyOwner({
-          title: `Recuperação de senha solicitada`,
-          content: [
-            `Usuário: ${user.name ?? "sem nome"} (${user.email})`,
-            isOAuthAccount ? `\u26a0️ Conta criada via ${user.loginMethod ?? "OAuth"} — primeira definição de senha.` : "",
-            ``,
-            `Link de redefinição (válido por 1 hora):`,
-            `/reset-password?token=${token}`,
-          ].filter(Boolean).join("\n"),
+
+        // Send email via Resend (falls back to owner notification if not configured)
+        const result = await sendPasswordResetEmail({
+          to: user.email!,
+          name: user.name,
+          token,
         });
-        return { success: true };
+
+        return { success: true, emailSent: result.sent, fallback: result.fallback };
       }),
 
     // ── Reset Password ────────────────────────────────────────────────────────

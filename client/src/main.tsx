@@ -33,7 +33,9 @@ queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    // Suppress expected auth errors (user not logged in) from polluting the console
+    const isAuthError = error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+    if (!isAuthError) console.error("[API Query Error]", error);
   }
 });
 
@@ -41,7 +43,9 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
+    // Suppress expected auth errors from polluting the console
+    const isAuthError = error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+    if (!isAuthError) console.error("[API Mutation Error]", error);
   }
 });
 

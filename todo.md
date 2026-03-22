@@ -244,3 +244,12 @@
 - [ ] Atualizar const.ts: getLoginUrl() → retornar '/login'
 - [ ] Atualizar AppLayout e Home.tsx para usar /login em vez de OAuth URL
 - [ ] Remover rota /api/oauth/callback do servidor
+
+## Recuperação de Senha por E-mail + Admin (Fase 9)
+
+- [ ] Definir senha do admin diretamente no banco (solução imediata)
+- [ ] Integrar Resend para envio de e-mail de recuperação de senha
+- [ ] Criar helper sendPasswordResetEmail no servidor
+- [ ] Atualizar procedure forgotPassword para enviar e-mail real
+- [ ] Criar painel admin para gerenciar/redefinir senhas de usuários
+- [ ] Adicionar procedure admin.setUserPassword no backend
