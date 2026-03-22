@@ -4,6 +4,7 @@ import makeWASocket, {
   makeCacheableSignalKeyStore,
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
+import { downloadMediaMessage } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import * as fs from "fs";
 import * as path from "path";
@@ -21,6 +22,7 @@ import {
   getMagazineLuizaConfig,
   getAliexpressConfig,
   getBotSettings,
+  getGroupTargets,
   createPostLog,
   updatePostLog,
   createSendLog,
@@ -261,17 +263,77 @@ export class WhatsAppManager extends EventEmitter {
     if (!remoteJid.endsWith("@g.us")) return;
 
     try {
-      // Check if this group is monitored
+      // Check if this group is monitored with buscarOfertas active
       const monitoredGroupsList = await getMonitoredGroups(userId, instanceId);
-      const activeMonitored = monitoredGroupsList.filter((g) => g.isActive && g.groupJid === remoteJid);
-      if (activeMonitored.length === 0) return;
+      const activeMonitored = monitoredGroupsList.filter(
+        (g) => g.isActive && g.groupJid === remoteJid && g.buscarOfertas
+      );
+      if (activeMonitored.length === 0) {
+        // Also check espelharConteudo groups
+        const mirrorGroups = monitoredGroupsList.filter(
+          (g) => g.isActive && g.groupJid === remoteJid && g.espelharConteudo
+        );
+        if (mirrorGroups.length === 0) return;
+        // Handle espelharConteudo: forward message as-is to all enviarOfertas groups
+        const allEnviar = monitoredGroupsList.filter(
+          (g) => g.isActive && g.enviarOfertas && g.groupJid !== remoteJid
+        );
+        if (allEnviar.length === 0) return;
+        const { text, mediaType, mediaUrl } = extractMessageContent(msg);
+        if (!text && !mediaUrl) return;
+        const sock = this.sockets.get(instanceId);
+        if (!sock) return;
+        for (const target of allEnviar) {
+          try {
+            await sock.sendMessage(target.groupJid, { forward: msg as any });
+            console.log(`[WhatsApp] Mirrored message to ${target.groupName || target.groupJid}`);
+          } catch (e) {
+            console.error(`[WhatsApp] Failed to mirror to ${target.groupJid}:`, e);
+          }
+        }
+        return;
+      }
+
+      console.log(`[WhatsApp] Incoming message in monitored group: ${remoteJid} (${activeMonitored[0]?.groupName || 'unknown'})`);
 
       // Find automations for this group
       const allAutomations = await getAutomations(userId);
       const matchingAutomations = allAutomations.filter(
         (a) => a.isActive && a.instanceId === instanceId && activeMonitored.some((g) => g.id === a.sourceGroupId)
       );
-      if (matchingAutomations.length === 0) return;
+      
+      if (matchingAutomations.length === 0) {
+        // No automation configured but group has buscarOfertas — use default dispatch
+        // Find all enviarOfertas groups as fallback
+        const enviarGroups = monitoredGroupsList.filter(
+          (g) => g.isActive && g.enviarOfertas && g.groupJid !== remoteJid
+        );
+        if (enviarGroups.length === 0) {
+          console.log(`[WhatsApp] No automations and no enviarOfertas groups. Skipping.`);
+          return;
+        }
+        // Create a synthetic automation for default dispatch
+        const { text, mediaType, mediaUrl } = extractMessageContent(msg);
+        if (!text && !mediaUrl) return;
+        const links = await getActiveAffiliateLinks(userId);
+        const mlConfig = await getMercadoLivreConfig(userId);
+        const shopeeConfig = await getShopeeConfig(userId);
+        const amazonConfig = await getAmazonConfig(userId);
+        const magaluConfig = await getMagazineLuizaConfig(userId);
+        const aliConfig = await getAliexpressConfig(userId);
+        const botSettings = await getBotSettings(userId);
+        const syntheticAutomation = {
+          id: 0,
+          sourceGroupId: activeMonitored[0].id,
+          instanceId,
+          campaignId: null,
+          useLlmSuggestion: false,
+          sendDelay: 0,
+          isActive: true,
+        };
+        await this.processAutomation(instanceId, userId, syntheticAutomation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
+        return;
+      }
 
       // Extract message content
       const { text, mediaType, mediaUrl } = extractMessageContent(msg);
@@ -431,8 +493,8 @@ export class WhatsAppManager extends EventEmitter {
         }
       }
 
-      // If no links found/replaced, skip
-      if (linksFound === 0 && !mediaUrl) {
+      // If no content at all, skip
+      if (!processedText && !mediaUrl) {
         await updatePostLog(logId, { status: "skipped" });
         return;
       }
@@ -447,16 +509,82 @@ export class WhatsAppManager extends EventEmitter {
         status: "processed",
       });
 
-      // Get send targets for this automation
-      const automationTargetsList = await getAutomationTargets(automation.id);
-      const allTargets = await getSendTargets(userId, instanceId);
-      const targets = allTargets.filter(
-        (t) => t.isActive && automationTargetsList.some((at) => at.sendTargetId === t.id)
+      // Get destination groups via group_targets (sourceGroupId → target monitored groups with enviarOfertas)
+      // The automation's sourceGroupId is a monitored_group id
+      const sourceGroupRecord = (await getMonitoredGroups(userId, instanceId)).find(
+        (g) => g.id === automation.sourceGroupId
       );
 
-      if (targets.length === 0) {
+      let targetJids: { jid: string; name: string }[] = [];
+
+      // First try: group_targets (explicitly configured targets for this source group)
+      const groupTargetsList = await getGroupTargets(userId, automation.sourceGroupId);
+      if (groupTargetsList.length > 0) {
+        const allMonitored = await getMonitoredGroups(userId, instanceId);
+        for (const gt of groupTargetsList) {
+          const targetGroup = allMonitored.find((g) => g.id === gt.targetGroupId && g.isActive);
+          if (targetGroup && targetGroup.groupJid) {
+            targetJids.push({ jid: targetGroup.groupJid, name: targetGroup.groupName || targetGroup.groupJid });
+          }
+        }
+      }
+
+      // Fallback: automation_targets → send_targets (legacy path)
+      if (targetJids.length === 0) {
+        const automationTargetsList = await getAutomationTargets(automation.id);
+        if (automationTargetsList.length > 0) {
+          const allSendTargets = await getSendTargets(userId, instanceId);
+          for (const at of automationTargetsList) {
+            const st = allSendTargets.find((t) => t.id === at.sendTargetId && t.isActive);
+            if (st) {
+              targetJids.push({ jid: st.targetJid, name: st.targetName || st.targetJid });
+            }
+          }
+        }
+      }
+
+      // Last fallback: all groups with enviarOfertas active for this instance
+      if (targetJids.length === 0) {
+        const allMonitored = await getMonitoredGroups(userId, instanceId);
+        const enviarGroups = allMonitored.filter(
+          (g) => g.isActive && g.enviarOfertas && g.groupJid !== sourceGroupRecord?.groupJid
+        );
+        for (const g of enviarGroups) {
+          if (g.groupJid) {
+            targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid });
+          }
+        }
+      }
+
+      if (targetJids.length === 0) {
+        console.log(`[WhatsApp] No target groups found for automation ${automation.id} (sourceGroupId=${automation.sourceGroupId}). Skipping.`);
         await updatePostLog(logId, { status: "skipped" });
         return;
+      }
+
+      console.log(`[WhatsApp] Dispatching to ${targetJids.length} groups:`, targetJids.map(t => t.name));
+
+      // Download media from WhatsApp if present, upload to S3 for reliable reuse
+      let uploadedMediaUrl: string | null = null;
+      if ((mediaType === "image" || mediaType === "video") && msg.message) {
+        try {
+          const buffer = await downloadMediaMessage(
+            msg as any,
+            "buffer",
+            {},
+          ) as Buffer;
+          if (buffer && buffer.length > 0) {
+            const ext = mediaType === "image" ? "jpg" : "mp4";
+            const mimeType = mediaType === "image" ? "image/jpeg" : "video/mp4";
+            const fileKey = `whatsapp-media/${userId}-${Date.now()}.${ext}`;
+            const { url } = await storagePut(fileKey, buffer, mimeType);
+            uploadedMediaUrl = url;
+            console.log(`[WhatsApp] Media uploaded to S3: ${uploadedMediaUrl}`);
+          }
+        } catch (mediaErr) {
+          console.error(`[WhatsApp] Failed to download/upload media:`, mediaErr);
+          // Continue with text-only if media download fails
+        }
       }
 
       // Apply send delay
@@ -464,24 +592,31 @@ export class WhatsAppManager extends EventEmitter {
         await new Promise((resolve) => setTimeout(resolve, automation.sendDelay * 1000));
       }
 
-      // Send to all targets
+      // Send to all target groups
       let allSent = true;
-      for (const target of targets) {
+      for (const target of targetJids) {
         const sendLogId = await createSendLog({
           postLogId: logId,
-          targetJid: target.targetJid,
-          targetName: target.targetName || undefined,
+          targetJid: target.jid,
+          targetName: target.name,
           status: "pending",
         });
 
         let sent = false;
         try {
-          if (mediaType === "image" && mediaUrl) {
-            sent = await this.sendImageMessage(instanceId, target.targetJid, mediaUrl, processedText);
-          } else if (mediaType === "video" && mediaUrl) {
-            sent = await this.sendVideoMessage(instanceId, target.targetJid, mediaUrl, processedText);
+          if (uploadedMediaUrl && mediaType === "image") {
+            sent = await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+          } else if (uploadedMediaUrl && mediaType === "video") {
+            sent = await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+          } else if (processedText) {
+            sent = await this.sendTextMessage(instanceId, target.jid, processedText);
           } else {
-            sent = await this.sendTextMessage(instanceId, target.targetJid, processedText);
+            // Forward original message as-is
+            const sock = this.sockets.get(instanceId);
+            if (sock && msg.key) {
+              await sock.sendMessage(target.jid, { forward: msg as any });
+              sent = true;
+            }
           }
 
           await updateSendLog(sendLogId, {
@@ -490,6 +625,7 @@ export class WhatsAppManager extends EventEmitter {
           });
           if (!sent) allSent = false;
         } catch (err: any) {
+          console.error(`[WhatsApp] Failed to send to ${target.jid}:`, err.message);
           await updateSendLog(sendLogId, { status: "failed", errorMessage: err.message });
           allSent = false;
         }

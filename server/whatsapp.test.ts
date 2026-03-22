@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { replaceLinksInText, replaceMercadoLivreLinks } from "./whatsapp";
+import { replaceLinksInText, replaceMercadoLivreLinks, replaceShopeeLinks, replaceAmazonLinks, replaceMagazineLuizaLinks } from "./whatsapp";
 
 describe("replaceLinksInText", () => {
   it("substitui um link que corresponde ao padrão", () => {
@@ -105,5 +105,56 @@ describe("replaceMercadoLivreLinks", () => {
 describe("auth.logout", () => {
   it("deve ser testado via auth.logout.test.ts", () => {
     expect(true).toBe(true);
+  });
+});
+
+describe("replaceShopeeLinks", () => {
+  it("adiciona parâmetro de afiliado em link da Shopee", () => {
+    const text = "Veja: https://shopee.com.br/produto-123.456789012";
+    const result = replaceShopeeLinks(text, { appId: "12345678", isActive: true });
+    expect(result.found).toBe(1);
+    expect(result.replaced).toBe(1);
+    expect(result.text).toContain("af_id=12345678");
+  });
+
+  it("não altera links que não são da Shopee", () => {
+    const text = "Veja: https://amazon.com.br/produto/123";
+    const result = replaceShopeeLinks(text, { appId: "12345678", isActive: true });
+    expect(result.found).toBe(0);
+    expect(result.replaced).toBe(0);
+  });
+});
+
+describe("replaceAmazonLinks", () => {
+  it("adiciona tag de afiliado em link da Amazon", () => {
+    const text = "Veja: https://www.amazon.com.br/dp/B08N5WRWNW";
+    const result = replaceAmazonLinks(text, { tag: "meutag-20", isActive: true });
+    expect(result.found).toBe(1);
+    expect(result.replaced).toBe(1);
+    expect(result.text).toContain("tag=meutag-20");
+  });
+
+  it("não altera links que não são da Amazon", () => {
+    const text = "Veja: https://shopee.com.br/produto";
+    const result = replaceAmazonLinks(text, { tag: "meutag-20", isActive: true });
+    expect(result.found).toBe(0);
+    expect(result.replaced).toBe(0);
+  });
+});
+
+describe("replaceMagazineLuizaLinks", () => {
+  it("adiciona tag de afiliado em link do Magazine Luiza", () => {
+    const text = "Veja: https://www.magazineluiza.com.br/produto/p/123456789/";
+    const result = replaceMagazineLuizaLinks(text, { tag: "meutag123", isActive: true });
+    expect(result.found).toBe(1);
+    expect(result.replaced).toBe(1);
+    expect(result.text).toContain("utm_medium=meutag123");
+  });
+
+  it("não altera links que não são do Magazine Luiza", () => {
+    const text = "Veja: https://amazon.com.br/produto";
+    const result = replaceMagazineLuizaLinks(text, { tag: "meutag123", isActive: true });
+    expect(result.found).toBe(0);
+    expect(result.replaced).toBe(0);
   });
 });

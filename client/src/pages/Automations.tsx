@@ -334,32 +334,20 @@ export default function Automations() {
               )}
             </div>
 
-            {/* Target Groups */}
+            {/* Target Groups - info only */}
             <div className="space-y-2">
-              <Label>Grupos de Destino <span className="text-muted-foreground font-normal text-xs">(com Enviar Ofertas ativo)</span></Label>
-              {targetGroups.length === 0 ? (
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400">
-                  Nenhum grupo com "Enviar Ofertas" ativo. <Link href="/groups" className="underline font-medium">Configure os grupos</Link>.
-                  <p className="mt-1 text-muted-foreground">Sem destinos, as mensagens serão enviadas para todos os grupos de disparo.</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {targetGroups.map((g) => (
-                    <label
-                      key={g.id}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.targetGroupIds.includes(g.id)}
-                        onChange={() => toggleTarget(g.id)}
-                        className="rounded accent-primary"
-                      />
-                      <span className="text-sm">📤 {g.groupName || g.groupJid}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <Label>Grupos de Destino</Label>
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 space-y-1">
+                <p className="font-medium">📤 Destinos configurados na página de Grupos</p>
+                {targetGroups.length === 0 ? (
+                  <p className="text-muted-foreground">Nenhum grupo com "Enviar Ofertas" ativo. <Link href="/groups" className="underline font-medium">Configure os grupos</Link>.</p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {targetGroups.length} grupo(s) com "Enviar Ofertas" ativo: {targetGroups.map(g => g.groupName || g.groupJid).join(", ")}.
+                    Configure os alvos específicos por grupo de origem na <Link href="/groups" className="underline font-medium">página de Grupos</Link> (botão "Alvos").
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Campaign */}
