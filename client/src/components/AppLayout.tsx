@@ -19,7 +19,7 @@ import {
   FileText,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -52,6 +52,34 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     onSuccess: () => { window.location.href = "/"; },
     onError: () => toast.error("Erro ao sair"),
   });
+
+  // Poll latest successful send every 3s for real-time notification banner
+  const [sendNotif, setSendNotif] = useState<{ platform: string; targetName: string | null; messageContent: string | null } | null>(null);
+  const lastSendIdRef = useRef<number | null>(null);
+  const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { data: latestSent } = trpc.sendLogs.latestSent.useQuery(undefined, {
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+    enabled: isAuthenticated,
+  });
+  useEffect(() => {
+    if (!latestSent) return;
+    // Only show notification when a NEW send arrives (id changed)
+    if (lastSendIdRef.current === null) {
+      lastSendIdRef.current = latestSent.id;
+      return;
+    }
+    if (latestSent.id !== lastSendIdRef.current) {
+      lastSendIdRef.current = latestSent.id;
+      setSendNotif({
+        platform: latestSent.platform ?? "Bot",
+        targetName: latestSent.targetName,
+        messageContent: latestSent.messageContent,
+      });
+      if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+      notifTimerRef.current = setTimeout(() => setSendNotif(null), 5000);
+    }
+  }, [latestSent]);
 
   // Poll WhatsApp connection status every 5s for real-time indicator
   const { data: waInstances } = trpc.whatsapp.listInstances.useQuery(undefined, {
@@ -261,6 +289,36 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
+        {/* Send success notification banner */}
+        {sendNotif && (
+          <div
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border border-green-500/30 backdrop-blur-xl animate-in slide-in-from-top-4 fade-in duration-300"
+            style={{ background: "oklch(0.12 0.04 145 / 0.97)", minWidth: 280, maxWidth: 480 }}
+          >
+            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4 h-4 text-green-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">Link enviado com sucesso</p>
+              <p className="text-sm text-white/90 truncate">
+                {sendNotif.targetName ? `→ ${sendNotif.targetName}` : "Grupo destino"}
+                {sendNotif.platform && sendNotif.platform !== "unknown" && (
+                  <span className="ml-2 text-xs text-white/50 capitalize">[{sendNotif.platform}]</span>
+                )}
+              </p>
+              {sendNotif.messageContent && (
+                <p className="text-xs text-white/40 truncate mt-0.5">{sendNotif.messageContent.slice(0, 80)}</p>
+              )}
+            </div>
+            <button
+              onClick={() => { setSendNotif(null); if (notifTimerRef.current) clearTimeout(notifTimerRef.current); }}
+              className="text-white/30 hover:text-white/70 transition-colors flex-shrink-0 ml-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {title && (
           <header className="h-16 border-b border-white/5 flex items-center px-6 sticky top-0 z-10 backdrop-blur-xl" style={{ background: "oklch(0.08 0.015 250 / 0.85)" }}>
             <div className="flex items-center gap-3">

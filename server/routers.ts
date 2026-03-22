@@ -1043,6 +1043,11 @@ export const appRouter = router({
       .query(async ({ ctx }) => {
         return getSendLogStats(ctx.user.id);
       }),
+    latestSent: protectedProcedure
+      .query(async ({ ctx }) => {
+        const logs = await listSendLogs(ctx.user.id, "sent", 1);
+        return logs[0] ?? null;
+      }),
   }),
   // ── Suporte / Recuperação de Acesso ────────────────────────────────────
   support: router({

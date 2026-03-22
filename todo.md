@@ -459,3 +459,11 @@
 - [x] Procedure tRPC diag.getLogs e diag.clearLogs adicionadas ao routers.ts
 - [x] Página /diagnostico criada com terminal ao vivo, filtros por categoria e auto-scroll
 - [x] Item Diagnóstico adicionado na sidebar do AppLayout (badge rosa, ícone Activity)
+
+## Notificação de Envio Bem-Sucedido (Fase 34)
+- [x] Backend: procedure sendLogs.latestSent retorna o envio mais recente com status=sent
+- [x] AppLayout: polling a cada 3s comparando ID do último envio
+- [x] Banner verde animado (slide-in-from-top) no centro do topo da tela
+- [x] Mostra: plataforma, grupo destino, prévia do conteúdo (80 chars)
+- [x] Auto-fechar após 5 segundos com botão X para fechar manualmente
+- [x] Não exibe na primeira carga (só quando chega envio novo após abrir o app)
