@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Activity, BarChart3, CheckCircle2, Clock, Loader2, RefreshCw, XCircle } from "lucide-react";
+import { Activity, BarChart3, CheckCircle2, ChevronDown, ChevronUp, Clock, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { useState } from "react";
 
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; textColor: string; bg: string }> = {
@@ -32,6 +32,16 @@ type FilterStatus = "all" | "sent" | "failed" | "pending";
 
 export default function Logs() {
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set());
+
+  const toggleExpand = (id: number) => {
+    setExpandedLogs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const { data: logs, isLoading, refetch, isFetching } = trpc.sendLogs.list.useQuery(
     { status: filter, limit: 100 },
@@ -122,6 +132,10 @@ export default function Logs() {
                 ? format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
                 : "";
 
+              const isExpanded = expandedLogs.has(log.id);
+              const hasLlm = !!(log as any).llmSuggestion;
+              const hasOriginal = !!(log as any).originalContent;
+
               return (
                 <div
                   key={log.id}
@@ -145,6 +159,12 @@ export default function Logs() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <PlatformBadge platform={log.platform} />
+                        {hasLlm && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/25">
+                            <Sparkles className="w-3 h-3" />
+                            IA
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground font-mono">{dateStr}</span>
                       </div>
                       <p className="text-sm font-semibold mt-1.5">
@@ -156,11 +176,48 @@ export default function Logs() {
                         <p className="text-xs text-muted-foreground mt-0.5">Para: <span className="text-foreground/70">{log.targetName}</span></p>
                       )}
                     </div>
+                    {(hasLlm || hasOriginal) && (
+                      <button
+                        onClick={() => toggleExpand(log.id)}
+                        className="flex-shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+                        title={isExpanded ? "Recolher detalhes" : "Ver detalhes da IA"}
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    )}
                   </div>
 
+                  {/* Frase gerada pela IA — sempre visível quando presente */}
+                  {hasLlm && (
+                    <div className="rounded-xl border border-yellow-500/25 p-3 space-y-1.5" style={{ background: "oklch(0.12 0.04 90 / 0.25)" }}>
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                        <span className="text-xs font-bold text-yellow-400 uppercase tracking-wide">Frase gerada pela IA</span>
+                      </div>
+                      <p className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+                        {((log as any).llmSuggestion as string).length > 300
+                          ? ((log as any).llmSuggestion as string).slice(0, 300) + "..."
+                          : (log as any).llmSuggestion}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Mensagem enviada (conteúdo processado) */}
                   {log.messageContent && (
                     <div className="rounded-xl border border-white/5 p-3 text-xs text-foreground/70 whitespace-pre-wrap max-h-36 overflow-y-auto font-mono leading-relaxed" style={{ background: "oklch(0.08 0.015 250 / 0.6)" }}>
                       {log.messageContent.length > 400 ? log.messageContent.slice(0, 400) + "..." : log.messageContent}
+                    </div>
+                  )}
+
+                  {/* Conteúdo original — visível ao expandir */}
+                  {isExpanded && hasOriginal && (
+                    <div className="rounded-xl border border-white/5 p-3 space-y-1.5" style={{ background: "oklch(0.08 0.015 250 / 0.4)" }}>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Mensagem original (antes da IA)</p>
+                      <p className="text-xs text-foreground/60 whitespace-pre-wrap font-mono leading-relaxed max-h-28 overflow-y-auto">
+                        {((log as any).originalContent as string).length > 400
+                          ? ((log as any).originalContent as string).slice(0, 400) + "..."
+                          : (log as any).originalContent}
+                      </p>
                     </div>
                   )}
 

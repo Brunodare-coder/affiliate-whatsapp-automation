@@ -596,14 +596,39 @@ export async function getUsersWithFeedGlobalEnabled(): Promise<Array<{ userId: n
   }));
 }
 
-export async function listSendLogs(userId: number, status?: string, limit = 100): Promise<SendLog[]> {
+export async function listSendLogs(
+  userId: number,
+  status?: string,
+  limit = 100
+): Promise<(SendLog & { llmSuggestion?: string | null; originalContent?: string | null })[]> {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(sendLogs.userId, userId)];
   if (status && status !== "all") {
     conditions.push(eq(sendLogs.status, status as "pending" | "sent" | "failed"));
   }
-  return db.select().from(sendLogs).where(and(...conditions)).orderBy(desc(sendLogs.createdAt)).limit(limit);
+  const rows = await db
+    .select({
+      id: sendLogs.id,
+      postLogId: sendLogs.postLogId,
+      userId: sendLogs.userId,
+      platform: sendLogs.platform,
+      targetJid: sendLogs.targetJid,
+      targetName: sendLogs.targetName,
+      messageContent: sendLogs.messageContent,
+      status: sendLogs.status,
+      errorMessage: sendLogs.errorMessage,
+      sentAt: sendLogs.sentAt,
+      createdAt: sendLogs.createdAt,
+      llmSuggestion: postLogs.llmSuggestion,
+      originalContent: postLogs.originalContent,
+    })
+    .from(sendLogs)
+    .leftJoin(postLogs, eq(sendLogs.postLogId, postLogs.id))
+    .where(and(...conditions))
+    .orderBy(desc(sendLogs.createdAt))
+    .limit(limit);
+  return rows;
 }
 
 export async function getSendLogStats(userId: number): Promise<{ total: number; success: number; errors: number; pending: number }> {

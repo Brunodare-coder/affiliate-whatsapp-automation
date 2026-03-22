@@ -378,3 +378,12 @@
 - [x] Adicionar toggle "Gerar Frase com IA" na UI de grupos (Groups.tsx) com ícone Sparkles
 - [x] Atualizar seção "Como usar" com descrição dos novos toggles
 - [x] Atualizar botão "Desativar Todos" para incluir generateMarketing
+
+## Preview Frase de IA nos Logs (Fase 23)
+- [x] Verificar que llmSuggestion é retornado na query de logs (tRPC)
+- [x] Adicionar seção "Frase gerada pela IA" nos cards de log da página /logs
+- [x] Exibir llmSuggestion com destaque visual (badge IA + texto em caixa destacada)
+- [x] Mostrar o campo apenas quando llmSuggestion não for nulo/vazio
+- [x] listSendLogs: JOIN com post_logs para trazer llmSuggestion e originalContent
+- [x] Adicionar badge ✨ IA no header do card quando frase foi gerada
+- [x] Botão expandir/recolher para ver mensagem original (antes da IA)
