@@ -98,3 +98,12 @@
 - [x] Automações: corrigir seletor de grupo de origem para usar grupos salvos no DB
 - [x] Automações: corrigir seletor de destinos para usar grupos com enviarOfertas ativo
 - [x] Automações: simplificar formulário de criação
+
+## Correção Sincronização de Grupos WA
+- [x] Restaurar instâncias WhatsApp automaticamente no startup do servidor
+- [x] Melhorar getGroups com retry (3 tentativas) quando socket não está pronto
+- [x] syncGroupsFromWA: reconectar automaticamente se socket perdido após restart
+- [x] Melhorar mensagens de erro na sincronização
+- [x] Corrigir getGroups no Baileys para buscar grupos da conta conectada
+- [x] Melhorar feedback do botão Sincronizar (mostrar quantos grupos encontrados)
+- [x] Garantir que grupos sejam carregados após conexão do WA

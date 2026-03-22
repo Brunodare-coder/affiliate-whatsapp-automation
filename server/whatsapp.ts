@@ -180,18 +180,30 @@ export class WhatsAppManager extends EventEmitter {
 
   async getGroups(instanceId: number): Promise<{ id: string; subject: string; participantCount: number }[]> {
     const sock = this.sockets.get(instanceId);
-    if (!sock) return [];
-    try {
-      const groups = await sock.groupFetchAllParticipating();
-      return Object.values(groups).map((g) => ({
-        id: g.id,
-        subject: g.subject,
-        participantCount: g.participants?.length || 0,
-      }));
-    } catch (err) {
-      console.error("[WhatsApp] Failed to fetch groups:", err);
+    if (!sock) {
+      console.warn(`[WhatsApp] getGroups: no socket for instance ${instanceId}`);
       return [];
     }
+    // Retry up to 3 times with 2s delay if groups come back empty (socket may not be fully ready)
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const groups = await sock.groupFetchAllParticipating();
+        const result = Object.values(groups).map((g) => ({
+          id: g.id,
+          subject: g.subject,
+          participantCount: g.participants?.length || 0,
+        }));
+        console.log(`[WhatsApp] getGroups instance ${instanceId}: found ${result.length} groups (attempt ${attempt})`);
+        if (result.length > 0 || attempt === 3) return result;
+        // Wait before retry if empty
+        await new Promise((r) => setTimeout(r, 2000));
+      } catch (err) {
+        console.error(`[WhatsApp] Failed to fetch groups (attempt ${attempt}):`, err);
+        if (attempt === 3) return [];
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+    return [];
   }
 
   async sendTextMessage(instanceId: number, jid: string, text: string): Promise<boolean> {

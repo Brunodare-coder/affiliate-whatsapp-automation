@@ -7,6 +7,10 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { whatsappManager } from "../whatsapp";
+import { getDb } from "../db";
+import { whatsappInstances } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -59,6 +63,26 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+  });
+
+  // Restore connected WhatsApp instances after server starts
+  server.on("listening", async () => {
+    try {
+      const db = await getDb();
+      if (!db) return;
+      const instances = await db
+        .select()
+        .from(whatsappInstances)
+        .where(eq(whatsappInstances.status, "connected"));
+      for (const instance of instances) {
+        console.log(`[WhatsApp] Restoring instance ${instance.id} (${instance.name})...`);
+        whatsappManager.connectInstance(instance.id, instance.userId).catch((err) => {
+          console.error(`[WhatsApp] Failed to restore instance ${instance.id}:`, err);
+        });
+      }
+    } catch (err) {
+      console.error("[WhatsApp] Failed to restore instances:", err);
+    }
   });
 }
 

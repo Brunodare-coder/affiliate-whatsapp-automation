@@ -231,7 +231,21 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const instance = await getWhatsappInstanceById(input.instanceId, ctx.user.id);
         if (!instance) throw new Error("Instance not found");
+        // If socket is not active but DB says connected, try to reconnect first
+        if (!whatsappManager.isConnected(input.instanceId)) {
+          if (instance.status === "connected") {
+            console.log(`[WhatsApp] syncGroupsFromWA: socket not active, reconnecting instance ${input.instanceId}...`);
+            await whatsappManager.connectInstance(input.instanceId, ctx.user.id);
+            // Wait for connection to establish
+            await new Promise((r) => setTimeout(r, 5000));
+          } else {
+            throw new Error("WhatsApp não está conectado. Conecte primeiro na página WhatsApp.");
+          }
+        }
         const waGroups = await whatsappManager.getGroups(input.instanceId);
+        if (waGroups.length === 0) {
+          throw new Error("Nenhum grupo encontrado. O WhatsApp pode estar sincronizando. Aguarde alguns segundos e tente novamente.");
+        }
         const existing = await getMonitoredGroups(ctx.user.id, input.instanceId);
         const existingJids = new Set(existing.map((g) => g.groupJid));
         let added = 0;
