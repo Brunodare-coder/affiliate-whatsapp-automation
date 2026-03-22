@@ -313,3 +313,9 @@
 - [x] tRPC procedures: admin.getAdText, admin.saveAdText (protegido por role=admin)
 - [x] Painel Admin: seção "Configurações do Anúncio" com textarea + preview + botão salvar
 - [x] whatsapp.ts: buscar ad_text do banco em vez de usar texto fixo
+
+## Correção de Links Encurtados (Fase 13)
+- [x] Implementar resolução de links encurtados antes da substituição de afiliado
+- [x] Suporte a meli.la (Mercado Livre), amzn.to (Amazon), s.shopee.com.br (Shopee), bit.ly, encurtador.com.br
+- [x] Testar com exemplos reais: meli.la/1k7ypTV → mercadolivre.com.br + tag MEUTAG123 aplicado corretamente
+- [x] Limpar parâmetros de rastreamento de terceiros (matt_word, ref, forceInApp) antes de aplicar o nosso tag

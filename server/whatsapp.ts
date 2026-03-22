@@ -663,9 +663,18 @@ export class WhatsAppManager extends EventEmitter {
         ? links.filter((l) => l.campaignId === selectedCampaignId)
         : links;
 
+      // Expand short links (meli.la, amzn.to, etc.) before affiliate substitution
+      if (processedText) {
+        try {
+          processedText = await expandShortLinksInText(processedText);
+        } catch {
+          // ignore expansion errors
+        }
+      }
+
       // Replace links in text (affiliate links)
-      if (text && campaignLinks.length > 0) {
-        const result = replaceLinksInText(text, campaignLinks);
+      if (processedText && campaignLinks.length > 0) {
+        const result = replaceLinksInText(processedText, campaignLinks);
         processedText = result.text;
         linksFound = result.linksFound;
         linksReplaced = result.linksReplaced;
@@ -942,6 +951,100 @@ function extractMessageContent(msg: WhatsAppMessage): {
   return { text: null, mediaType: "text", mediaUrl: null };
 }
 
+// ── Resolução de links encurtados ──────────────────────────────────────────
+// Domínios de encurtamento conhecidos das plataformas
+const SHORT_LINK_DOMAINS = [
+  "meli.la",          // Mercado Livre
+  "mercadolivre.com", // ML internacional
+  "amzn.to",          // Amazon
+  "amzn.eu",          // Amazon Europa
+  "bit.ly",           // Genérico
+  "tinyurl.com",      // Genérico
+  "encurtador.com.br",// Genérico BR
+  "s.shopee.com.br",  // Shopee
+  "shp.ee",           // Shopee encurtado
+  "go.magalu.com",    // Magazine Luiza
+  "mglu.me",          // Magazine Luiza
+  "ali.ski",          // AliExpress
+  "a.aliexpress.com", // AliExpress
+  "click.aliexpress.com", // AliExpress
+];
+
+/**
+ * Resolve um link encurtado para o URL final seguindo redirecionamentos HTTP.
+ * Usa User-Agent de browser para evitar bloqueios.
+ */
+async function resolveShortLink(url: string): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    clearTimeout(timeout);
+    return response.url || url;
+  } catch {
+    return url; // Em caso de erro, retorna o URL original
+  }
+}
+
+/**
+ * Verifica se um URL é de um domínio encurtador conhecido.
+ */
+function isShortLink(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return SHORT_LINK_DOMAINS.some((d) => hostname === d || hostname.endsWith("." + d));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Expande todos os links encurtados em um texto, substituindo-os pelos URLs reais.
+ * Processa em paralelo com limite de concorrência para não sobrecarregar.
+ */
+export async function expandShortLinksInText(text: string): Promise<string> {
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+  const allUrls = text.match(urlRegex) || [];
+  const shortUrls = allUrls.filter(isShortLink);
+
+  if (shortUrls.length === 0) return text;
+
+  // Resolve todos os links encurtados em paralelo (máx. 5 por vez)
+  const uniqueShortUrls = Array.from(new Set(shortUrls));
+  const resolvedPairs: Array<{ original: string; resolved: string }> = [];
+
+  // Processar em lotes de 5
+  for (let i = 0; i < uniqueShortUrls.length; i += 5) {
+    const batch = uniqueShortUrls.slice(i, i + 5);
+    const results = await Promise.all(
+      batch.map(async (url) => ({ original: url, resolved: await resolveShortLink(url) }))
+    );
+    for (const r of results) {
+      resolvedPairs.push(r);
+    }
+  }
+
+  // Substituir no texto
+  let expandedText = text;
+  for (const pair of resolvedPairs) {
+    if (pair.original !== pair.resolved) {
+      // Escapa caracteres especiais de regex no URL original
+      const escaped = pair.original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      expandedText = expandedText.replace(new RegExp(escaped, "g"), pair.resolved);
+    }
+  }
+
+  return expandedText;
+}
+
 export function replaceLinksInText(
   text: string,
   affiliateLinks: { originalPattern: string; affiliateUrl: string }[]
@@ -988,9 +1091,14 @@ export function replaceMercadoLivreLinks(
   const processedText = text.replace(mlPattern, (url) => {
     try {
       const urlObj = new URL(url);
-      // Adiciona tag de rastreamento
+      // Remove parâmetros de rastreamento de afiliados de terceiros
+      // (presentes quando o link encurtado é expandido)
+      urlObj.searchParams.delete("matt_word");   // nome do afiliado original
+      urlObj.searchParams.delete("ref");          // token de rastreamento externo
+      urlObj.searchParams.delete("forceInApp");   // parâmetro interno do ML
+      // Adiciona nosso tag de rastreamento (sobrescreve se já existir)
       if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
-      // Adiciona Matt Tool ID se disponível
+      // Adiciona Matt Tool ID se disponível (sobrescreve o do afiliado original)
       if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
       replaced++;
       return urlObj.toString();
