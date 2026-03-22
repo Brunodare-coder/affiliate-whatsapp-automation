@@ -77,9 +77,10 @@ function ConfigureTargetsModal({
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-bold text-white text-base">Configurar Grupos de Disparo</h3>
-              <p className="text-orange-100 text-sm mt-0.5 font-mono">
-                {sourceGroup.groupName || sourceGroup.groupJid}
+              <h3 className="font-bold text-white text-base">Grupos de Disparo</h3>
+              <p className="text-orange-100 text-xs mt-1 opacity-80">Origem das ofertas:</p>
+              <p className="text-white text-sm font-mono font-bold">
+                🔍 {sourceGroup.groupName || sourceGroup.groupJid}
               </p>
             </div>
             <button onClick={onClose} className="text-orange-100 hover:text-white mt-0.5">
@@ -88,11 +89,16 @@ function ConfigureTargetsModal({
           </div>
         </div>
         <div className="bg-[#0f172a] p-5">
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4">
-            <p className="text-sm text-orange-300">
-              <span className="font-semibold">Selecione</span> os grupos de disparo que receberão as mensagens
-              deste grupo monitorado. Se nenhum for selecionado, as mensagens serão enviadas para{" "}
-              <strong>todos</strong> os grupos de disparo.
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4 space-y-2">
+            <p className="text-xs font-bold text-orange-300 uppercase tracking-wide">Como funciona</p>
+            <p className="text-sm text-orange-200">
+              📥 O bot <strong>busca ofertas</strong> no grupo acima (origem)
+            </p>
+            <p className="text-sm text-orange-200">
+              📤 E <strong>envia com seu código de afiliado</strong> para os grupos abaixo (disparo)
+            </p>
+            <p className="text-xs text-orange-300/70 mt-1">
+              Se nenhum for selecionado, envia para <strong>todos</strong> os grupos com "Enviar Ofertas" ativo.
             </p>
           </div>
           {targets.length === 0 ? (
@@ -303,6 +309,7 @@ function GroupOptionRow({
 function GroupsTab() {
   const { data: instances } = trpc.whatsapp.listInstances.useQuery();
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "origem" | "disparo">("all");
   const [targetSourceGroup, setTargetSourceGroup] = useState<{
     id: number;
     groupName: string | null;
@@ -354,12 +361,28 @@ function GroupsTab() {
     },
   });
 
-  const filteredGroups = useMemo(
-    () => (savedGroups || []).filter((g) =>
-      (g.groupName || g.groupJid).toLowerCase().includes(search.toLowerCase())
-    ),
-    [savedGroups, search]
-  );
+  const filteredGroups = useMemo(() => {
+    let groups = savedGroups || [];
+    if (filterType === "origem") groups = groups.filter((g) => g.buscarOfertas);
+    else if (filterType === "disparo") groups = groups.filter((g) => g.enviarOfertas);
+    if (search) groups = groups.filter((g) => (g.groupName || g.groupJid).toLowerCase().includes(search.toLowerCase()));
+    return groups;
+  }, [savedGroups, search, filterType]);
+
+  const disableAll = async () => {
+    const groups = savedGroups || [];
+    if (groups.length === 0) return;
+    if (!confirm(`Desativar todos os toggles de ${groups.length} grupo(s)?`)) return;
+    try {
+      await Promise.all(groups.map((g) =>
+        updateGroup.mutateAsync({ id: g.id, buscarOfertas: false, enviarOfertas: false, espelharConteudo: false, substituirImagem: false })
+      ));
+      await refetchSaved();
+      toast.success("Todos os grupos foram desativados!");
+    } catch {
+      toast.error("Erro ao desativar grupos");
+    }
+  };
 
   const handleToggle = async (group: NonNullable<typeof savedGroups>[0], flag: GroupFlag, value: boolean) => {
     try {
@@ -401,27 +424,64 @@ function GroupsTab() {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => { refetchSaved(); refetchTargets(); }} className="gap-2 border-white/10 bg-white/5 hover:bg-white/10">
-            <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-          </Button>
-          {firstConnectedId && (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
+          <div className="flex gap-2 flex-wrap">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
-              disabled={syncGroups.isPending}
-              className="gap-2 border-blue-500/25 bg-blue-500/10 hover:bg-blue-500/15 text-blue-300"
+              variant="outline" size="sm"
+              onClick={async () => { await Promise.all([refetchSaved(), refetchTargets()]); toast.success("Atualizado!"); }}
+              className="gap-2 border-white/10 bg-white/5 hover:bg-white/10"
             >
-              {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-              Sincronizar do WA
+              <RefreshCw className="w-3.5 h-3.5" /> Atualizar
             </Button>
-          )}
-          <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20">
-            <Plus className="w-3.5 h-3.5" /> Adicionar Grupo
-          </Button>
+            <Button
+              variant="outline" size="sm"
+              onClick={disableAll}
+              disabled={updateGroup.isPending}
+              className="gap-2 border-red-500/25 bg-red-500/10 hover:bg-red-500/15 text-red-400"
+            >
+              <AlertCircle className="w-3.5 h-3.5" /> Desativar Todos
+            </Button>
+            {firstConnectedId && (
+              <Button
+                variant="outline" size="sm"
+                onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
+                disabled={syncGroups.isPending}
+                className="gap-2 border-blue-500/25 bg-blue-500/10 hover:bg-blue-500/15 text-blue-300"
+              >
+                {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                Sincronizar do WA
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20">
+              <Plus className="w-3.5 h-3.5" /> Adicionar Grupo
+            </Button>
+          </div>
+        </div>
+
+        {/* Filtros de tipo */}
+        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "oklch(0.10 0.015 250 / 0.8)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+          {([
+            { id: "all", label: "Todos", count: (savedGroups || []).length },
+            { id: "origem", label: "🔍 Origem (Buscar)", count: (savedGroups || []).filter((g) => g.buscarOfertas).length },
+            { id: "disparo", label: "📤 Disparo (Enviar)", count: (savedGroups || []).filter((g) => g.enviarOfertas).length },
+          ] as const).map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilterType(f.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                filterType === f.id
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-black shadow-lg shadow-green-500/20"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f.label}
+              <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-black ${
+                filterType === f.id ? "bg-black/20 text-black" : "bg-white/10 text-muted-foreground"
+              }`}>{f.count}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -533,9 +593,21 @@ function GroupsTab() {
                       {group.groupJid}
                     </p>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${ isCanal ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20" }`}>
-                    {groupType}
-                  </span>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {group.buscarOfertas && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border bg-green-500/10 text-green-400 border-green-500/20">
+                        🔍 Origem
+                      </span>
+                    )}
+                    {group.enviarOfertas && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border bg-orange-500/10 text-orange-400 border-orange-500/20">
+                        📤 Disparo
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border ${ isCanal ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20" }`}>
+                      {groupType}
+                    </span>
+                  </div>
                   <button
                     onClick={() => {
                       if (confirm(`Remover "${group.groupName || group.groupJid}"?`)) {
@@ -583,10 +655,10 @@ function GroupsTab() {
                     </div>
                   )}
                   <GroupOptionRow
-                    icon={<Link2 className="w-4 h-4 text-orange-400" />}
-                    label="Configurar Alvos"
-                    sublabel={targetCount > 0 ? `${targetCount} grupo(s) selecionado(s)` : undefined}
-                    sublabelColor="text-orange-300"
+                    icon={<Target className="w-4 h-4 text-orange-400" />}
+                    label="Grupos de Disparo"
+                    sublabel={targetCount > 0 ? `${targetCount} grupo(s) de disparo` : "Clique para configurar destinos"}
+                    sublabelColor={targetCount > 0 ? "text-orange-300" : "text-muted-foreground"}
                     highlight
                     targetCount={targetCount > 0 ? targetCount : undefined}
                     onClick={() =>

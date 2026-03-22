@@ -346,3 +346,11 @@
 - [x] Remover aba Automações da página Groups.tsx
 - [x] Deixar página Grupos sem abas (só os cards de grupo com toggles)
 - [x] Processamento continua usando a lógica de Configurar Alvos (group_targets) - sem alteração no backend
+
+## Reorganização Página Configurar Ofertas (Fase 18)
+- [x] Corrigir botão Atualizar para recarregar dados corretamente
+- [x] Adicionar botão "Desativar Todos" para desligar todos os toggles de uma vez
+- [x] Criar filtros visuais: "Todos / Origem (Buscar) / Disparo (Enviar)"
+- [x] Badges de Origem/Disparo nos cards de grupo
+- [x] Renomear "Configurar Alvos" para "Grupos de Disparo" com texto mais claro
+- [x] Modal Grupos de Disparo: explicar claramente origem vs destino
