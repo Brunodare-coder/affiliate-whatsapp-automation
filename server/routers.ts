@@ -56,6 +56,8 @@ import {
   deleteAliexpressConfig,
   getBotSettings,
   upsertBotSettings,
+  listSendLogs,
+  getSendLogStats,
 } from "./db";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
@@ -600,6 +602,21 @@ export const appRouter = router({
       }),
   }),
 
+  // ── Logs de Envio ────────────────────────────────────────────────────────
+  sendLogs: router({
+    list: protectedProcedure
+      .input(z.object({
+        status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
+        limit: z.number().min(1).max(500).default(100),
+      }))
+      .query(async ({ ctx, input }) => {
+        return listSendLogs(ctx.user.id, input.status, input.limit);
+      }),
+    stats: protectedProcedure
+      .query(async ({ ctx }) => {
+        return getSendLogStats(ctx.user.id);
+      }),
+  }),
   // ── Envio Manual ─────────────────────────────────────────────────────────
   manualSend: router({
     send: protectedProcedure

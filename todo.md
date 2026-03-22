@@ -158,10 +158,17 @@
 - [x] Adicionar item de menu "Feed Global" no AppLayout
 
 ## Redesign Grupos + Credenciais (Fase 3)
-- [ ] Schema Amazon: adicionar campos ubidAcbbr, atAcbbr, xAcbb (3 cookies separados)
-- [ ] Migrar banco de dados com novos campos Amazon
-- [ ] Remover aba Campanhas do menu (AppLayout)
-- [ ] Redesenhar página de Grupos igual ao ProAfiliados (Buscar Ofertas, Enviar Ofertas, Configurar Alvos modal laranja, Espelhar, Substituir Imagem, Ordem do Link)
-- [ ] Corrigir modal Amazon: 3 campos de cookie (ubid_acbbr, at_acbbr, x_acbb)
-- [ ] Corrigir modal Shopee: AppID + Senha com instruções corretas
-- [ ] Corrigir modal Magazine Luiza: Tag com formato magazinevoce.com.br/SUA_TAG/produto/...
+- [x] Schema Amazon: adicionar campos ubidAcbbr, atAcbbr, xAcbb (3 cookies separados)
+- [x] Migrar banco de dados com novos campos Amazon
+- [x] Remover aba Campanhas do menu (AppLayout)
+- [x] Redesenhar página de Grupos igual ao ProAfiliados (Buscar Ofertas, Enviar Ofertas, Configurar Alvos modal laranja, Espelhar, Substituir Imagem, Ordem do Link)
+- [x] Corrigir modal Amazon: 3 campos de cookie (ubid_acbbr, at_acbbr, x_acbb)
+- [x] Corrigir modal Shopee: AppID + Senha com instruções corretas
+- [x] Corrigir modal Magazine Luiza: Tag com formato magazinevoce.com.br/SUA_TAG/produto/...
+
+## Logs de Envio (Redesign - Fase 4)
+- [x] Schema: tabela send_logs com campos platform, status, targetGroup, messageContent, errorMessage, createdAt
+- [x] DB helpers: createSendLog, listSendLogs, getSendLogStats
+- [x] tRPC procedures: sendLogs.list, sendLogs.stats
+- [x] Integrar createSendLog no fluxo de envio do whatsapp.ts
+- [x] Redesenhar página /logs com contadores Total/Sucesso/Erros/Pendente, filtros e cards de log

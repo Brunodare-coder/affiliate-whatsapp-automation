@@ -718,13 +718,25 @@ export class WhatsAppManager extends EventEmitter {
         await new Promise((resolve) => setTimeout(resolve, automation.sendDelay * 1000));
       }
 
+      // Detect which platform was used for link replacement
+      let detectedPlatform = "";
+      const originalText = text || "";
+      if (mlConfig?.tag && processedText !== originalText && processedText.includes(mlConfig.tag)) detectedPlatform = "mercadolivre";
+      else if (shopeeConfig?.appId && processedText !== originalText) detectedPlatform = "shopee";
+      else if (amazonConfig?.tag && processedText !== originalText) detectedPlatform = "amazon";
+      else if (magaluConfig?.tag && processedText !== originalText) detectedPlatform = "magalu";
+      else if (aliConfig?.trackId && processedText !== originalText) detectedPlatform = "aliexpress";
+
       // Send to all target groups
       let allSent = true;
       for (const target of targetJids) {
         const sendLogId = await createSendLog({
           postLogId: logId,
+          userId,
+          platform: detectedPlatform || undefined,
           targetJid: target.jid,
           targetName: target.name,
+          messageContent: processedText || text || undefined,
           status: "pending",
         });
 

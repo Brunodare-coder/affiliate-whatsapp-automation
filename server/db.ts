@@ -542,3 +542,25 @@ export async function getUsersWithFeedGlobalEnabled(): Promise<Array<{ userId: n
     clickablePreview: r.clickablePreview,
   }));
 }
+
+export async function listSendLogs(userId: number, status?: string, limit = 100): Promise<SendLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(sendLogs.userId, userId)];
+  if (status && status !== "all") {
+    conditions.push(eq(sendLogs.status, status as "pending" | "sent" | "failed"));
+  }
+  return db.select().from(sendLogs).where(and(...conditions)).orderBy(desc(sendLogs.createdAt)).limit(limit);
+}
+
+export async function getSendLogStats(userId: number): Promise<{ total: number; success: number; errors: number; pending: number }> {
+  const db = await getDb();
+  if (!db) return { total: 0, success: 0, errors: 0, pending: 0 };
+  const all = await db.select().from(sendLogs).where(eq(sendLogs.userId, userId));
+  return {
+    total: all.length,
+    success: all.filter((l) => l.status === "sent").length,
+    errors: all.filter((l) => l.status === "failed").length,
+    pending: all.filter((l) => l.status === "pending").length,
+  };
+}

@@ -185,8 +185,11 @@ export type InsertPostLog = typeof postLogs.$inferInsert;
 export const sendLogs = mysqlTable("send_logs", {
   id: int("id").autoincrement().primaryKey(),
   postLogId: int("postLogId").notNull(),
+  userId: int("userId").notNull(),
+  platform: varchar("platform", { length: 50 }),  // mercadolivre, shopee, amazon, magalu, aliexpress
   targetJid: varchar("targetJid", { length: 255 }).notNull(),
   targetName: varchar("targetName", { length: 255 }),
+  messageContent: text("messageContent"),  // conteúdo da mensagem enviada
   status: mysqlEnum("status", ["pending", "sent", "failed"]).default("pending").notNull(),
   errorMessage: text("errorMessage"),
   sentAt: timestamp("sentAt"),

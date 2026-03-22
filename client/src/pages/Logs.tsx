@@ -1,132 +1,193 @@
 import AppLayout from "@/components/AppLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Activity, ArrowRight, ChevronLeft, ChevronRight, FileText, Image, Loader2, Video } from "lucide-react";
+import { Activity, CheckCircle2, Clock, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
 
-const STATUS_CONFIG = {
-  sent: { label: "Enviado", className: "bg-green-500/20 text-green-400 border-green-500/30" },
-  failed: { label: "Falhou", className: "bg-destructive/20 text-destructive border-destructive/30" },
-  processed: { label: "Processado", className: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  skipped: { label: "Ignorado", className: "bg-muted text-muted-foreground" },
-  pending: { label: "Pendente", className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+const PLATFORM_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  mercadolivre: { label: "mercadolivre", color: "#f97316", bg: "bg-orange-500" },
+  shopee:        { label: "shopee",       color: "#f97316", bg: "bg-orange-600" },
+  amazon:        { label: "amazon",       color: "#f59e0b", bg: "bg-yellow-600" },
+  magalu:        { label: "magalu",       color: "#3b82f6", bg: "bg-blue-600" },
+  aliexpress:    { label: "aliexpress",   color: "#ef4444", bg: "bg-red-600" },
 };
 
-function MediaIcon({ type }: { type: string }) {
-  if (type === "image") return <Image className="w-4 h-4 text-blue-400" />;
-  if (type === "video") return <Video className="w-4 h-4 text-purple-400" />;
-  return <FileText className="w-4 h-4 text-muted-foreground" />;
+function PlatformBadge({ platform }: { platform?: string | null }) {
+  const cfg = platform ? PLATFORM_CONFIG[platform] : null;
+  if (!cfg) return (
+    <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-slate-600 text-white">
+      geral
+    </span>
+  );
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${cfg.bg} text-white`}>
+      {cfg.label}
+    </span>
+  );
 }
 
+type FilterStatus = "all" | "sent" | "failed" | "pending";
+
 export default function Logs() {
-  const [page, setPage] = useState(0);
-  const limit = 20;
+  const [filter, setFilter] = useState<FilterStatus>("all");
 
-  const { data: logs, isLoading } = trpc.logs.list.useQuery({ limit, offset: page * limit });
-  const { data: stats } = trpc.logs.stats.useQuery();
+  const { data: logs, isLoading, refetch, isFetching } = trpc.sendLogs.list.useQuery(
+    { status: filter, limit: 100 },
+    { refetchInterval: 30000 }
+  );
+  const { data: stats } = trpc.sendLogs.stats.useQuery(
+    undefined,
+    { refetchInterval: 30000 }
+  );
 
-  const hasMore = (logs?.length ?? 0) === limit;
+  const filterButtons: { key: FilterStatus; label: string }[] = [
+    { key: "all",     label: "Todos" },
+    { key: "sent",    label: "Sucesso" },
+    { key: "failed",  label: "Erros" },
+    { key: "pending", label: "Pendente" },
+  ];
 
   return (
-    <AppLayout title="Logs">
-      <div className="p-6 space-y-6">
-        {/* Stats row */}
-        {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Total", value: stats.total, color: "text-foreground" },
-              { label: "Enviados", value: stats.sent, color: "text-green-400" },
-              { label: "Links Substituídos", value: stats.linksReplaced, color: "text-primary" },
-              { label: "Falhas", value: stats.failed, color: "text-destructive" },
-            ].map((stat) => (
-              <Card key={stat.label}>
-                <CardContent className="p-4 text-center">
-                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+    <AppLayout title="Logs de Envio">
+      <div className="p-6 space-y-5">
 
-        {/* Logs list */}
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Logs de Envio</h1>
+            <p className="text-sm text-muted-foreground">Histórico de mensagens disparadas pelo bot</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-4 gap-3">
+          {/* Total */}
+          <div className="rounded-xl bg-card border border-border p-4 text-center">
+            <p className="text-3xl font-bold text-foreground">{stats?.total ?? 0}</p>
+            <p className="text-xs text-muted-foreground mt-1">Total</p>
+          </div>
+          {/* Sucesso */}
+          <div className="rounded-xl bg-green-950/40 border border-green-800/40 p-4 text-center">
+            <p className="text-3xl font-bold text-green-400">{stats?.success ?? 0}</p>
+            <p className="text-xs text-green-500/70 mt-1">Sucesso</p>
+          </div>
+          {/* Erros */}
+          <div className="rounded-xl bg-red-950/40 border border-red-800/40 p-4 text-center">
+            <p className="text-3xl font-bold text-red-400">{stats?.errors ?? 0}</p>
+            <p className="text-xs text-red-500/70 mt-1">Erros</p>
+          </div>
+          {/* Pendente */}
+          <div className="rounded-xl bg-yellow-950/30 border border-yellow-800/30 p-4 text-center">
+            <p className="text-3xl font-bold text-yellow-400">{stats?.pending ?? 0}</p>
+            <p className="text-xs text-yellow-500/70 mt-1">Pendente</p>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2">
+          {filterButtons.map((btn) => (
+            <button
+              key={btn.key}
+              onClick={() => setFilter(btn.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                filter === btn.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+              }`}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Logs List */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : !logs || logs.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border rounded-xl">
             <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum log ainda</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum log encontrado</h3>
             <p className="text-muted-foreground text-sm">
-              Os logs aparecerão aqui quando posts forem processados pelas automações.
+              Os logs aparecerão aqui quando mensagens forem disparadas pelo bot.
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {logs.map((log) => {
-              const status = STATUS_CONFIG[log.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+              const isSuccess = log.status === "sent";
+              const isFailed = log.status === "failed";
+              const isPending = log.status === "pending";
+
+              const cardBorder = isSuccess
+                ? "border-green-800/40 bg-green-950/20"
+                : isFailed
+                ? "border-red-800/40 bg-red-950/20"
+                : "border-yellow-800/30 bg-yellow-950/10";
+
+              const StatusIcon = isSuccess
+                ? <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                : isFailed
+                ? <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                : <Clock className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />;
+
+              const dateStr = log.createdAt
+                ? format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
+                : "";
+
               return (
-                <Link key={log.id} href={`/logs/${log.id}`}>
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/30 cursor-pointer transition-colors">
-                    <MediaIcon type={log.mediaType || "text"} />
+                <div
+                  key={log.id}
+                  className={`rounded-xl border p-4 space-y-2 ${cardBorder}`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-start gap-2">
+                    {StatusIcon}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-sm font-medium truncate">
-                          {log.sourceGroupName || log.sourceGroupJid}
-                        </p>
-                        {log.linksReplaced > 0 && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {log.linksReplaced} link{log.linksReplaced > 1 ? "s" : ""}
-                          </Badge>
-                        )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <PlatformBadge platform={log.platform} />
+                        <span className="text-xs text-muted-foreground">{dateStr}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {log.originalContent?.slice(0, 80) || `[${log.mediaType || "mídia"}]`}
-                        {(log.originalContent?.length ?? 0) > 80 ? "..." : ""}
+                      <p className="text-sm font-semibold text-foreground mt-1">
+                        {isSuccess ? "Link de afiliado enviado" : isFailed ? "Falha no envio" : "Envio pendente"}
                       </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge variant="secondary" className={`text-xs ${status.className}`}>
-                        {status.label}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:block">
-                        {format(new Date(log.createdAt), "dd/MM HH:mm", { locale: ptBR })}
-                      </span>
-                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      {log.targetName && (
+                        <p className="text-xs text-muted-foreground">Para: {log.targetName}</p>
+                      )}
                     </div>
                   </div>
-                </Link>
+
+                  {/* Message content preview */}
+                  {log.messageContent && (
+                    <div className="rounded-lg bg-black/30 border border-white/5 p-3 text-xs text-foreground/80 whitespace-pre-wrap max-h-40 overflow-y-auto font-mono leading-relaxed">
+                      {log.messageContent.length > 400
+                        ? log.messageContent.slice(0, 400) + "..."
+                        : log.messageContent}
+                    </div>
+                  )}
+
+                  {/* Error message */}
+                  {log.errorMessage && (
+                    <div className="rounded-lg bg-red-950/40 border border-red-800/30 p-2 text-xs text-red-400">
+                      Erro: {log.errorMessage}
+                    </div>
+                  )}
+                </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {(logs?.length ?? 0) > 0 && (
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">Página {page + 1}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={!hasMore}
-            >
-              Próxima <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
           </div>
         )}
       </div>

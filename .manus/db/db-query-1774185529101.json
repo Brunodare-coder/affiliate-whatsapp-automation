@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE send_logs \n  ADD COLUMN IF NOT EXISTS userId INT NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS platform VARCHAR(50) NULL,\n  ADD COLUMN IF NOT EXISTS messageContent TEXT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute \nALTER TABLE send_logs \n  ADD COLUMN IF NOT EXISTS userId INT NOT NULL DEFAULT 0,\n  ADD COLUMN IF NOT EXISTS platform VARCHAR(50) NULL,\n  ADD COLUMN IF NOT EXISTS messageContent TEXT NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1652
+}
