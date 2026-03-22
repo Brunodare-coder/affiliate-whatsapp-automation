@@ -1,0 +1,25 @@
+{
+  "query": "SELECT 'monitored_groups' as tbl, instanceId, COUNT(*) as cnt FROM monitored_groups WHERE userId=1 GROUP BY instanceId UNION ALL SELECT 'automations' as tbl, instanceId, COUNT(*) as cnt FROM automations WHERE userId=1 GROUP BY instanceId UNION ALL SELECT 'whatsapp_instances' as tbl, id, 1 FROM whatsapp_instances WHERE userId=1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT 'monitored_groups' as tbl, instanceId, COUNT(*) as cnt FROM monitored_groups WHERE userId=1 GROUP BY instanceId UNION ALL SELECT 'automations' as tbl, instanceId, COUNT(*) as cnt FROM automations WHERE userId=1 GROUP BY instanceId UNION ALL SELECT 'whatsapp_instances' as tbl, id, 1 FROM whatsapp_instances WHERE userId=1;",
+  "rows": [
+    {
+      "tbl": "whatsapp_instances",
+      "instanceId": "30005",
+      "cnt": "1"
+    },
+    {
+      "tbl": "automations",
+      "instanceId": "1",
+      "cnt": "2"
+    },
+    {
+      "tbl": "monitored_groups",
+      "instanceId": "30004",
+      "cnt": "91"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tinstanceId\tcnt\nwhatsapp_instances\t30005\t1\nautomations\t1\t2\nmonitored_groups\t30004\t91\n",
+  "stderr": "",
+  "execution_time_ms": 342
+}

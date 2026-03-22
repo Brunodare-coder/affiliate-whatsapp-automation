@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE automations SET instanceId = 30005 WHERE userId = 1 AND instanceId = 1;\nUPDATE monitored_groups SET instanceId = 30005 WHERE userId = 1 AND instanceId = 30004;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute UPDATE automations SET instanceId = 30005 WHERE userId = 1 AND instanceId = 1;\nUPDATE monitored_groups SET instanceId = 30005 WHERE userId = 1 AND instanceId = 30004;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 446
+}

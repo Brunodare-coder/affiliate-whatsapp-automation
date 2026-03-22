@@ -480,9 +480,11 @@ export class WhatsAppManager extends EventEmitter {
       console.log(`[WhatsApp] Incoming message in monitored group: ${remoteJid} (${activeMonitored[0]?.groupName || 'unknown'})`);
 
       // Find automations for this group
+      // NOTE: Filter by sourceGroupId only (not instanceId) — instanceId in automations table may be stale
+      // after instance recreation. The actual running instance is identified by the socket connection.
       const allAutomations = await cachedGetAutomations(userId);
       const matchingAutomations = allAutomations.filter(
-        (a) => a.isActive && a.instanceId === instanceId && activeMonitored.some((g) => g.id === a.sourceGroupId)
+        (a) => a.isActive && activeMonitored.some((g) => g.id === a.sourceGroupId)
       );
       
       if (matchingAutomations.length === 0) {
@@ -1026,8 +1028,8 @@ Regras:
       });
 
       // Get destination groups via group_targets (sourceGroupId → target monitored groups with enviarOfertas)
-      // The automation's sourceGroupId is a monitored_group id
-      const sourceGroupRecord = (await getMonitoredGroups(userId, instanceId)).find(
+      // NOTE: No instanceId filter — resilient to stale instanceId after instance recreation
+      const sourceGroupRecord = (await getMonitoredGroups(userId)).find(
         (g) => g.id === automation.sourceGroupId
       );
 
@@ -1035,7 +1037,7 @@ Regras:
       // First try: group_targets (explicitly configured targets for this source group)
       const groupTargetsList = await getGroupTargets(userId, automation.sourceGroupId);
       if (groupTargetsList.length > 0) {
-        const allMonitored = await getMonitoredGroups(userId, instanceId);
+        const allMonitored = await getMonitoredGroups(userId); // no instanceId filter
         for (const gt of groupTargetsList) {
           const targetGroup = allMonitored.find((g) => g.id === gt.targetGroupId && g.isActive);
           if (targetGroup && targetGroup.groupJid) {
@@ -1056,12 +1058,15 @@ Regras:
           }
         }
       }
-      // Last fallback: all groups with enviarOfertas active for this instance
+      // Last fallback: all groups with enviarOfertas active (no instanceId filter — resilient to stale IDs)
       if (targetJids.length === 0) {
-        const allMonitored = await getMonitoredGroups(userId, instanceId);
+        const allMonitored = await getMonitoredGroups(userId); // userId only, no instanceId filter
         const enviarGroups = allMonitored.filter(
           (g) => g.isActive && g.enviarOfertas && g.groupJid !== sourceGroupRecord?.groupJid
         );
+        if (enviarGroups.length > 0) {
+          diagInfo(userId, 'ENVIO', `Fallback: encontrados ${enviarGroups.length} grupo(s) com enviarOfertas ativo (sem filtro de instância)`);
+        }
         for (const g of enviarGroups) {
           if (g.groupJid) {
             targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid, inviteLink: g.inviteLink });

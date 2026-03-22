@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, userId, name, status FROM whatsapp_instances WHERE userId = 1 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, userId, name, status FROM whatsapp_instances WHERE userId = 1 LIMIT 10;",
+  "rows": [
+    {
+      "id": "30005",
+      "userId": "1",
+      "name": "FFFFFF",
+      "status": "connected"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tname\tstatus\n30005\t1\tFFFFFF\tconnected\n",
+  "stderr": "",
+  "execution_time_ms": 347
+}

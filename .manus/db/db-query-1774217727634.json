@@ -1,0 +1,28 @@
+{
+  "query": "SELECT a.id as automationId, a.instanceId as automationInstanceId, wi.id as instanceDbId, wi.name as instanceName, mg.id as sourceGroupId, mg.groupName, mg.instanceId as groupInstanceId FROM automations a LEFT JOIN whatsapp_instances wi ON wi.id = a.instanceId LEFT JOIN monitored_groups mg ON mg.id = a.sourceGroupId WHERE a.isActive = 1 AND a.userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT a.id as automationId, a.instanceId as automationInstanceId, wi.id as instanceDbId, wi.name as instanceName, mg.id as sourceGroupId, mg.groupName, mg.instanceId as groupInstanceId FROM automations a LEFT JOIN whatsapp_instances wi ON wi.id = a.instanceId LEFT JOIN monitored_groups mg ON mg.id = a.sourceGroupId WHERE a.isActive = 1 AND a.userId = 1;",
+  "rows": [
+    {
+      "automationId": "1",
+      "automationInstanceId": "1",
+      "instanceDbId": "NULL",
+      "instanceName": "NULL",
+      "sourceGroupId": "29",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "groupInstanceId": "30004"
+    },
+    {
+      "automationId": "5",
+      "automationInstanceId": "1",
+      "instanceDbId": "NULL",
+      "instanceName": "NULL",
+      "sourceGroupId": "27",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "groupInstanceId": "30004"
+    }
+  ],
+  "messages": [],
+  "stdout": "automationId\tautomationInstanceId\tinstanceDbId\tinstanceName\tsourceGroupId\tgroupName\tgroupInstanceId\n1\t1\tNULL\tNULL\t29\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t30004\n5\t1\tNULL\tNULL\t27\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t30004\n",
+  "stderr": "",
+  "execution_time_ms": 351
+}

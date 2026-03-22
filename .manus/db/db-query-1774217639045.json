@@ -1,0 +1,280 @@
+{
+  "query": "SELECT id, userId, groupJid, groupName, isActive, enviarOfertas, instanceId FROM monitored_groups WHERE isActive = 1 ORDER BY userId, instanceId LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, userId, groupJid, groupName, isActive, enviarOfertas, instanceId FROM monitored_groups WHERE isActive = 1 ORDER BY userId, instanceId LIMIT 30;",
+  "rows": [
+    {
+      "id": "2",
+      "userId": "1",
+      "groupJid": "120363417996123437@g.us",
+      "groupName": "",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "groupJid": "120363405981153417@g.us",
+      "groupName": "Bruno",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "4",
+      "userId": "1",
+      "groupJid": "447930630502-1619017254@g.us",
+      "groupName": "bruno files",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "5",
+      "userId": "1",
+      "groupJid": "120363160561892860@g.us",
+      "groupName": "Texas Chain Saw",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "6",
+      "userId": "1",
+      "groupJid": "120363373661844250@g.us",
+      "groupName": "Liverpool ",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "7",
+      "userId": "1",
+      "groupJid": "120363337305498255@g.us",
+      "groupName": "Ratos Da Academia ",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "8",
+      "userId": "1",
+      "groupJid": "120363292982714586@g.us",
+      "groupName": "Red dead",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "9",
+      "userId": "1",
+      "groupJid": "120363022693141101@g.us",
+      "groupName": "Cirurgia Bruno",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "10",
+      "userId": "1",
+      "groupJid": "120363045475965763@g.us",
+      "groupName": "Arden - Computing",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "11",
+      "userId": "1",
+      "groupJid": "5518996048950-1432411666@g.us",
+      "groupName": "❤Familia linda🍻",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "12",
+      "userId": "1",
+      "groupJid": "120363423601670759@g.us",
+      "groupName": "MSc Supply Chain Management and Logistics-Arden University",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "13",
+      "userId": "1",
+      "groupJid": "120363405385682358@g.us",
+      "groupName": "Vendas Brasil 🇧🇷",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "14",
+      "userId": "1",
+      "groupJid": "120363424916448075@g.us",
+      "groupName": "Top Achados",
+      "isActive": "1",
+      "enviarOfertas": "1",
+      "instanceId": "30004"
+    },
+    {
+      "id": "15",
+      "userId": "1",
+      "groupJid": "120363346618057589@g.us",
+      "groupName": "✅BESTWAY ROMFORD 🛵✅🤝",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "16",
+      "userId": "1",
+      "groupJid": "120363405081175742@g.us",
+      "groupName": "Divulgação do seu trabalho para mais de 1 milhão pessoas",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "17",
+      "userId": "1",
+      "groupJid": "120363424437188317@g.us",
+      "groupName": "🔥 Ofertas Insanas 🛒",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "18",
+      "userId": "1",
+      "groupJid": "120363423377935707@g.us",
+      "groupName": "Solução Deliveroo/uber facial",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "19",
+      "userId": "1",
+      "groupJid": "447719061840-1547202937@g.us",
+      "groupName": "🇬🇧 LONDON 4 ALL 🇬🇧",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "20",
+      "userId": "1",
+      "groupJid": "120363399706522399@g.us",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "21",
+      "userId": "1",
+      "groupJid": "447719061840-1537288775@g.us",
+      "groupName": "BRAZUKA CLASSIFICADOS UK",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "22",
+      "userId": "1",
+      "groupJid": "120363213106042976@g.us",
+      "groupName": "𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "23",
+      "userId": "1",
+      "groupJid": "120363421807658892@g.us",
+      "groupName": "Quartos na Terra da Rainha 🇬🇧",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "24",
+      "userId": "1",
+      "groupJid": "120363047345688968@g.us",
+      "groupName": "Brasileiros em Manchester",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "25",
+      "userId": "1",
+      "groupJid": "447922189933-1518168311@g.us",
+      "groupName": "Liverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "26",
+      "userId": "1",
+      "groupJid": "120363404265871262@g.us",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "27",
+      "userId": "1",
+      "groupJid": "120363403753474842@g.us",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "28",
+      "userId": "1",
+      "groupJid": "120363405844728563@g.us",
+      "groupName": "@sopromosoriginais 943",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "29",
+      "userId": "1",
+      "groupJid": "120363406198839283@g.us",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "30001",
+      "userId": "1",
+      "groupJid": "120363423007813233@g.us",
+      "groupName": "TV",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    },
+    {
+      "id": "1",
+      "userId": "1",
+      "groupJid": "120363045962843457@g.us",
+      "groupName": "Brasileiros em Manchester",
+      "isActive": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30004"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tgroupJid\tgroupName\tisActive\tenviarOfertas\tinstanceId\n2\t1\t120363417996123437@g.us\t\t1\t0\t30004\n3\t1\t120363405981153417@g.us\tBruno\t1\t0\t30004\n4\t1\t447930630502-1619017254@g.us\tbruno files\t1\t0\t30004\n5\t1\t120363160561892860@g.us\tTexas Chain Saw\t1\t0\t30004\n6\t1\t120363373661844250@g.us\tLiverpool \t1\t0\t30004\n7\t1\t120363337305498255@g.us\tRatos Da Academia \t1\t0\t30004\n8\t1\t120363292982714586@g.us\tRed dead\t1\t0\t30004\n9\t1\t120363022693141101@g.us\tCirurgia Bruno\t1\t0\t30004\n10\t1\t120363045475965763@g.us\tArden - Computing\t1\t0\t30004\n11\t1\t5518996048950-1432411666@g.us\t❤Familia linda🍻\t1\t0\t30004\n12\t1\t120363423601670759@g.us\tMSc Supply Chain Management and Logistics-Arden University\t1\t0\t30004\n13\t1\t120363405385682358@g.us\tVendas Brasil 🇧🇷\t1\t0\t30004\n14\t1\t120363424916448075@g.us\tTop Achados\t1\t1\t30004\n15\t1\t120363346618057589@g.us\t✅BESTWAY ROMFORD 🛵✅🤝\t1\t0\t30004\n16\t1\t120363405081175742@g.us\tDivulgação do seu trabalho para mais de 1 milhão pessoas\t1\t0\t30004\n17\t1\t120363424437188317@g.us\t🔥 Ofertas Insanas 🛒\t1\t0\t30004\n18\t1\t120363423377935707@g.us\tSolução Deliveroo/uber facial\t1\t0\t30004\n19\t1\t447719061840-1547202937@g.us\t🇬🇧 LONDON 4 ALL 🇬🇧\t1\t0\t30004\n20\t1\t120363399706522399@g.us\tAchados Promocionais  do mercado Livre.  😱\t1\t0\t30004\n21\t1\t447719061840-1537288775@g.us\tBRAZUKA CLASSIFICADOS UK\t1\t0\t30004\n22\t1\t120363213106042976@g.us\t𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬\t1\t0\t30004\n23\t1\t120363421807658892@g.us\tQuartos na Terra da Rainha 🇬🇧\t1\t0\t30004\n24\t1\t120363047345688968@g.us\tBrasileiros em Manchester\t1\t0\t30004\n25\t1\t447922189933-1518168311@g.us\tLiverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿\t1\t0\t30004\n26\t1\t120363404265871262@g.us\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t1\t0\t30004\n27\t1\t120363403753474842@g.us\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t1\t0\t30004\n28\t1\t120363405844728563@g.us\t@sopromosoriginais 943\t1\t0\t30004\n29\t1\t120363406198839283@g.us\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t1\t0\t30004\n30001\t1\t120363423007813233@g.us\tTV\t1\t0\t30004\n1\t1\t120363045962843457@g.us\tBrasileiros em Manchester\t1\t0\t30004\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

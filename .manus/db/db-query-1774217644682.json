@@ -1,0 +1,28 @@
+{
+  "query": "SELECT a.id, a.userId, a.instanceId, a.sourceGroupId, a.isActive, mg.groupName as sourceGroupName, mg.enviarOfertas as sourceEnviarOfertas FROM automations a LEFT JOIN monitored_groups mg ON mg.id = a.sourceGroupId WHERE a.isActive = 1 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT a.id, a.userId, a.instanceId, a.sourceGroupId, a.isActive, mg.groupName as sourceGroupName, mg.enviarOfertas as sourceEnviarOfertas FROM automations a LEFT JOIN monitored_groups mg ON mg.id = a.sourceGroupId WHERE a.isActive = 1 LIMIT 10;",
+  "rows": [
+    {
+      "id": "5",
+      "userId": "1",
+      "instanceId": "1",
+      "sourceGroupId": "27",
+      "isActive": "1",
+      "sourceGroupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "sourceEnviarOfertas": "0"
+    },
+    {
+      "id": "1",
+      "userId": "1",
+      "instanceId": "1",
+      "sourceGroupId": "29",
+      "isActive": "1",
+      "sourceGroupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "sourceEnviarOfertas": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tinstanceId\tsourceGroupId\tisActive\tsourceGroupName\tsourceEnviarOfertas\n5\t1\t1\t27\t1\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t0\n1\t1\t1\t29\t1\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t0\n",
+  "stderr": "",
+  "execution_time_ms": 357
+}
