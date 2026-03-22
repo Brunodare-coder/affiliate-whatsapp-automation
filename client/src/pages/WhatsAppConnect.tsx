@@ -17,6 +17,18 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 function QRCodeDisplay({ instanceId }: { instanceId: number }) {
+  const utils = trpc.useUtils();
+  const refreshQR = trpc.whatsapp.refreshQR.useMutation({
+    onSuccess: () => {
+      // Start polling immediately after refresh
+      setTimeout(() => utils.whatsapp.getQRCode.invalidate({ instanceId }), 500);
+    },
+    onError: (e) => {
+      // Even on error, try to refetch in case QR was generated
+      utils.whatsapp.getQRCode.invalidate({ instanceId });
+    },
+  });
+
   const { data, isLoading, refetch } = trpc.whatsapp.getQRCode.useQuery(
     { instanceId },
     {
@@ -61,8 +73,18 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
         <p className="text-sm text-muted-foreground text-center max-w-xs leading-relaxed">
           Abra o WhatsApp → <strong className="text-foreground">Dispositivos conectados</strong> → Conectar dispositivo
         </p>
-        <Button size="sm" variant="outline" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10">
-          <RefreshCw className="w-3 h-3 mr-1.5" /> Atualizar QR
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => refreshQR.mutate({ instanceId })}
+          disabled={refreshQR.isPending}
+          className="border-white/10 bg-white/5 hover:bg-white/10"
+        >
+          {refreshQR.isPending
+            ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+            : <RefreshCw className="w-3 h-3 mr-1.5" />
+          }
+          {refreshQR.isPending ? "Gerando novo QR..." : "Atualizar QR"}
         </Button>
       </div>
     );
@@ -85,9 +107,24 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
     <div className="flex flex-col items-center justify-center h-48 gap-3">
       <QrCode className="w-12 h-12 text-muted-foreground" />
       <p className="text-sm text-muted-foreground">QR Code não disponível</p>
-      <Button size="sm" variant="outline" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10">
-        <RefreshCw className="w-3 h-3 mr-1.5" /> Verificar
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => refreshQR.mutate({ instanceId })}
+          disabled={refreshQR.isPending}
+          className="border-white/10 bg-white/5 hover:bg-white/10"
+        >
+          {refreshQR.isPending
+            ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+            : <RefreshCw className="w-3 h-3 mr-1.5" />
+          }
+          {refreshQR.isPending ? "Gerando..." : "Gerar QR"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => refetch()} className="text-muted-foreground">
+          Verificar
+        </Button>
+      </div>
     </div>
   );
 }

@@ -311,6 +311,25 @@ export class WhatsAppManager extends EventEmitter {
     await updateWhatsappInstance(instanceId, { status: "disconnected", qrCode: null });
   }
 
+  /**
+   * Force-close the socket without logging out (keeps auth files intact).
+   * Used when refreshing the QR Code — we want a new QR without losing the session.
+   */
+  async forceDisconnectForQR(instanceId: number): Promise<void> {
+    const timer = this.reconnectTimers.get(instanceId);
+    if (timer) {
+      clearTimeout(timer);
+      this.reconnectTimers.delete(instanceId);
+    }
+    const sock = this.sockets.get(instanceId);
+    if (sock) {
+      try { sock.end(undefined); } catch (_) {}
+      this.sockets.delete(instanceId);
+      this.qrCodes.delete(instanceId);
+    }
+    await updateWhatsappInstance(instanceId, { status: "disconnected", qrCode: null });
+  }
+
   getQRCode(instanceId: number): string | undefined {
     return this.qrCodes.get(instanceId);
   }

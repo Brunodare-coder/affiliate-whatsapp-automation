@@ -397,3 +397,14 @@
 - [x] Backend: timeouts otimizados (connectTimeoutMs: 20s, keepAliveIntervalMs: 10s)
 - [x] Frontend: polling mais agressivo (1.5s no status connecting, 2s no qr_pending)
 - [x] Frontend: estado visual "Gerando QR Code..." com spinner enquanto status=connecting
+
+## Bug Fix - QR Code "tenta mais tarde" (Fase 26)
+- [ ] Investigar erro "tenta mais tarde" ao escanear QR Code no celular
+- [ ] Corrigir versão/configuração do Baileys para aceitar conexão
+
+## Bug Fix - Botão Atualizar QR Code (Fase 26b)
+- [x] Adicionado método forceDisconnectForQR no WhatsAppManager (fecha socket sem logout)
+- [x] Adicionada procedure refreshQR no tRPC (disconnect + delay 1.5s + reconnect)
+- [x] Botão "Atualizar QR" agora chama refreshQR.mutate() em vez de refetch()
+- [x] Botão mostra spinner "Gerando novo QR..." enquanto aguarda
+- [x] Tela "QR Code não disponível" agora tem botão "Gerar QR" que também chama refreshQR

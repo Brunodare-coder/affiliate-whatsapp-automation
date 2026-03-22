@@ -494,6 +494,25 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Regenerate QR Code: disconnect + reconnect to force a fresh QR
+    refreshQR: protectedProcedure
+      .input(z.object({ instanceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const instance = await getWhatsappInstanceById(input.instanceId, ctx.user.id);
+        if (!instance) throw new Error("Instance not found");
+        // Disconnect first to clear old session socket (but keep auth files)
+        try {
+          await whatsappManager.forceDisconnectForQR(input.instanceId);
+        } catch (_) {
+          // ignore disconnect errors
+        }
+        // Small delay to let WA server reset
+        await new Promise((r) => setTimeout(r, 1500));
+        // Reconnect — this will trigger a new QR code
+        await whatsappManager.connectInstance(input.instanceId, ctx.user.id);
+        return { success: true };
+      }),
+
     getQRCode: protectedProcedure
       .input(z.object({ instanceId: z.number() }))
       .query(async ({ ctx, input }) => {
