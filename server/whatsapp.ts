@@ -713,7 +713,7 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean } | null = null,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null } | null = null,
     shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
     amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
     magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
@@ -798,7 +798,20 @@ export class WhatsAppManager extends EventEmitter {
         const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
         diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
         if (mlResult.replaced > 0) {
-          processedText = mlResult.text;
+          // Se tiver cookies ML configurados, encurtar via API meli.la
+          if (mlConfig.cookieSsid && mlConfig.cookieCsrf) {
+            try {
+              const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
+              processedText = shortenedText;
+              diagSuccess(userId, 'LINKS', `ML encurtado via meli.la: ${mlResult.replaced} link(s)`);
+            } catch (err) {
+              // Fallback: usar link longo com tag substituída
+              processedText = mlResult.text;
+              diagWarn(userId, 'LINKS', `Falha ao encurtar via meli.la, usando link longo: ${err}`);
+            }
+          } else {
+            processedText = mlResult.text;
+          }
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
           diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
@@ -1638,4 +1651,64 @@ async function fetchAmazonImage(productUrl: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+// ── Encurtamento de links ML via API meli.la ─────────────────────────────────
+/**
+ * Encurta todos os links mercadolivre.com.br no texto via API oficial do ML.
+ * Retorna o texto com os links substituídos por meli.la/XXXXX.
+ */
+export async function shortenMeliLinksInText(
+  text: string,
+  tag: string,
+  cookieSsid: string,
+  cookieCsrf: string
+): Promise<string> {
+  const mlPattern = /https?:\/\/[a-z0-9-]*\.?mercadolivre\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = Array.from(text.matchAll(mlPattern));
+  if (matches.length === 0) return text;
+
+  // Coletar URLs únicas para encurtar
+  const uniqueUrls = Array.from(new Set(matches.map(m => m[0])));
+
+  // Chamar API createLink do ML
+  const response = await fetch(
+    "https://www.mercadolivre.com.br/affiliate-program/api/v2/affiliates/createLink",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": `ssid=${cookieSsid}; _csrf=${cookieCsrf}`,
+        "X-CSRF-Token": cookieCsrf,
+        "Origin": "https://www.mercadolivre.com.br",
+        "Referer": "https://www.mercadolivre.com.br/afiliados/linkbuilder",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+      },
+      body: JSON.stringify({ urls: uniqueUrls, tag }),
+      signal: AbortSignal.timeout(15000),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`API meli.la retornou ${response.status}: ${await response.text()}`);
+  }
+
+  const data = await response.json() as {
+    urls: Array<{ origin_url: string; short_url: string }>;
+  };
+
+  // Construir mapa de URL longa → URL curta
+  const urlMap = new Map<string, string>();
+  for (const item of data.urls || []) {
+    if (item.origin_url && item.short_url) {
+      urlMap.set(item.origin_url, item.short_url);
+    }
+  }
+
+  // Substituir no texto
+  let result = text;
+  urlMap.forEach((shortUrl, longUrl) => {
+    result = result.split(longUrl).join(shortUrl);
+  });
+  return result;
 }

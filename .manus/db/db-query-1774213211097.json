@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE mercado_livre_config \nSET \n  cookieSsid = 'ghy-032103-xnXxU08nAKNQ96KyOvuLluaY6jYpEj-__-3174532722-__-1868772540215--RRR_0-RRR_0',\n  cookieCsrf = 'vrR725i1gpfZ84j1PmeMZRF4'\nWHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute UPDATE mercado_livre_config \nSET \n  cookieSsid = 'ghy-032103-xnXxU08nAKNQ96KyOvuLluaY6jYpEj-__-3174532722-__-1868772540215--RRR_0-RRR_0',\n  cookieCsrf = 'vrR725i1gpfZ84j1PmeMZRF4'\nWHERE userId = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 372
+}

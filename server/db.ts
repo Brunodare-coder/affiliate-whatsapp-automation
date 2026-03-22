@@ -492,6 +492,7 @@ export async function upsertMercadoLivreConfig(userId: number, data: Omit<Insert
     set: {
       tag: data.tag,
       cookieSsid: data.cookieSsid,
+      cookieCsrf: data.cookieCsrf,
       mattToolId: data.mattToolId,
       socialTag: data.socialTag,
       isActive: data.isActive,

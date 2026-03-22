@@ -28,6 +28,7 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
   const [form, setForm] = useState({
     tag: "",
     cookieSsid: "",
+    cookieCsrf: "",
     mattToolId: "",
     socialTag: "",
   });
@@ -39,6 +40,7 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       setForm({
         tag: config.tag || "",
         cookieSsid: config.cookieSsid || "",
+        cookieCsrf: (config as any).cookieCsrf || "",
         mattToolId: config.mattToolId || "",
         socialTag: config.socialTag || "",
       });
@@ -58,6 +60,7 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
     saveMutation.mutate({
       tag: form.tag.trim() || undefined,
       cookieSsid: form.cookieSsid.trim() || undefined,
+      cookieCsrf: form.cookieCsrf.trim() || undefined,
       mattToolId: form.mattToolId.trim() || undefined,
       socialTag: form.socialTag.trim() || undefined,
       isActive: true,
@@ -151,6 +154,20 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
               onChange={(e) => setForm({ ...form, cookieSsid: e.target.value })}
               rows={3}
               className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20 resize-none font-mono text-xs"
+            />
+          </div>
+
+          {/* Cookie _csrf field */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium text-white">Cookie (_csrf)</Label>
+              <span className="text-xs text-muted-foreground">(para encurtar links via meli.la)</span>
+            </div>
+            <Input
+              placeholder="Ex: vrR725i1gpfZ84j1PmeMZRF4"
+              value={form.cookieCsrf}
+              onChange={(e) => setForm({ ...form, cookieCsrf: e.target.value })}
+              className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20 font-mono text-xs"
             />
           </div>
 

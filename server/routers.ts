@@ -763,6 +763,7 @@ export const appRouter = router({
         z.object({
           tag: z.string().optional(),
           cookieSsid: z.string().optional(),
+          cookieCsrf: z.string().optional(),
           mattToolId: z.string().optional(),
           socialTag: z.string().optional(),
           isActive: z.boolean().optional(),
@@ -772,6 +773,7 @@ export const appRouter = router({
         await upsertMercadoLivreConfig(ctx.user.id, {
           tag: input.tag || null,
           cookieSsid: input.cookieSsid || null,
+          cookieCsrf: input.cookieCsrf || null,
           mattToolId: input.mattToolId || null,
           socialTag: input.socialTag || null,
           isActive: input.isActive ?? true,

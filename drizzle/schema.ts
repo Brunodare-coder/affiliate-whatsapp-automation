@@ -216,6 +216,7 @@ export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
   userId: int("userId").notNull().unique(),
   tag: varchar("tag", { length: 255 }),                    // Tag de rastreamento (ex: bq20260201142328)
   cookieSsid: text("cookieSsid"),                          // Cookie ssid para autenticação
+  cookieCsrf: varchar("cookieCsrf", { length: 255 }),       // Cookie _csrf para autenticação na API createLink
   mattToolId: varchar("mattToolId", { length: 100 }),      // Matt Tool ID (para links de listas/ofertas)
   socialTag: varchar("socialTag", { length: 255 }),        // Tag do Perfil Social (/social/SLUG)
   isActive: boolean("isActive").default(true).notNull(),

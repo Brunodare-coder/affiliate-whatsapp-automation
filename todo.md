@@ -494,3 +494,15 @@
 - [x] Amazon desativada (usuário não quer Amazon)
 - [x] Corrigir lógica: pathname /social/OUTRO substituído por /social/bq20260201142328
 - [x] Bloqueio de reenvio sem substituição adicionado para Amazon e Shopee
+
+## Encurtamento de Links ML (Fase 39)
+- [x] Pesquisar API meli.la para encurtar links
+- [x] Após substituir tag ML, encurtar o link via meli.la
+- [x] Enviar apenas o link encurtado (meli.la/XXXXX) no lugar do link longo
+
+## Encurtamento via API ML createLink (Fase 40)
+- [x] Adicionar campo cookieCsrf na tabela mercado_livre_config
+- [x] Salvar novo ssid e csrf no banco
+- [x] Implementar shortenMeliLink: chama API createLink e retorna meli.la/XXXXX
+- [x] Substituir link ML pelo link encurtado meli.la no processamento
+- [x] Atualizar UI de config ML para editar ssid e csrf
