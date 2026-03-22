@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, ChevronDown, ChevronRight, ClipboardPaste, ExternalLink, Link2, Settings, X, Zap } from "lucide-react";
+import { CheckCircle2, ClipboardPaste, Link2, Settings, X, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,11 +37,11 @@ const LINK_MODE_OPTIONS = [
   },
   {
     value: "social",
-    label: "Vitrine Social (meli.la)",
-    description: "Encurta via API oficial do ML. Gera link meli.la que abre sua vitrine de afiliado.",
+    label: "Vitrine Social",
+    description: "Substitui a tag no link /social/ e preserva forceInApp+ref. Abre o produto na vitrine.",
     badge: "Requer cookies",
     badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    example: "meli.la/XXXXX → abre vitrine /social/SUA_TAG",
+    example: "/social/SUA_TAG?forceInApp=true&ref=TOKEN → produto na vitrine",
   },
   {
     value: "tinyurl",
@@ -63,12 +63,9 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
     tag: "",
     cookieSsid: "",
     cookieCsrf: "",
-    mattToolId: "",
-    socialTag: "",
     linkMode: "long" as "long" | "social" | "tinyurl",
   });
 
-  const [showMattHelp, setShowMattHelp] = useState(false);
   const [cookiePasteValue, setCookiePasteValue] = useState("");
   const [extractedPreview, setExtractedPreview] = useState<{ ssid: string; csrf: string } | null>(null);
 
@@ -78,8 +75,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
         tag: config.tag || "",
         cookieSsid: config.cookieSsid || "",
         cookieCsrf: (config as any).cookieCsrf || "",
-        mattToolId: config.mattToolId || "",
-        socialTag: config.socialTag || "",
         linkMode: ((config as any).linkMode as "long" | "social" | "tinyurl") || "long",
       });
     }
@@ -99,8 +94,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       tag: form.tag.trim() || undefined,
       cookieSsid: form.cookieSsid.trim() || undefined,
       cookieCsrf: form.cookieCsrf.trim() || undefined,
-      mattToolId: form.mattToolId.trim() || undefined,
-      socialTag: form.socialTag.trim() || undefined,
       linkMode: form.linkMode,
       isActive: true,
     });
@@ -134,12 +127,12 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
   }
 
   const isConfigured = !!(config?.tag);
-  const hasCookies = !!(form.cookieSsid && form.cookieCsrf);
+  const hasCookies = !!(form.cookieSsid);
   const selectedMode = LINK_MODE_OPTIONS.find((m) => m.value === form.linkMode) || LINK_MODE_OPTIONS[0];
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-[640px] p-0 gap-0 overflow-hidden bg-[#1a2035] border-[#2a3555]">
+      <DialogContent className="max-w-[600px] p-0 gap-0 overflow-hidden bg-[#1a2035] border-[#2a3555]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a3555]">
           <div className="flex items-center gap-3">
@@ -211,7 +204,7 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
             {form.linkMode === "social" && !hasCookies && (
               <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-3">
                 <p className="text-xs text-orange-400">
-                  ⚠️ O modo <strong>Vitrine Social</strong> requer cookies (ssid e _csrf). Configure-os abaixo ou escolha outro modo.
+                  ⚠️ O modo <strong>Vitrine Social</strong> requer o cookie <strong>ssid</strong>. Configure-o abaixo ou escolha outro modo.
                 </p>
               </div>
             )}
@@ -224,9 +217,19 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
             <div className="flex-1 h-px bg-[#2a3555]" />
           </div>
 
+          {/* Instruções */}
+          <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 space-y-1.5">
+            <p className="text-xs font-semibold text-yellow-400">Como obter suas credenciais Mercado Livre:</p>
+            <ol className="text-xs text-yellow-300/80 space-y-1">
+              <li>1. Acesse <a href="https://affiliates.mercadolivre.com.br" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-yellow-200">affiliates.mercadolivre.com.br</a> e faça login</li>
+              <li>2. Vá em <strong>Minha conta → Tag de rastreamento</strong> para copiar sua <strong>Tag</strong></li>
+              <li>3. Para o Cookie: instale a extensão <a href="https://chrome.google.com/webstore/detail/editthiscookie" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-200">EditThisCookie</a> no seu navegador → acesse o site → clique no ícone da extensão → copie o valor de <strong>ssid</strong></li>
+            </ol>
+          </div>
+
           {/* Tag field */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-white">Tag de afiliado</Label>
+            <Label className="text-sm font-medium text-white">Tag</Label>
             <Input
               placeholder="Ex: bq20260201142328"
               value={form.tag}
@@ -235,68 +238,12 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
             />
           </div>
 
-          {/* Matt Tool ID field */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium text-white">Matt Tool ID</Label>
-              <span className="text-xs text-muted-foreground">(opcional)</span>
-            </div>
-            <button
-              type="button"
-              className="flex items-center gap-1 text-xs text-yellow-400 hover:text-yellow-300 transition-colors"
-              onClick={() => setShowMattHelp(!showMattHelp)}
-            >
-              {showMattHelp ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-              Como obter o Matt Tool ID?
-            </button>
-            {showMattHelp && (
-              <div className="rounded-lg bg-[#0f1628] border border-[#2a3555] p-3 text-xs text-muted-foreground space-y-1">
-                <p>1. Acesse o painel de afiliados do Mercado Livre</p>
-                <p>2. Vá em <strong className="text-white">Ferramentas → Matt Tool</strong></p>
-                <p>3. Copie o ID numérico da sua ferramenta (ex: 78912023)</p>
-                <a
-                  href="https://affiliates.mercadolivre.com.br"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-yellow-400 hover:text-yellow-300 mt-1"
-                >
-                  <ExternalLink className="w-3 h-3" /> Acessar painel de afiliados
-                </a>
-              </div>
-            )}
-            <Input
-              placeholder="Ex: 78912023"
-              value={form.mattToolId}
-              onChange={(e) => setForm({ ...form, mattToolId: e.target.value })}
-              className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20"
-            />
-          </div>
-
-          {/* Social Tag field */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium text-white">Tag do Perfil Social</Label>
-              <span className="text-xs text-muted-foreground">(opcional — para links /social/)</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Slug usado no path{" "}
-              <code className="bg-[#2a3555] px-1.5 py-0.5 rounded text-xs text-white">/social/SLUG</code>{" "}
-              dos links de perfil. Se vazio, usa a Tag de afiliado acima.
-            </p>
-            <Input
-              placeholder="Ex: bq20260201142328"
-              value={form.socialTag}
-              onChange={(e) => setForm({ ...form, socialTag: e.target.value })}
-              className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20"
-            />
-          </div>
-
-          {/* Cookies section (only relevant for social mode, but kept for reference) */}
+          {/* Cookies section */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-blue-400" />
-              <Label className="text-sm font-semibold text-white">Cookies do browser</Label>
-              <span className="text-xs text-muted-foreground">(necessário para modo Vitrine Social)</span>
+              <Label className="text-sm font-semibold text-white">Cookie (ssid)</Label>
+              <span className="text-xs text-muted-foreground">— necessário para modo Vitrine Social</span>
             </div>
 
             {/* ── ATALHO: Colar cookies completos ── */}
@@ -357,20 +304,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
                 className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20 resize-none font-mono text-xs"
               />
             </div>
-
-            {/* Cookie _csrf field */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-white">Cookie (_csrf)</Label>
-                <span className="text-xs text-muted-foreground">(para modo Vitrine Social)</span>
-              </div>
-              <Input
-                placeholder="Ex: vrR725i1gpfZ84j1PmeMZRF4"
-                value={form.cookieCsrf}
-                onChange={(e) => setForm({ ...form, cookieCsrf: e.target.value })}
-                className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 focus:ring-yellow-500/20 font-mono text-xs"
-              />
-            </div>
           </div>
 
           {/* Preview */}
@@ -380,17 +313,16 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
               <p className="text-xs text-white">
                 <span className="text-muted-foreground">Tag:</span>{" "}
                 <span className="font-mono text-green-400">{form.tag}</span>
-                {form.mattToolId ? <span className="text-muted-foreground"> | Tool: <span className="font-mono text-green-400">{form.mattToolId}</span></span> : ""}
               </p>
               <p className="text-xs text-white">
                 <span className="text-muted-foreground">Modo:</span>{" "}
                 <Badge className={`text-xs ${selectedMode.badgeColor}`}>{selectedMode.label}</Badge>
               </p>
               {form.linkMode === "social" && !hasCookies && (
-                <p className="text-xs text-orange-400">⚠ Modo social requer cookies (ssid + _csrf)</p>
+                <p className="text-xs text-orange-400">⚠ Modo social requer cookie ssid</p>
               )}
               {form.linkMode === "social" && hasCookies && (
-                <p className="text-xs text-blue-400">✓ Cookies configurados — encurtamento via meli.la ativo</p>
+                <p className="text-xs text-blue-400">✓ Cookie configurado — modo vitrine social ativo</p>
               )}
               {form.linkMode === "tinyurl" && (
                 <p className="text-xs text-purple-400">✓ Links serão encurtados via TinyURL (produto direto)</p>
@@ -416,7 +348,7 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
             disabled={saveMutation.isPending || isLoading}
             className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
           >
-            {saveMutation.isPending ? "Salvando..." : "Salvar configurações"}
+            {saveMutation.isPending ? "Salvando..." : "✓ Salvar"}
           </Button>
         </div>
       </DialogContent>

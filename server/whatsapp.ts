@@ -803,18 +803,13 @@ export class WhatsAppManager extends EventEmitter {
         const linkMode = mlConfig.linkMode || 'long';
         diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'}, modo=${linkMode})`);
         if (mlResult.replaced > 0) {
-          if (linkMode === 'social' && mlConfig.cookieSsid && mlConfig.cookieCsrf) {
-            // Modo social: encurtar via API meli.la (gera link de vitrine social)
-            try {
-              const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
-              processedText = shortenedText;
-              usedMlLinkMode = 'social';
-              diagSuccess(userId, 'LINKS', `ML modo=social: encurtado via meli.la (vitrine social): ${mlResult.replaced} link(s)`);
-            } catch (err) {
-              processedText = mlResult.text;
-              usedMlLinkMode = 'long'; // fallback
-              diagWarn(userId, 'LINKS', `ML modo=social: falha ao encurtar via meli.la, usando link longo: ${err}`);
-            }
+          if (linkMode === 'social') {
+            // Modo social: usa o link completo com forceInApp=true e ref= preservados
+            // O ref é um token criptografado ECIES gerado pelo servidor do ML que aponta para o produto
+            // específico. Não encurtar via API (meli.la não preserva o ref) — usar o link longo.
+            processedText = mlResult.text;
+            usedMlLinkMode = 'social';
+            diagSuccess(userId, 'LINKS', `ML modo=social: link completo com forceInApp+ref preservados: ${mlResult.replaced} link(s)`);
           } else if (linkMode === 'tinyurl') {
             // Modo tinyurl: encurtar via TinyURL (mantém produto específico)
             try {
@@ -1394,7 +1389,7 @@ export function replaceMercadoLivreLinks(
       const isSocialLink = urlObj.pathname.startsWith("/social/");
 
       if (isSocialLink) {
-        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
+        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO&forceInApp=true&ref=TOKEN
         // Substituir o slug /social/OUTRO_USUARIO pelo slug do nosso usuário
         // Tratar 'NULL' (string literal) como ausente
         const validSocialTag = config.socialTag && config.socialTag !== 'NULL' && config.socialTag.trim() !== '' ? config.socialTag.trim() : null;
@@ -1404,9 +1399,9 @@ export function replaceMercadoLivreLinks(
         // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
         if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
         if (config.tag) urlObj.searchParams.set("matt_word", config.tag);
-        // Remover rastreamento do afiliado original
-        urlObj.searchParams.delete("ref");
-        urlObj.searchParams.delete("forceInApp");
+        // PRESERVAR forceInApp e ref — são tokens criptografados gerados pelo servidor do ML
+        // que garantem o redirecionamento correto para o app. Não remover.
+        // (forceInApp e ref já estão presentes na URL original — não precisam ser adicionados)
       } else {
         // Formato normal de produto: adicionar matt_from e matt_tool
         // Remove parâmetros de rastreamento de afiliados de terceiros
