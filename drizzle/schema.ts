@@ -181,6 +181,7 @@ export const postLogs = mysqlTable("post_logs", {
   llmSuggestion: text("llmSuggestion"),               // sugestão do LLM
   mediaType: mysqlEnum("mediaType", ["text", "image", "video", "document", "sticker", "audio"]).default("text"),
   mediaUrl: text("mediaUrl"),                          // URL da mídia no S3
+  mlLinkMode: mysqlEnum("ml_link_mode", ["long", "social", "tinyurl"]),  // modo de link ML usado no envio
   status: mysqlEnum("status", ["pending", "processed", "sent", "failed", "skipped"]).default("pending").notNull(),
   errorMessage: text("errorMessage"),
   sentAt: timestamp("sentAt"),

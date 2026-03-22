@@ -618,7 +618,7 @@ export async function listSendLogs(
   userId: number,
   status?: string,
   limit = 100
-): Promise<(SendLog & { llmSuggestion?: string | null; originalContent?: string | null })[]> {
+): Promise<(SendLog & { llmSuggestion?: string | null; originalContent?: string | null; mlLinkMode?: string | null })[]> {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(sendLogs.userId, userId)];
@@ -641,6 +641,7 @@ export async function listSendLogs(
       createdAt: sendLogs.createdAt,
       llmSuggestion: postLogs.llmSuggestion,
       originalContent: postLogs.originalContent,
+      mlLinkMode: postLogs.mlLinkMode,
     })
     .from(sendLogs)
     .leftJoin(postLogs, eq(sendLogs.postLogId, postLogs.id))

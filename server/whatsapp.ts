@@ -748,6 +748,7 @@ export class WhatsAppManager extends EventEmitter {
       let selectedCampaignId: number | undefined;
       let selectedCampaignName: string | undefined;
       let llmSuggestion: string | undefined;
+      let usedMlLinkMode: "long" | "social" | "tinyurl" | undefined;
 
       // Use LLM to suggest campaign if enabled
       if (automation.useLlmSuggestion && text) {
@@ -805,9 +806,11 @@ export class WhatsAppManager extends EventEmitter {
             try {
               const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
               processedText = shortenedText;
+              usedMlLinkMode = 'social';
               diagSuccess(userId, 'LINKS', `ML modo=social: encurtado via meli.la (vitrine social): ${mlResult.replaced} link(s)`);
             } catch (err) {
               processedText = mlResult.text;
+              usedMlLinkMode = 'long'; // fallback
               diagWarn(userId, 'LINKS', `ML modo=social: falha ao encurtar via meli.la, usando link longo: ${err}`);
             }
           } else if (linkMode === 'tinyurl') {
@@ -815,14 +818,17 @@ export class WhatsAppManager extends EventEmitter {
             try {
               const shortenedText = await shortenMeliLinksWithTinyUrl(mlResult.text);
               processedText = shortenedText;
+              usedMlLinkMode = 'tinyurl';
               diagSuccess(userId, 'LINKS', `ML modo=tinyurl: encurtado via TinyURL: ${mlResult.replaced} link(s)`);
             } catch (err) {
               processedText = mlResult.text;
+              usedMlLinkMode = 'long'; // fallback
               diagWarn(userId, 'LINKS', `ML modo=tinyurl: falha ao encurtar via TinyURL, usando link longo: ${err}`);
             }
           } else {
             // Modo long (padrão): link longo com tag substituída
             processedText = mlResult.text;
+            usedMlLinkMode = 'long';
             diagSuccess(userId, 'LINKS', `ML modo=long: link longo com tag substituída: ${mlResult.replaced} link(s)`);
           }
           linksFound = Math.max(linksFound, mlResult.found);
@@ -1015,6 +1021,7 @@ Regras:
         campaignId: selectedCampaignId,
         campaignName: selectedCampaignName,
         llmSuggestion,
+        mlLinkMode: usedMlLinkMode ?? null,
         status: "processed",
       });
 
