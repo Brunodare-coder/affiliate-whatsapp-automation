@@ -639,19 +639,45 @@ export class WhatsAppManager extends EventEmitter {
             }
           }
 
-          // Send to all target groups
+          // Send to all target groups (with logging)
           for (const target of targetJids) {
+            // Create a dummy postLogId=0 for feed global (no automation)
+            const globalPostLogId = await createPostLog({
+              userId: subscriber.userId,
+              automationId: 0,
+              instanceId,
+              sourceGroupJid,
+              sourceGroupName: undefined,
+              originalContent: text || undefined,
+              processedContent: processedText || undefined,
+              llmSuggestion: undefined,
+              linksFound: 0,
+              linksReplaced: 0,
+            }).catch(() => 0);
+            const globalSendLogId = await createSendLog({
+              postLogId: globalPostLogId,
+              userId: subscriber.userId,
+              platform: undefined,
+              targetJid: target.jid,
+              targetName: target.name,
+              messageContent: processedText || undefined,
+              status: "pending",
+              source: "global",
+            }).catch(() => 0);
             try {
+              let sent = false;
               if (uploadedMediaUrl && mediaType === "image") {
-                await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+                sent = await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
               } else if (uploadedMediaUrl && mediaType === "video") {
-                await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+                sent = await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
               } else if (processedText) {
-                await this.sendTextMessage(instanceId, target.jid, processedText);
+                sent = await this.sendTextMessage(instanceId, target.jid, processedText);
               }
+              if (globalSendLogId) await updateSendLog(globalSendLogId, { status: sent ? "sent" : "failed", sentAt: sent ? new Date() : undefined });
               console.log(`[FeedGlobal] Sent to user ${subscriber.userId} group ${target.name}`);
             } catch (sendErr: any) {
               console.error(`[FeedGlobal] Failed to send to ${target.jid}:`, sendErr.message);
+              if (globalSendLogId) await updateSendLog(globalSendLogId, { status: "failed", errorMessage: sendErr.message });
             }
           }
         } catch (subErr) {
@@ -1058,6 +1084,7 @@ Regras:
           targetName: target.name,
           messageContent: finalText || text || undefined,
           status: "pending",
+          source: "bot",
         });
         let sent = false;
         try {

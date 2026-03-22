@@ -633,6 +633,7 @@ export async function listSendLogs(
       targetName: sendLogs.targetName,
       messageContent: sendLogs.messageContent,
       status: sendLogs.status,
+      source: sendLogs.source,
       errorMessage: sendLogs.errorMessage,
       sentAt: sendLogs.sentAt,
       createdAt: sendLogs.createdAt,

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Activity, BarChart3, CheckCircle2, ChevronDown, ChevronUp, Clock, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
+import { Activity, BarChart3, Bot, CheckCircle2, ChevronDown, ChevronUp, Clock, Globe, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { useState } from "react";
 
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; textColor: string; bg: string }> = {
@@ -179,6 +179,18 @@ export default function Logs() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <PlatformBadge platform={log.platform} />
+                        {/* Source badge: Feed Global vs Bot */}
+                        {(log as any).source === "global" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/25">
+                            <Globe className="w-3 h-3" />
+                            Feed Global
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/25">
+                            <Bot className="w-3 h-3" />
+                            Bot
+                          </span>
+                        )}
                         {hasLlm && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/15 text-yellow-400 border border-yellow-500/25">
                             <Sparkles className="w-3 h-3" />

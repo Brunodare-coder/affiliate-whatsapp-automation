@@ -441,3 +441,10 @@
 - [x] listInstancesFull: nova procedure com qrCode, usada APENAS na página WhatsApp
 - [x] WhatsAppConnect: polling adaptativo (2s quando conectando, 5s quando idle)
 - [x] getQRCode: já usa memória primeiro (Map<instanceId, qrDataUrl>) - confirma que é rápido
+
+## Origem nos Logs de Envio (Fase 32)
+- [x] Adicionado campo source ENUM('bot','global') DEFAULT 'bot' na tabela send_logs
+- [x] Backend processAutomation: createSendLog com source='bot'
+- [x] Backend dispatchToFeedGlobalSubscribers: agora cria postLog + sendLog com source='global' para cada envio
+- [x] Feed Global: logs de envio agora aparecem na página /logs com origem identificada
+- [x] UI Logs.tsx: badge azul 'Feed Global' (ícone Globe) e badge roxo 'Bot' (ícone Bot) em cada card

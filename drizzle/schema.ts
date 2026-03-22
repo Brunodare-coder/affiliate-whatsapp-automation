@@ -201,6 +201,7 @@ export const sendLogs = mysqlTable("send_logs", {
   targetName: varchar("targetName", { length: 255 }),
   messageContent: text("messageContent"),  // conteúdo da mensagem enviada
   status: mysqlEnum("status", ["pending", "sent", "failed"]).default("pending").notNull(),
+  source: mysqlEnum("source", ["bot", "global"]).default("bot").notNull(), // bot=configurado manualmente, global=Feed Global
   errorMessage: text("errorMessage"),
   sentAt: timestamp("sentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
