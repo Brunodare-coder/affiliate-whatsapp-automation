@@ -204,3 +204,15 @@
 - [ ] Remover aba "Automações" do menu (manter só "Configurar Ofertas")
 - [x] Painel Admin: garantir visível só para admins no menu
 - [ ] Corrigir duplicações gerais no layout
+
+## Landing Page de Marketing (Fase 6)
+- [x] Redesenhar Home.tsx como landing page profissional de marketing
+- [x] Hero section com headline impactante, subheadline e CTA principal
+- [x] Seção "Como funciona" com 4 passos visuais
+- [x] Seção de funcionalidades com cards detalhados (5 plataformas, automação, etc.)
+- [x] Seção de planos e preços (Trial grátis, Basic R$50, Premium R$100)
+- [x] Seção de depoimentos/prova social
+- [x] Seção FAQ
+- [x] CTA final com botão de cadastro
+- [x] Header com logo, navegação e botão "Entrar"
+- [x] Footer com links e informações
