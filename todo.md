@@ -259,3 +259,7 @@
 - [x] Configurar RESEND_API_KEY via secrets para envio real de e-mails
 - [x] Adicionar troca de senha na página de Configurações do usuário
 - [x] Adicionar busca e filtro na tabela de usuários do painel Admin
+
+## Bug Fix
+
+- [x] Corrigir redirecionamento após login (usuário fica na tela de login após clicar em Entrar)

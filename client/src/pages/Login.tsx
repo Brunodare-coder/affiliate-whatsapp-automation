@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Bot, Eye, EyeOff, Loader2, MessageSquare } from "lucide-react";
 
 export default function Login() {
-  const [, navigate] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,8 +20,9 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
       setErrorMsg(null);
-      await utils.auth.me.invalidate();
-      navigate("/dashboard");
+      // Force full page reload so the session cookie is picked up by the server
+      // and auth.me is fetched fresh — avoids race condition with wouter navigate
+      window.location.href = "/dashboard";
     },
     onError: (err) => {
       const msg = err.message || "E-mail ou senha incorretos";
