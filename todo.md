@@ -319,3 +319,10 @@
 - [x] Suporte a meli.la (Mercado Livre), amzn.to (Amazon), s.shopee.com.br (Shopee), bit.ly, encurtador.com.br
 - [x] Testar com exemplos reais: meli.la/1k7ypTV → mercadolivre.com.br + tag MEUTAG123 aplicado corretamente
 - [x] Limpar parâmetros de rastreamento de terceiros (matt_word, ref, forceInApp) antes de aplicar o nosso tag
+
+## Formato de Link Social ML (Fase 14)
+- [ ] Atualizar replaceMercadoLivreLinks para preservar /social/CODIGO e substituir matt_tool + matt_word pelo do usuário
+- [ ] Suporte ao campo mattToolId e mattWord no mlConfig
+- [ ] Testar com exemplo: mercadolivre.com.br/social/bq20260201142328?matt_tool=78912023&matt_word=bq20260201142328
+- [x] replaceMercadoLivreLinks: substituir matt_tool e matt_word pelo do usuário em links /social/CODIGO
+- [x] Verificar e testar expansão de amzn.to + aplicação do tag Amazon (dib, dib_tag, sbo removidos)

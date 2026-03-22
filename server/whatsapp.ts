@@ -1091,15 +1091,28 @@ export function replaceMercadoLivreLinks(
   const processedText = text.replace(mlPattern, (url) => {
     try {
       const urlObj = new URL(url);
-      // Remove parâmetros de rastreamento de afiliados de terceiros
-      // (presentes quando o link encurtado é expandido)
-      urlObj.searchParams.delete("matt_word");   // nome do afiliado original
-      urlObj.searchParams.delete("ref");          // token de rastreamento externo
-      urlObj.searchParams.delete("forceInApp");   // parâmetro interno do ML
-      // Adiciona nosso tag de rastreamento (sobrescreve se já existir)
-      if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
-      // Adiciona Matt Tool ID se disponível (sobrescreve o do afiliado original)
-      if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+      const isSocialLink = urlObj.pathname.startsWith("/social/");
+
+      if (isSocialLink) {
+        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
+        // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
+        if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+        if (config.tag) urlObj.searchParams.set("matt_word", config.tag);
+        // Remover rastreamento do afiliado original
+        urlObj.searchParams.delete("ref");
+        urlObj.searchParams.delete("forceInApp");
+      } else {
+        // Formato normal de produto: adicionar matt_from e matt_tool
+        // Remove parâmetros de rastreamento de afiliados de terceiros
+        urlObj.searchParams.delete("matt_word");   // nome do afiliado original
+        urlObj.searchParams.delete("ref");          // token de rastreamento externo
+        urlObj.searchParams.delete("forceInApp");   // parâmetro interno do ML
+        // Adiciona nosso tag de rastreamento (sobrescreve se já existir)
+        if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
+        // Adiciona Matt Tool ID se disponível (sobrescreve o do afiliado original)
+        if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+      }
+
       replaced++;
       return urlObj.toString();
     } catch {
@@ -1154,7 +1167,13 @@ export function replaceAmazonLinks(
   const processedText = text.replace(amazonPattern, (url) => {
     try {
       const urlObj = new URL(url);
+      // Substitui o tag do afiliado original pelo do usuário
       urlObj.searchParams.set("tag", config.tag!);
+      // Remove parâmetros de rastreamento do afiliado original
+      // (presentes quando amzn.to é expandido)
+      urlObj.searchParams.delete("dib");
+      urlObj.searchParams.delete("dib_tag");
+      urlObj.searchParams.delete("sbo");
       replaced++;
       return urlObj.toString();
     } catch {
