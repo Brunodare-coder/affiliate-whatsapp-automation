@@ -506,3 +506,7 @@
 - [x] Implementar shortenMeliLink: chama API createLink e retorna meli.la/XXXXX
 - [x] Substituir link ML pelo link encurtado meli.la no processamento
 - [x] Atualizar UI de config ML para editar ssid e csrf
+
+## Fallback Encurtamento ML (Fase 41)
+- [x] shortenMeliLinksInText: capturar erro da API e retornar texto com link longo (tag já substituída)
+- [x] Log de aviso no Diagnóstico quando fallback for acionado
