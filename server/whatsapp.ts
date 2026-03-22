@@ -798,20 +798,9 @@ export class WhatsAppManager extends EventEmitter {
         const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
         diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
         if (mlResult.replaced > 0) {
-          // Se tiver cookies ML configurados, encurtar via API meli.la
-          if (mlConfig.cookieSsid && mlConfig.cookieCsrf) {
-            try {
-              const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
-              processedText = shortenedText;
-              diagSuccess(userId, 'LINKS', `ML encurtado via meli.la: ${mlResult.replaced} link(s)`);
-            } catch (err) {
-              // Fallback: usar link longo com tag substituída
-              processedText = mlResult.text;
-              diagWarn(userId, 'LINKS', `Falha ao encurtar via meli.la, usando link longo: ${err}`);
-            }
-          } else {
-            processedText = mlResult.text;
-          }
+          // Usar link longo com tag substituída (encurtamento via API desativado
+          // pois a API do ML bloqueia produtos específicos com erro 111)
+          processedText = mlResult.text;
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
           diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
@@ -1229,8 +1218,7 @@ function extractMessageContent(msg: WhatsAppMessage): {
 // ── Resolução de links encurtados ──────────────────────────────────────────
 // Domínios de encurtamento conhecidos das plataformas
 const SHORT_LINK_DOMAINS = [
-  "meli.la",          // Mercado Livre
-  "mercadolivre.com", // ML internacional
+  "meli.la",          // Mercado Livre — expandir para substituir a tag de afiliado
   "amzn.to",          // Amazon
   "amzn.eu",          // Amazon Europa
   "bit.ly",           // Genérico
@@ -1369,19 +1357,23 @@ export function replaceMercadoLivreLinks(
       const isSocialLink = urlObj.pathname.startsWith("/social/");
 
       if (isSocialLink) {
-        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
+        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO&forceInApp=true&ref=...
         // Substituir o slug /social/OUTRO_USUARIO pelo slug do nosso usuário
         // Tratar 'NULL' (string literal) como ausente
         const validSocialTag = config.socialTag && config.socialTag !== 'NULL' && config.socialTag.trim() !== '' ? config.socialTag.trim() : null;
         if (validSocialTag) {
           urlObj.pathname = `/social/${validSocialTag}`;
+        } else if (config.tag) {
+          // Se não houver socialTag, usar a tag de afiliado no slug
+          urlObj.pathname = `/social/${config.tag}`;
         }
         // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
         if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
         if (config.tag) urlObj.searchParams.set("matt_word", config.tag);
-        // Remover rastreamento do afiliado original
-        urlObj.searchParams.delete("ref");
-        urlObj.searchParams.delete("forceInApp");
+        // PRESERVAR ref e forceInApp — são tokens do ML que apontam para o produto
+        // específico. Removê-los faz o link abrir apenas a vitrine geral.
+        // urlObj.searchParams.delete("ref");       // NÃO remover
+        // urlObj.searchParams.delete("forceInApp"); // NÃO remover
       } else {
         // Formato normal de produto: adicionar matt_from e matt_tool
         // Remove parâmetros de rastreamento de afiliados de terceiros

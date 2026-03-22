@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, userId, tag, LEFT(cookieSsid, 50) as ssid_preview, mattToolId, socialTag, isActive FROM mercado_livre_config;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, userId, tag, LEFT(cookieSsid, 50) as ssid_preview, mattToolId, socialTag, isActive FROM mercado_livre_config;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "tag": "bq20260201142328",
+      "ssid_preview": "ghy-032216-WSaG5XtvcPeuJ2BAUaRTHdSZnxet42-__-31745",
+      "mattToolId": "NULL",
+      "socialTag": "NULL",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\ttag\tssid_preview\tmattToolId\tsocialTag\tisActive\n1\t1\tbq20260201142328\tghy-032216-WSaG5XtvcPeuJ2BAUaRTHdSZnxet42-__-31745\tNULL\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}
