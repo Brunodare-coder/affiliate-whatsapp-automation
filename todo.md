@@ -216,3 +216,13 @@
 - [x] CTA final com botão de cadastro
 - [x] Header com logo, navegação e botão "Entrar"
 - [x] Footer com links e informações
+
+## Redesign Premium + Escalabilidade (Fase 7)
+- [x] Atualizar index.html com fontes premium (Inter + Space Grotesk)
+- [x] Atualizar index.css com animações e efeitos visuais premium
+- [x] Redesenhar Home.tsx com layout premium e chamativo
+- [x] Sistema de suporte/recuperação de acesso (página /support, procedure support.sendRequest)
+- [x] Cache em memória para configs de afiliado (server/cache.ts, TTL por categoria)
+- [x] Fila de processamento de mensagens por usuário (enqueueForUser)
+- [x] Paralelização de fetch de configs com Promise.all
+- [x] Invalidação de cache automática ao salvar configurações

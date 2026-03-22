@@ -73,6 +73,7 @@ import {
 import { generatePixQRCode, generateTxid } from "./pix";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
+import { invalidateUserCache } from "./cache";
 
 // ── Admin Router ────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -506,6 +507,7 @@ export const appRouter = router({
           socialTag: input.socialTag || null,
           isActive: input.isActive ?? true,
         });
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
 
@@ -532,10 +534,12 @@ export const appRouter = router({
       .input(z.object({ appId: z.string().optional(), secret: z.string().optional(), isActive: z.boolean().optional() }))
       .mutation(async ({ ctx, input }) => {
         await upsertShopeeConfig(ctx.user.id, { appId: input.appId || null, secret: input.secret || null, isActive: input.isActive ?? true });
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
     deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
       await deleteShopeeConfig(ctx.user.id);
+      invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
   }),
@@ -562,10 +566,12 @@ export const appRouter = router({
           xAcbb: input.xAcbb || null,
           isActive: input.isActive ?? true,
         });
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
     deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
       await deleteAmazonConfig(ctx.user.id);
+      invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
   }),
@@ -580,10 +586,12 @@ export const appRouter = router({
       .input(z.object({ tag: z.string().optional(), isActive: z.boolean().optional() }))
       .mutation(async ({ ctx, input }) => {
         await upsertMagazineLuizaConfig(ctx.user.id, { tag: input.tag || null, isActive: input.isActive ?? true });
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
     deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
       await deleteMagazineLuizaConfig(ctx.user.id);
+      invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
   }),
@@ -598,10 +606,12 @@ export const appRouter = router({
       .input(z.object({ trackId: z.string().optional(), cookie: z.string().optional(), isActive: z.boolean().optional() }))
       .mutation(async ({ ctx, input }) => {
         await upsertAliexpressConfig(ctx.user.id, { trackId: input.trackId || null, cookie: input.cookie || null, isActive: input.isActive ?? true });
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
     deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
       await deleteAliexpressConfig(ctx.user.id);
+      invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
   }),
@@ -642,6 +652,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         await upsertBotSettings(ctx.user.id, input as any);
+        invalidateUserCache(ctx.user.id);
         return { success: true };
       }),
   }),
@@ -763,6 +774,24 @@ export const appRouter = router({
         return getSendLogStats(ctx.user.id);
       }),
   }),
+  // ── Suporte / Recuperação de Acesso ────────────────────────────────────
+  support: router({
+    sendRequest: publicProcedure
+      .input(z.object({
+        name: z.string().min(2).max(100),
+        email: z.string().email(),
+        message: z.string().min(10).max(2000),
+      }))
+      .mutation(async ({ input }) => {
+        const content = `Nome: ${input.name}\nE-mail: ${input.email}\n\nMensagem:\n${input.message}`;
+        await notifyOwner({
+          title: `[Suporte] Solicitação de ${input.name}`,
+          content,
+        });
+        return { success: true };
+      }),
+  }),
+
   // ── Envio Manual ─────────────────────────────────────────────────────────
   manualSend: router({
     send: protectedProcedure

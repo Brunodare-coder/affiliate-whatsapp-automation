@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import FeedGlobal from "./pages/FeedGlobal";
 import Subscription from "./pages/Subscription";
 import Admin from "./pages/Admin";
+import Support from "./pages/Support";
 
 function Router() {
   return (
@@ -34,6 +35,8 @@ function Router() {
       <Route path="/feed-global" component={FeedGlobal} />
       <Route path="/subscription" component={Subscription} />
       <Route path="/admin" component={Admin} />
+      <Route path="/support" component={Support} />
+      <Route path="/suporte" component={Support} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

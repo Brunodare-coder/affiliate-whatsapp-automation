@@ -32,8 +32,116 @@ import {
 } from "./db";
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
+import { botCache, cacheKey, TTL } from "./cache";
 
 const SESSION_DIR = process.env.SESSION_DIR || "/tmp/whatsapp-sessions";
+
+// ── Per-user message processing queue ─────────────────────────────────────
+// Limits concurrent processing per user to prevent DB overload
+const userQueues = new Map<number, Promise<void>>();
+
+function enqueueForUser(userId: number, task: () => Promise<void>): void {
+  const current = userQueues.get(userId) ?? Promise.resolve();
+  const next = current.then(() => task()).catch((err) => {
+    console.error(`[Queue] Error processing task for user ${userId}:`, err);
+  });
+  userQueues.set(userId, next);
+  // Cleanup resolved queue entry after task completes
+  next.finally(() => {
+    if (userQueues.get(userId) === next) userQueues.delete(userId);
+  });
+}
+
+// ── Cached DB helpers ──────────────────────────────────────────────────────
+async function cachedGetMonitoredGroups(userId: number, instanceId?: number) {
+  const key = cacheKey.monitoredGroups(userId, instanceId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getMonitoredGroups>>>(key);
+  if (cached) return cached;
+  const data = await getMonitoredGroups(userId, instanceId);
+  botCache.set(key, data, TTL.MONITORED_GROUPS);
+  return data;
+}
+
+async function cachedGetAutomations(userId: number) {
+  const key = cacheKey.automations(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getAutomations>>>(key);
+  if (cached) return cached;
+  const data = await getAutomations(userId);
+  botCache.set(key, data, TTL.AUTOMATIONS);
+  return data;
+}
+
+async function cachedGetAffiliateLinks(userId: number) {
+  const key = cacheKey.affiliateLinks(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getActiveAffiliateLinks>>>(key);
+  if (cached) return cached;
+  const data = await getActiveAffiliateLinks(userId);
+  botCache.set(key, data, TTL.AFFILIATE_LINKS);
+  return data;
+}
+
+async function cachedGetMlConfig(userId: number) {
+  const key = cacheKey.mlConfig(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getMercadoLivreConfig>>>(key);
+  if (cached !== null) return cached;
+  const data = await getMercadoLivreConfig(userId);
+  botCache.set(key, data ?? null, TTL.AFFILIATE_CONFIG);
+  return data;
+}
+
+async function cachedGetShopeeConfig(userId: number) {
+  const key = cacheKey.shopeeConfig(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getShopeeConfig>>>(key);
+  if (cached !== null) return cached;
+  const data = await getShopeeConfig(userId);
+  botCache.set(key, data ?? null, TTL.AFFILIATE_CONFIG);
+  return data;
+}
+
+async function cachedGetAmazonConfig(userId: number) {
+  const key = cacheKey.amazonConfig(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getAmazonConfig>>>(key);
+  if (cached !== null) return cached;
+  const data = await getAmazonConfig(userId);
+  botCache.set(key, data ?? null, TTL.AFFILIATE_CONFIG);
+  return data;
+}
+
+async function cachedGetMagaluConfig(userId: number) {
+  const key = cacheKey.magaluConfig(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getMagazineLuizaConfig>>>(key);
+  if (cached !== null) return cached;
+  const data = await getMagazineLuizaConfig(userId);
+  botCache.set(key, data ?? null, TTL.AFFILIATE_CONFIG);
+  return data;
+}
+
+async function cachedGetAliConfig(userId: number) {
+  const key = cacheKey.aliConfig(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getAliexpressConfig>>>(key);
+  if (cached !== null) return cached;
+  const data = await getAliexpressConfig(userId);
+  botCache.set(key, data ?? null, TTL.AFFILIATE_CONFIG);
+  return data;
+}
+
+async function cachedGetBotSettings(userId: number) {
+  const key = cacheKey.botSettings(userId);
+  const cached = botCache.get<Awaited<ReturnType<typeof getBotSettings>>>(key);
+  if (cached !== null) return cached;
+  const data = await getBotSettings(userId);
+  botCache.set(key, data ?? null, TTL.BOT_SETTINGS);
+  return data;
+}
+
+async function cachedGetFeedSubscribers() {
+  const key = cacheKey.feedSubscribers();
+  const cached = botCache.get<Awaited<ReturnType<typeof getUsersWithFeedGlobalEnabled>>>(key);
+  if (cached) return cached;
+  const data = await getUsersWithFeedGlobalEnabled();
+  botCache.set(key, data, TTL.FEED_SUBSCRIBERS);
+  return data;
+}
 
 export interface WhatsAppMessage {
   key: {
@@ -256,16 +364,18 @@ export class WhatsAppManager extends EventEmitter {
     }
   }
 
-  private async handleIncomingMessage(instanceId: number, userId: number, msg: WhatsAppMessage): Promise<void> {
+  private handleIncomingMessage(instanceId: number, userId: number, msg: WhatsAppMessage): void {
     const remoteJid = msg.key.remoteJid;
     if (!remoteJid) return;
-
-    // Only process group messages
     if (!remoteJid.endsWith("@g.us")) return;
+    // Enqueue per-user to prevent DB overload under high concurrency
+    enqueueForUser(userId, () => this._processIncomingMessage(instanceId, userId, msg, remoteJid));
+  }
 
+  private async _processIncomingMessage(instanceId: number, userId: number, msg: WhatsAppMessage, remoteJid: string): Promise<void> {
     try {
       // Check if this group is monitored with buscarOfertas active
-      const monitoredGroupsList = await getMonitoredGroups(userId, instanceId);
+      const monitoredGroupsList = await cachedGetMonitoredGroups(userId, instanceId);
       const activeMonitored = monitoredGroupsList.filter(
         (g) => g.isActive && g.groupJid === remoteJid && g.buscarOfertas
       );
@@ -298,7 +408,7 @@ export class WhatsAppManager extends EventEmitter {
       console.log(`[WhatsApp] Incoming message in monitored group: ${remoteJid} (${activeMonitored[0]?.groupName || 'unknown'})`);
 
       // Find automations for this group
-      const allAutomations = await getAutomations(userId);
+      const allAutomations = await cachedGetAutomations(userId);
       const matchingAutomations = allAutomations.filter(
         (a) => a.isActive && a.instanceId === instanceId && activeMonitored.some((g) => g.id === a.sourceGroupId)
       );
@@ -316,13 +426,15 @@ export class WhatsAppManager extends EventEmitter {
         // Create a synthetic automation for default dispatch
         const { text, mediaType, mediaUrl } = extractMessageContent(msg);
         if (!text && !mediaUrl) return;
-        const links = await getActiveAffiliateLinks(userId);
-        const mlConfig = await getMercadoLivreConfig(userId);
-        const shopeeConfig = await getShopeeConfig(userId);
-        const amazonConfig = await getAmazonConfig(userId);
-        const magaluConfig = await getMagazineLuizaConfig(userId);
-        const aliConfig = await getAliexpressConfig(userId);
-        const botSettings = await getBotSettings(userId);
+        const [links, mlConfig, shopeeConfig, amazonConfig, magaluConfig, aliConfig, botSettings] = await Promise.all([
+          cachedGetAffiliateLinks(userId),
+          cachedGetMlConfig(userId),
+          cachedGetShopeeConfig(userId),
+          cachedGetAmazonConfig(userId),
+          cachedGetMagaluConfig(userId),
+          cachedGetAliConfig(userId),
+          cachedGetBotSettings(userId),
+        ]);
         const syntheticAutomation = {
           id: 0,
           sourceGroupId: activeMonitored[0].id,
@@ -340,16 +452,16 @@ export class WhatsAppManager extends EventEmitter {
       const { text, mediaType, mediaUrl } = extractMessageContent(msg);
       if (!text && !mediaUrl) return;
 
-      // Get active affiliate links
-      const links = await getActiveAffiliateLinks(userId);
-
-      // Get affiliate configs for all platforms
-      const mlConfig = await getMercadoLivreConfig(userId);
-      const shopeeConfig = await getShopeeConfig(userId);
-      const amazonConfig = await getAmazonConfig(userId);
-      const magaluConfig = await getMagazineLuizaConfig(userId);
-      const aliConfig = await getAliexpressConfig(userId);
-      const botSettings = await getBotSettings(userId);
+      // Get active affiliate links and configs (all from cache, parallel fetch on miss)
+      const [links, mlConfig, shopeeConfig, amazonConfig, magaluConfig, aliConfig, botSettings] = await Promise.all([
+        cachedGetAffiliateLinks(userId),
+        cachedGetMlConfig(userId),
+        cachedGetShopeeConfig(userId),
+        cachedGetAmazonConfig(userId),
+        cachedGetMagaluConfig(userId),
+        cachedGetAliConfig(userId),
+        cachedGetBotSettings(userId),
+      ]);
 
       for (const automation of matchingAutomations) {
         await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
@@ -377,7 +489,7 @@ export class WhatsAppManager extends EventEmitter {
     sourceGroupJid: string,
   ): Promise<void> {
     try {
-      const subscribers = await getUsersWithFeedGlobalEnabled();
+      const subscribers = await cachedGetFeedSubscribers();
       if (subscribers.length === 0) return;
 
       for (const subscriber of subscribers) {
@@ -386,7 +498,7 @@ export class WhatsAppManager extends EventEmitter {
 
         try {
           // Get subscriber's monitored groups
-          const subscriberGroups = await getMonitoredGroups(subscriber.userId);
+          const subscriberGroups = await cachedGetMonitoredGroups(subscriber.userId);
 
           // Determine target JIDs: either selected targets or all enviarOfertas groups
           let targetJids: { jid: string; name: string }[] = [];
@@ -408,13 +520,15 @@ export class WhatsAppManager extends EventEmitter {
 
           if (targetJids.length === 0) continue;
 
-          // Get subscriber's affiliate configs
-          const subLinks = await getActiveAffiliateLinks(subscriber.userId);
-          const subMlConfig = await getMercadoLivreConfig(subscriber.userId);
-          const subShopeeConfig = await getShopeeConfig(subscriber.userId);
-          const subAmazonConfig = await getAmazonConfig(subscriber.userId);
-          const subMagaluConfig = await getMagazineLuizaConfig(subscriber.userId);
-          const subAliConfig = await getAliexpressConfig(subscriber.userId);
+          // Get subscriber's affiliate configs (from cache, parallel fetch on miss)
+          const [subLinks, subMlConfig, subShopeeConfig, subAmazonConfig, subMagaluConfig, subAliConfig] = await Promise.all([
+            cachedGetAffiliateLinks(subscriber.userId),
+            cachedGetMlConfig(subscriber.userId),
+            cachedGetShopeeConfig(subscriber.userId),
+            cachedGetAmazonConfig(subscriber.userId),
+            cachedGetMagaluConfig(subscriber.userId),
+            cachedGetAliConfig(subscriber.userId),
+          ]);
 
           // Process text: replace links with subscriber's affiliate links
           let processedText = text || "";
