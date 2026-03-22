@@ -794,12 +794,19 @@ export class WhatsAppManager extends EventEmitter {
 
       // Replace Mercado Livre links with affiliate tag
       if (mlConfig && mlConfig.isActive && mlConfig.tag && processedText) {
+        diagInfo(userId, 'LINKS', `Texto antes ML (150 chars): ${processedText.substring(0, 150)}`);
         const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
+        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
         if (mlResult.replaced > 0) {
           processedText = mlResult.text;
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
+          diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
+        } else if (mlResult.found > 0) {
+          diagWarn(userId, 'LINKS', `ML: ${mlResult.found} link(s) encontrado(s) mas não substituído(s) - verifique a configuração`);
         }
+      } else if (processedText && /mercadolivre\.com\.br/i.test(processedText)) {
+        diagWarn(userId, 'LINKS', `Link ML detectado mas configuração ML inativa ou sem tag`);
       }
 
       // Replace Shopee links with affiliate tag
@@ -954,6 +961,24 @@ Regras:
       // If no content at all, skip
       if (!processedText && !mediaUrl) {
         await updatePostLog(logId, { status: "skipped" });
+        return;
+      }
+
+      // Se o texto contém links de afiliado conhecidos mas nenhum foi substituído, não repostar
+      // Isso evita repostar links de outros afiliados sem substituir pela tag do usuário
+      const hasKnownAffiliateLinks = processedText && (
+        /mercadolivre\.com\.br/i.test(processedText) ||
+        /shopee\.com\.br/i.test(processedText) ||
+        /amazon\.com\.br/i.test(processedText) ||
+        /magazineluiza\.com\.br/i.test(processedText) ||
+        /aliexpress\.com/i.test(processedText) ||
+        /amzn\.to/i.test(processedText) ||
+        /meli\.la/i.test(processedText) ||
+        /s\.shopee\.com\.br/i.test(processedText)
+      );
+      if (hasKnownAffiliateLinks && linksReplaced === 0) {
+        diagWarn(userId, 'LINKS', `⚠️ BLOQUEADO: mensagem contém links de afiliado mas nenhum foi substituído pela sua tag. Verifique configurações de afiliado.`);
+        await updatePostLog(logId, { status: "skipped", linksFound, linksReplaced });
         return;
       }
 
@@ -1333,8 +1358,10 @@ export function replaceMercadoLivreLinks(
       if (isSocialLink) {
         // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
         // Substituir o slug /social/OUTRO_USUARIO pelo slug do nosso usuário
-        if (config.socialTag) {
-          urlObj.pathname = `/social/${config.socialTag}`;
+        // Tratar 'NULL' (string literal) como ausente
+        const validSocialTag = config.socialTag && config.socialTag !== 'NULL' && config.socialTag.trim() !== '' ? config.socialTag.trim() : null;
+        if (validSocialTag) {
+          urlObj.pathname = `/social/${validSocialTag}`;
         }
         // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
         if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);

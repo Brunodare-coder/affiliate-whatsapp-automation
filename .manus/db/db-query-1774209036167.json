@@ -1,0 +1,9 @@
+{
+  "query": "SELECT 'amazon' as platform, id, userId, tag, isActive FROM amazon_config WHERE userId = 1\nUNION ALL\nSELECT 'shopee', id, userId, appId, isActive FROM shopee_config WHERE userId = 1\nUNION ALL\nSELECT 'magalu', id, userId, tag, isActive FROM magazine_luiza_config WHERE userId = 1\nUNION ALL\nSELECT 'ali', id, userId, trackId, isActive FROM aliexpress_config WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT 'amazon' as platform, id, userId, tag, isActive FROM amazon_config WHERE userId = 1\nUNION ALL\nSELECT 'shopee', id, userId, appId, isActive FROM shopee_config WHERE userId = 1\nUNION ALL\nSELECT 'magalu', id, userId, tag, isActive FROM magazine_luiza_config WHERE userId = 1\nUNION ALL\nSELECT 'ali', id, userId, trackId, isActive FROM aliexpress_config WHERE userId = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 344
+}

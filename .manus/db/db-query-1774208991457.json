@@ -1,0 +1,21 @@
+{
+  "query": "SELECT * FROM mercado_livre_config WHERE userId = 1;\nSELECT * FROM amazon_config WHERE userId = 1;\nSELECT * FROM shopee_config WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT * FROM mercado_livre_config WHERE userId = 1;\nSELECT * FROM amazon_config WHERE userId = 1;\nSELECT * FROM shopee_config WHERE userId = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "tag": "bq20260201142328",
+      "cookieSsid": "ghy-032106-SVxCWVuF97Ohv9YBCpigenHQEoV8cp-__-3174532722-__-1868782853144--RRR_0-RRR_0",
+      "mattToolId": "78912023",
+      "socialTag": "NULL",
+      "isActive": "1",
+      "createdAt": "2026-03-21 20:17:49",
+      "updatedAt": "2026-03-21 20:17:49"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\ttag\tcookieSsid\tmattToolId\tsocialTag\tisActive\tcreatedAt\tupdatedAt\n1\t1\tbq20260201142328\tghy-032106-SVxCWVuF97Ohv9YBCpigenHQEoV8cp-__-3174532722-__-1868782853144--RRR_0-RRR_0\t78912023\tNULL\t1\t2026-03-21 20:17:49\t2026-03-21 20:17:49\n",
+  "stderr": "",
+  "execution_time_ms": 452
+}

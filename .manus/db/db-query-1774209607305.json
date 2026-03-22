@@ -1,0 +1,16 @@
+{
+  "query": "UPDATE amazon_config SET isActive = 0, tag = NULL WHERE userId = 1;\nSELECT id, userId, tag, isActive FROM amazon_config WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute UPDATE amazon_config SET isActive = 0, tag = NULL WHERE userId = 1;\nSELECT id, userId, tag, isActive FROM amazon_config WHERE userId = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "tag": "NULL",
+      "isActive": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\ttag\tisActive\n1\t1\tNULL\t0\n",
+  "stderr": "",
+  "execution_time_ms": 433
+}

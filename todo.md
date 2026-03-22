@@ -482,3 +482,15 @@
 
 ## Correção Layout Diagnóstico (Fase 37)
 - [x] Página /diagnostico: adicionar AppLayout com barra lateral e menus de navegação
+
+## Correção Substituição de Links (Fase 38) - CRÍTICO
+- [x] Bug: ML está usando tag 'sajo' (de outro usuário) em vez da tag configurada pelo usuário
+- [x] Bug: Bot está enviando links Amazon mesmo sem configuração Amazon do usuário
+- [x] Verificar lógica replaceMercadoLivreLinks: usar config do usuário correto
+- [x] Bloquear processamento de plataformas não configuradas pelo usuário
+
+## Correção Tags Afiliado (Fase 38 cont.)
+- [x] Atualizar socialTag ML no banco para 'bq20260201142328'
+- [x] Amazon desativada (usuário não quer Amazon)
+- [x] Corrigir lógica: pathname /social/OUTRO substituído por /social/bq20260201142328
+- [x] Bloqueio de reenvio sem substituição adicionado para Amazon e Shopee

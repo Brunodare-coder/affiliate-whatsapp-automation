@@ -1,0 +1,25 @@
+{
+  "query": "SHOW TABLES LIKE '%config%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SHOW TABLES LIKE '%config%';",
+  "rows": [
+    {
+      "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)": "aliexpress_config"
+    },
+    {
+      "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)": "amazon_config"
+    },
+    {
+      "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)": "magazine_luiza_config"
+    },
+    {
+      "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)": "mercado_livre_config"
+    },
+    {
+      "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)": "shopee_config"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_cTskjyF8t4ZYZoNMwpD42P (%config%)\naliexpress_config\namazon_config\nmagazine_luiza_config\nmercado_livre_config\nshopee_config\n",
+  "stderr": "",
+  "execution_time_ms": 345
+}
