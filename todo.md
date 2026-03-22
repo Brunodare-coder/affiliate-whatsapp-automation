@@ -200,8 +200,8 @@
 ## Melhorias de Layout (Fase 5)
 - [x] Dashboard: remover seção "Mercado Livre Configurado" do rodapé
 - [x] Dashboard: adicionar banner trial/assinatura no topo com botão "Assinatura"
-- [ ] Unificar "Configurar Ofertas" e "Automações" em uma única página
-- [ ] Remover aba "Automações" do menu (manter só "Configurar Ofertas")
+  - [x] Unificar "Configurar Ofertas" e "Automações" em uma única página
+  - [x] Remover aba "Automações" do menu (manter só "Configurar Ofertas")
 - [x] Painel Admin: garantir visível só para admins no menu
 - [ ] Corrigir duplicações gerais no layout
 
@@ -276,3 +276,15 @@
 - [x] Verificação de e-mail no cadastro (token + página /verify-email)
 - [x] Procedure auth.verifyEmail e auth.resendVerification
 - [x] Notificação ao admin quando novo usuário se cadastra
+
+## Melhorias UX - Fase 11
+
+- [ ] Banner de e-mail não verificado no Dashboard com botão "Reenviar e-mail"
+- [ ] Unificar "Configurar Ofertas" e "Automações" em uma única página "/automations"
+- [ ] Remover entradas duplicadas do menu lateral no AppLayout
+
+## Melhorias de UX (Fase 10)
+- [x] Dashboard: banner de e-mail não verificado com botão "Reenviar" e dismiss
+- [x] Unificar páginas "Configurar Ofertas" e "Automações" em abas dentro de /groups
+- [x] Remover item "Automações" do menu lateral (AppLayout)
+- [x] Redirecionar /automations para /groups automaticamente

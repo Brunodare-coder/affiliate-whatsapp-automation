@@ -3,11 +3,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import {
+  AlertCircle,
+  AlertTriangle,
+  BarChart2,
+  Bot,
   ChevronRight,
   Copy,
   Download,
+  Edit2,
   Image,
   Link2,
   Loader2,
@@ -19,8 +34,7 @@ import {
   Trash2,
   Users,
   X,
-  BarChart2,
-  AlertTriangle,
+  Zap,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
@@ -28,7 +42,7 @@ import { toast } from "sonner";
 
 type GroupFlag = "buscarOfertas" | "espelharConteudo" | "enviarOfertas" | "substituirImagem";
 
-// ─── Modal Configurar Grupos de Disparo (laranja, igual ao ProAfiliados) ──────
+// ─── Modal Configurar Grupos de Disparo ──────────────────────────────────────
 function ConfigureTargetsModal({
   sourceGroup,
   allGroups,
@@ -60,7 +74,6 @@ function ConfigureTargetsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-orange-500/30">
-        {/* Header laranja */}
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-4">
           <div className="flex items-start justify-between">
             <div>
@@ -74,26 +87,19 @@ function ConfigureTargetsModal({
             </button>
           </div>
         </div>
-
-        {/* Body */}
         <div className="bg-[#0f172a] p-5">
-          {/* Info box */}
           <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4">
             <p className="text-sm text-orange-300">
               <span className="font-semibold">Selecione</span> os grupos de disparo que receberão as mensagens
-              deste grupo monitorado. Se nenhum grupo for selecionado, as mensagens serão enviadas para{" "}
+              deste grupo monitorado. Se nenhum for selecionado, as mensagens serão enviadas para{" "}
               <strong>todos</strong> os grupos de disparo.
             </p>
           </div>
-
           {targets.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <Users className="w-8 h-8 text-muted-foreground mx-auto" />
               <p className="text-sm text-muted-foreground">
                 Nenhum grupo com <strong>Enviar Ofertas</strong> ativo ainda.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Ative "Enviar Ofertas" em pelo menos um grupo para configurar os alvos.
               </p>
             </div>
           ) : (
@@ -104,9 +110,7 @@ function ConfigureTargetsModal({
                   <label
                     key={g.id}
                     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors border ${
-                      isChecked
-                        ? "bg-orange-500/10 border-orange-500/40"
-                        : "bg-[#1e293b] border-[#1e293b] hover:border-border"
+                      isChecked ? "bg-orange-500/10 border-orange-500/40" : "bg-[#1e293b] border-[#1e293b] hover:border-border"
                     }`}
                   >
                     <div
@@ -126,40 +130,24 @@ function ConfigureTargetsModal({
                       </p>
                       <p className="text-xs text-muted-foreground">Grupo</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggle(g.id)}
-                      className="sr-only"
-                    />
+                    <input type="checkbox" checked={isChecked} onChange={() => toggle(g.id)} className="sr-only" />
                   </label>
                 );
               })}
             </div>
           )}
         </div>
-
-        {/* Footer */}
         <div className="bg-[#0f172a] border-t border-border px-5 pb-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex gap-3">
-              <button onClick={selectAll} className="text-sm text-orange-400 hover:text-orange-300 font-medium">
-                Todos
-              </button>
+              <button onClick={selectAll} className="text-sm text-orange-400 hover:text-orange-300 font-medium">Todos</button>
               <span className="text-muted-foreground">|</span>
-              <button onClick={selectNone} className="text-sm text-orange-400 hover:text-orange-300 font-medium">
-                Nenhum
-              </button>
+              <button onClick={selectNone} className="text-sm text-orange-400 hover:text-orange-300 font-medium">Nenhum</button>
             </div>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => onSave(Array.from(selected))}
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
-            >
+            <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+            <Button onClick={() => onSave(Array.from(selected))} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white">
               ✓ Salvar
             </Button>
           </div>
@@ -204,7 +192,6 @@ function AddGroupModal({
               💡 Dica: Conecte seu WhatsApp e use <strong>"Sincronizar do WA"</strong> para importar todos os grupos automaticamente.
             </p>
           </div>
-
           {instances.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Instância WhatsApp</label>
@@ -222,7 +209,6 @@ function AddGroupModal({
               </select>
             </div>
           )}
-
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Nome do Grupo *</label>
             <input
@@ -233,7 +219,6 @@ function AddGroupModal({
               className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
             />
           </div>
-
           <div className="space-y-1.5">
             <label className="text-sm font-medium">
               JID do Grupo <span className="text-muted-foreground font-normal">(opcional)</span>
@@ -256,7 +241,7 @@ function AddGroupModal({
   );
 }
 
-// ─── Linha de opção do grupo (igual ao ProAfiliados) ─────────────────────────
+// ─── Linha de opção do grupo ──────────────────────────────────────────────────
 function GroupOptionRow({
   icon,
   label,
@@ -314,8 +299,8 @@ function GroupOptionRow({
   );
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
-export default function Groups() {
+// ─── Aba: Grupos ──────────────────────────────────────────────────────────────
+function GroupsTab() {
   const { data: instances } = trpc.whatsapp.listInstances.useQuery();
   const [search, setSearch] = useState("");
   const [targetSourceGroup, setTargetSourceGroup] = useState<{
@@ -369,18 +354,13 @@ export default function Groups() {
   });
 
   const filteredGroups = useMemo(
-    () =>
-      (savedGroups || []).filter((g) =>
-        (g.groupName || g.groupJid).toLowerCase().includes(search.toLowerCase())
-      ),
+    () => (savedGroups || []).filter((g) =>
+      (g.groupName || g.groupJid).toLowerCase().includes(search.toLowerCase())
+    ),
     [savedGroups, search]
   );
 
-  const handleToggle = async (
-    group: NonNullable<typeof savedGroups>[0],
-    flag: GroupFlag,
-    value: boolean
-  ) => {
+  const handleToggle = async (group: NonNullable<typeof savedGroups>[0], flag: GroupFlag, value: boolean) => {
     try {
       await updateGroup.mutateAsync({ id: group.id, [flag]: value });
     } catch {
@@ -390,10 +370,7 @@ export default function Groups() {
 
   const handleSaveTargets = async (targetIds: number[]) => {
     if (!targetSourceGroup) return;
-    await setTargets.mutateAsync({
-      sourceGroupId: targetSourceGroup.id,
-      targetGroupIds: targetIds,
-    });
+    await setTargets.mutateAsync({ sourceGroupId: targetSourceGroup.id, targetGroupIds: targetIds });
   };
 
   const getTargetCount = (sourceId: number) =>
@@ -411,257 +388,218 @@ export default function Groups() {
     : [];
 
   return (
-    <AppLayout title="Configurar Ofertas">
-      <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="text-xl font-bold">Configurar Ofertas</h1>
-            <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
-          </div>
-          <div className="flex gap-2">
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => { refetchSaved(); refetchTargets(); }} className="gap-2">
+            <RefreshCw className="w-3.5 h-3.5" /> Atualizar
+          </Button>
+          {firstConnectedId && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { refetchSaved(); refetchTargets(); }}
+              onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
+              disabled={syncGroups.isPending}
               className="gap-2"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Atualizar
+              {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              Sincronizar do WA
             </Button>
-            {firstConnectedId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
-                disabled={syncGroups.isPending}
-                className="gap-2"
-              >
-                {syncGroups.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-                Sincronizar do WA
+          )}
+          <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
+            <Plus className="w-3.5 h-3.5" /> Adicionar Grupo
+          </Button>
+        </div>
+      </div>
+
+      {/* Como usar */}
+      <div className="rounded-xl bg-card border border-border p-4">
+        <details>
+          <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
+            <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">ℹ</span>
+            Como usar as configurações
+          </summary>
+          <div className="mt-3 space-y-2 text-sm text-muted-foreground pl-7">
+            <p>🔍 <strong className="text-foreground">Buscar Ofertas</strong> — monitora e captura links de produtos neste grupo</p>
+            <p>📤 <strong className="text-foreground">Enviar Ofertas</strong> — este grupo receberá as mensagens processadas com seus links de afiliado</p>
+            <p>🔗 <strong className="text-foreground">Configurar Alvos</strong> — define quais grupos de disparo receberão as mensagens deste grupo</p>
+            <p>🔄 <strong className="text-foreground">Espelhar</strong> — replica mensagens sem converter links (para canais de notícias)</p>
+            <p>🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
+          </div>
+        </details>
+      </div>
+
+      {/* No WA connected */}
+      {connectedInstances.length === 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <Smartphone className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-amber-400">WhatsApp não conectado</p>
+            <p className="text-xs text-muted-foreground">
+              Você pode adicionar grupos manualmente agora e sincronizar depois que conectar.
+            </p>
+          </div>
+          <Button asChild size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold flex-shrink-0">
+            <Link href="/whatsapp">Conectar</Link>
+          </Button>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar grupos ou canais..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
+        />
+      </div>
+
+      {loadingGroups && (
+        <div className="flex items-center justify-center py-16 gap-3 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm">Carregando grupos...</span>
+        </div>
+      )}
+
+      {!loadingGroups && filteredGroups.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+            <Users className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-semibold">{search ? "Nenhum grupo encontrado" : "Nenhum grupo cadastrado ainda"}</p>
+            <p className="text-sm text-muted-foreground">
+              {search ? "Tente outra busca." : "Adicione grupos manualmente ou conecte o WhatsApp e sincronize."}
+            </p>
+          </div>
+          {!search && (
+            <div className="flex gap-2 flex-wrap justify-center">
+              <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
+                <Plus className="w-3.5 h-3.5" /> Adicionar Manualmente
               </Button>
-            )}
-            <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
-              <Plus className="w-3.5 h-3.5" /> Adicionar Grupo
-            </Button>
-          </div>
-        </div>
-
-        {/* Como usar */}
-        <div className="rounded-xl bg-card border border-border p-4">
-          <details>
-            <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
-              <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">ℹ</span>
-              Como usar as configurações
-            </summary>
-            <div className="mt-3 space-y-2 text-sm text-muted-foreground pl-7">
-              <p>🔍 <strong className="text-foreground">Buscar Ofertas</strong> — monitora e captura links de produtos neste grupo</p>
-              <p>📤 <strong className="text-foreground">Enviar Ofertas</strong> — este grupo receberá as mensagens processadas com seus links de afiliado</p>
-              <p>🔗 <strong className="text-foreground">Configurar Alvos</strong> — define quais grupos de disparo receberão as mensagens deste grupo</p>
-              <p>🔄 <strong className="text-foreground">Espelhar</strong> — replica mensagens sem converter links (para canais de notícias)</p>
-              <p>🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
-            </div>
-          </details>
-        </div>
-
-        {/* No WA connected banner */}
-        {connectedInstances.length === 0 && (
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <Smartphone className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-400">WhatsApp não conectado</p>
-              <p className="text-xs text-muted-foreground">
-                Você pode adicionar grupos manualmente agora e sincronizar depois que conectar.
-              </p>
-            </div>
-            <Button asChild size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold flex-shrink-0">
-              <Link href="/whatsapp">Conectar</Link>
-            </Button>
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Buscar grupos ou canais..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
-          />
-        </div>
-
-        {/* Loading */}
-        {loadingGroups && (
-          <div className="flex items-center justify-center py-16 gap-3 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm">Carregando grupos...</span>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loadingGroups && filteredGroups.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
-              <Users className="w-7 h-7 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-semibold">
-                {search ? "Nenhum grupo encontrado" : "Nenhum grupo cadastrado ainda"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {search
-                  ? "Tente outra busca."
-                  : "Adicione grupos manualmente ou conecte o WhatsApp e sincronize."}
-              </p>
-            </div>
-            {!search && (
-              <div className="flex gap-2 flex-wrap justify-center">
-                <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
-                  <Plus className="w-3.5 h-3.5" /> Adicionar Manualmente
+              {firstConnectedId && (
+                <Button
+                  size="sm"
+                  onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
+                  disabled={syncGroups.isPending}
+                  className="gap-2"
+                >
+                  {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  Sincronizar do WA
                 </Button>
-                {firstConnectedId && (
-                  <Button
-                    size="sm"
-                    onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
-                    disabled={syncGroups.isPending}
-                    className="gap-2"
-                  >
-                    {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                    Sincronizar do WA
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* Groups list — igual ao ProAfiliados */}
-        {!loadingGroups && filteredGroups.length > 0 && (
-          <div className="space-y-3">
-            {filteredGroups.map((group) => {
-              const targetCount = getTargetCount(group.id);
-              const groupType = group.groupJid.endsWith("@broadcast") ? "CANAL" : "GRUPO";
-              const groupTypeColor = groupType === "CANAL" ? "text-green-400" : "text-blue-400";
+      {!loadingGroups && filteredGroups.length > 0 && (
+        <div className="space-y-3">
+          {filteredGroups.map((group) => {
+            const targetCount = getTargetCount(group.id);
+            const groupType = group.groupJid.endsWith("@broadcast") ? "CANAL" : "GRUPO";
+            const groupTypeColor = groupType === "CANAL" ? "text-green-400" : "text-blue-400";
 
-              return (
-                <div key={group.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                  {/* Group header */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-[#0f172a]">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-foreground truncate">
-                        {group.groupName || group.groupJid}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono truncate opacity-60">
-                        {group.groupJid}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs font-bold border-current flex-shrink-0 ${groupTypeColor}`}
-                    >
-                      {groupType}
-                    </Badge>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Remover "${group.groupName || group.groupJid}"?`)) {
-                          removeGroup.mutate({ id: group.id });
-                        }
-                      }}
-                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            return (
+              <div key={group.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 bg-[#0f172a]">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-foreground truncate">
+                      {group.groupName || group.groupJid}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-mono truncate opacity-60">
+                      {group.groupJid}
+                    </p>
                   </div>
-
-                  {/* Options rows */}
-                  <div className="divide-y divide-border/40 bg-[#1e293b]/50">
-                    {/* Buscar Ofertas */}
-                    <GroupOptionRow
-                      icon={<BarChart2 className="w-4 h-4" />}
-                      label="Buscar Ofertas"
-                      sublabel={group.buscarOfertas ? "● Busca links" : "○ Inativo"}
-                      sublabelColor={group.buscarOfertas ? "text-green-400" : "text-muted-foreground"}
-                      checked={group.buscarOfertas}
-                      onToggle={(v) => handleToggle(group, "buscarOfertas", v)}
-                    />
-
-                    {/* Enviar Ofertas */}
-                    <GroupOptionRow
-                      icon={<AlertTriangle className="w-4 h-4" />}
-                      label="Enviar Ofertas"
-                      sublabel={group.enviarOfertas ? "● Converte links" : "○ Inativo"}
-                      sublabelColor={group.enviarOfertas ? "text-yellow-400" : "text-muted-foreground"}
-                      checked={group.enviarOfertas}
-                      onToggle={(v) => handleToggle(group, "enviarOfertas", v)}
-                    />
-
-                    {/* Configurar Alvos */}
-                    <GroupOptionRow
-                      icon={<Link2 className="w-4 h-4 text-orange-400" />}
-                      label="Configurar Alvos"
-                      sublabel={targetCount > 0 ? `${targetCount} grupo(s) selecionado(s)` : undefined}
-                      sublabelColor="text-orange-300"
-                      highlight
-                      targetCount={targetCount > 0 ? targetCount : undefined}
-                      onClick={() =>
-                        setTargetSourceGroup({
-                          id: group.id,
-                          groupName: group.groupName ?? null,
-                          groupJid: group.groupJid,
-                        })
+                  <Badge variant="outline" className={`text-xs font-bold border-current flex-shrink-0 ${groupTypeColor}`}>
+                    {groupType}
+                  </Badge>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Remover "${group.groupName || group.groupJid}"?`)) {
+                        removeGroup.mutate({ id: group.id });
                       }
-                    />
-
-                    {/* Espelhar */}
-                    <GroupOptionRow
-                      icon={<Copy className="w-4 h-4" />}
-                      label="Espelhar"
-                      sublabel={group.espelharConteudo ? "● Ativo" : "✕ sem links"}
-                      sublabelColor={group.espelharConteudo ? "text-blue-400" : "text-red-400"}
-                      checked={group.espelharConteudo}
-                      onToggle={(v) => handleToggle(group, "espelharConteudo", v)}
-                    />
-
-                    {/* Substituir Imagem */}
-                    <GroupOptionRow
-                      icon={<Image className="w-4 h-4 text-purple-400" />}
-                      label="Substituir Imagem"
-                      sublabel={group.substituirImagem ? "● Busca imagens" : "○ Inativo"}
-                      sublabelColor={group.substituirImagem ? "text-purple-400" : "text-muted-foreground"}
-                      checked={group.substituirImagem}
-                      onToggle={(v) => handleToggle(group, "substituirImagem", v)}
-                    />
-
-                    {/* Ordem do Link */}
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      <Target className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <p className="text-sm font-medium flex-1">Ordem do link</p>
-                      <Select
-                        value={botSettings?.linkOrder ?? "first"}
-                        onValueChange={(v) => saveBotSettings.mutate({ linkOrder: v as "first" | "last" })}
-                      >
-                        <SelectTrigger className="w-28 h-7 text-xs bg-[#0f172a] border-border">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="first">Primeiro</SelectItem>
-                          <SelectItem value="last">Último</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    }}
+                    className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="divide-y divide-border/40 bg-[#1e293b]/50">
+                  <GroupOptionRow
+                    icon={<BarChart2 className="w-4 h-4" />}
+                    label="Buscar Ofertas"
+                    sublabel={group.buscarOfertas ? "● Busca links" : "○ Inativo"}
+                    sublabelColor={group.buscarOfertas ? "text-green-400" : "text-muted-foreground"}
+                    checked={group.buscarOfertas}
+                    onToggle={(v) => handleToggle(group, "buscarOfertas", v)}
+                  />
+                  <GroupOptionRow
+                    icon={<AlertTriangle className="w-4 h-4" />}
+                    label="Enviar Ofertas"
+                    sublabel={group.enviarOfertas ? "● Converte links" : "○ Inativo"}
+                    sublabelColor={group.enviarOfertas ? "text-yellow-400" : "text-muted-foreground"}
+                    checked={group.enviarOfertas}
+                    onToggle={(v) => handleToggle(group, "enviarOfertas", v)}
+                  />
+                  <GroupOptionRow
+                    icon={<Link2 className="w-4 h-4 text-orange-400" />}
+                    label="Configurar Alvos"
+                    sublabel={targetCount > 0 ? `${targetCount} grupo(s) selecionado(s)` : undefined}
+                    sublabelColor="text-orange-300"
+                    highlight
+                    targetCount={targetCount > 0 ? targetCount : undefined}
+                    onClick={() =>
+                      setTargetSourceGroup({
+                        id: group.id,
+                        groupName: group.groupName ?? null,
+                        groupJid: group.groupJid,
+                      })
+                    }
+                  />
+                  <GroupOptionRow
+                    icon={<Copy className="w-4 h-4" />}
+                    label="Espelhar"
+                    sublabel={group.espelharConteudo ? "● Ativo" : "✕ sem links"}
+                    sublabelColor={group.espelharConteudo ? "text-blue-400" : "text-red-400"}
+                    checked={group.espelharConteudo}
+                    onToggle={(v) => handleToggle(group, "espelharConteudo", v)}
+                  />
+                  <GroupOptionRow
+                    icon={<Image className="w-4 h-4 text-purple-400" />}
+                    label="Substituir Imagem"
+                    sublabel={group.substituirImagem ? "● Busca imagens" : "○ Inativo"}
+                    sublabelColor={group.substituirImagem ? "text-purple-400" : "text-muted-foreground"}
+                    checked={group.substituirImagem}
+                    onToggle={(v) => handleToggle(group, "substituirImagem", v)}
+                  />
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Target className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-sm font-medium flex-1">Ordem do link</p>
+                    <Select
+                      value={botSettings?.linkOrder ?? "first"}
+                      onValueChange={(v) => saveBotSettings.mutate({ linkOrder: v as "first" | "last" })}
+                    >
+                      <SelectTrigger className="w-28 h-7 text-xs bg-[#0f172a] border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="first">Primeiro</SelectItem>
+                        <SelectItem value="last">Último</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modals */}
       {targetSourceGroup && (
@@ -680,6 +618,416 @@ export default function Groups() {
           onClose={() => setShowAddModal(false)}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Aba: Automações ──────────────────────────────────────────────────────────
+function AutomationsTab() {
+  const utils = trpc.useUtils();
+  const { data: automations, isLoading } = trpc.automations.list.useQuery();
+  const { data: instances } = trpc.whatsapp.listInstances.useQuery();
+  const { data: campaigns } = trpc.campaigns.list.useQuery();
+  const { data: allGroups } = trpc.whatsapp.listMonitoredGroups.useQuery({ instanceId: undefined });
+
+  const sourceGroups = allGroups?.filter((g) => g.buscarOfertas) || [];
+  const targetGroups = allGroups?.filter((g) => g.enviarOfertas) || [];
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    instanceId: "",
+    sourceGroupId: "",
+    campaignId: "",
+    useLlmSuggestion: false,
+    sendDelay: 0,
+    targetGroupIds: [] as number[],
+  });
+
+  const createMutation = trpc.automations.create.useMutation({
+    onSuccess: () => {
+      utils.automations.list.invalidate();
+      setShowCreate(false);
+      resetForm();
+      toast.success("Automação criada!");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateMutation = trpc.automations.update.useMutation({
+    onSuccess: () => {
+      utils.automations.list.invalidate();
+      setEditingId(null);
+      toast.success("Automação atualizada!");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteMutation = trpc.automations.delete.useMutation({
+    onSuccess: () => {
+      utils.automations.list.invalidate();
+      toast.success("Automação removida!");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const toggleMutation = trpc.automations.update.useMutation({
+    onSuccess: () => utils.automations.list.invalidate(),
+  });
+
+  function resetForm() {
+    setForm({ name: "", instanceId: "", sourceGroupId: "", campaignId: "", useLlmSuggestion: false, sendDelay: 0, targetGroupIds: [] });
+  }
+
+  function openEdit(automation: any) {
+    setEditingId(automation.id);
+    setForm({
+      name: automation.name,
+      instanceId: String(automation.instanceId || ""),
+      sourceGroupId: String(automation.sourceGroupId),
+      campaignId: automation.campaignId ? String(automation.campaignId) : "",
+      useLlmSuggestion: automation.useLlmSuggestion,
+      sendDelay: automation.sendDelay || 0,
+      targetGroupIds: [],
+    });
+  }
+
+  function handleSubmit() {
+    if (!form.name.trim()) return toast.error("Nome é obrigatório");
+    if (!form.sourceGroupId) return toast.error("Selecione um grupo de origem");
+
+    const instanceId = form.instanceId ? parseInt(form.instanceId) : instances?.[0]?.id ?? 0;
+    const payload = {
+      name: form.name,
+      instanceId,
+      sourceGroupId: parseInt(form.sourceGroupId),
+      campaignId: form.campaignId ? parseInt(form.campaignId) : undefined,
+      useLlmSuggestion: form.useLlmSuggestion,
+      sendDelay: form.sendDelay,
+      targetIds: form.targetGroupIds,
+    };
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, ...payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  }
+
+  const isOpen = showCreate || editingId !== null;
+  const isPending = createMutation.isPending || updateMutation.isPending;
+  const hasNoGroups = !allGroups || allGroups.length === 0;
+  const hasNoSourceGroups = sourceGroups.length === 0;
+  const hasNoTargetGroups = targetGroups.length === 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Configure automações para monitorar grupos e substituir links automaticamente.
+        </p>
+        <Button
+          onClick={() => { setEditingId(null); resetForm(); setShowCreate(true); }}
+          disabled={hasNoSourceGroups}
+        >
+          <Plus className="w-4 h-4 mr-2" /> Nova Automação
+        </Button>
+      </div>
+
+      {/* Warnings */}
+      {hasNoGroups && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-400">Configure os grupos primeiro</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Para criar uma automação, você precisa primeiro adicionar grupos na aba de Grupos e ativar "Buscar Ofertas" em pelo menos um grupo de origem.
+            </p>
+            <Button
+              size="sm"
+              className="mt-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold"
+              onClick={() => {
+                const tab = document.querySelector('[data-tab="grupos"]') as HTMLButtonElement;
+                tab?.click();
+              }}
+            >
+              Ir para Grupos
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!hasNoGroups && hasNoSourceGroups && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-400">Nenhum grupo de origem configurado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ative "Buscar Ofertas" em pelo menos um grupo para poder criar automações.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!hasNoSourceGroups && hasNoTargetGroups && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+          <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-400">Nenhum grupo de destino configurado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ative "Enviar Ofertas" em pelo menos um grupo para definir para onde as mensagens serão enviadas.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : automations?.length === 0 ? (
+        <div className="text-center py-16 border border-dashed border-border rounded-xl">
+          <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Nenhuma automação criada</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Crie uma automação para começar a substituir links automaticamente.
+          </p>
+          {!hasNoSourceGroups && (
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Criar automação
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {automations?.map((automation) => (
+            <Card key={automation.id} className="hover:border-primary/30 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${automation.isActive ? "bg-green-400" : "bg-muted-foreground"}`}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium truncate">{automation.name}</h3>
+                        {automation.useLlmSuggestion && (
+                          <Badge variant="outline" className="text-xs gap-1 flex-shrink-0">
+                            <Zap className="w-2.5 h-2.5" /> IA
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          Origem: {allGroups?.find((g) => g.id === automation.sourceGroupId)?.groupName || `Grupo #${automation.sourceGroupId}`}
+                        </span>
+                        {automation.sendDelay > 0 && <span>Delay: {automation.sendDelay}s</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Switch
+                      checked={automation.isActive}
+                      onCheckedChange={(checked) =>
+                        toggleMutation.mutate({ id: automation.id, isActive: checked })
+                      }
+                    />
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(automation)}>
+                      <Edit2 className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => {
+                        if (confirm(`Remover automação "${automation.name}"?`)) {
+                          deleteMutation.mutate({ id: automation.id });
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { setShowCreate(false); setEditingId(null); } }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Automação" : "Nova Automação"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input
+                placeholder="Ex: Ofertas Mercado Livre → Meu Grupo"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Grupo de Origem * <span className="text-muted-foreground font-normal text-xs">(com Buscar Ofertas ativo)</span></Label>
+              {sourceGroups.length === 0 ? (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
+                  Nenhum grupo com "Buscar Ofertas" ativo. Ative na aba <strong>Grupos</strong>.
+                </div>
+              ) : (
+                <Select value={form.sourceGroupId} onValueChange={(v) => setForm({ ...form, sourceGroupId: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o grupo de origem..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sourceGroups.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        🔍 {g.groupName || g.groupJid}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Grupos de Destino</Label>
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 space-y-1">
+                <p className="font-medium">📤 Destinos configurados na aba Grupos</p>
+                {targetGroups.length === 0 ? (
+                  <p className="text-muted-foreground">Nenhum grupo com "Enviar Ofertas" ativo. Ative na aba <strong>Grupos</strong>.</p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {targetGroups.length} grupo(s) com "Enviar Ofertas" ativo: {targetGroups.map(g => g.groupName || g.groupJid).join(", ")}.
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Campanha de Afiliado</Label>
+              <Select
+                value={form.campaignId || "none"}
+                onValueChange={(v) => setForm({ ...form, campaignId: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma campanha..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma (usar IA para sugerir)</SelectItem>
+                  {campaigns?.filter((c) => c.isActive).map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {instances && instances.length > 0 && (
+              <div className="space-y-2">
+                <Label>Instância WhatsApp <span className="text-muted-foreground font-normal text-xs">(opcional)</span></Label>
+                <Select
+                  value={form.instanceId || "auto"}
+                  onValueChange={(v) => setForm({ ...form, instanceId: v === "auto" ? "" : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Automático..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Automático (primeira instância conectada)</SelectItem>
+                    {instances.map((i) => (
+                      <SelectItem key={i.id} value={String(i.id)}>
+                        {i.name} — {i.status === "connected" ? "✓ Conectado" : i.status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+              <div>
+                <p className="text-sm font-medium">Usar IA para sugerir campanha</p>
+                <p className="text-xs text-muted-foreground">A IA analisa o conteúdo e escolhe a melhor campanha automaticamente.</p>
+              </div>
+              <Switch
+                checked={form.useLlmSuggestion}
+                onCheckedChange={(v) => setForm({ ...form, useLlmSuggestion: v })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Delay de envio (segundos)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={300}
+                value={form.sendDelay}
+                onChange={(e) => setForm({ ...form, sendDelay: parseInt(e.target.value) || 0 })}
+              />
+              <p className="text-xs text-muted-foreground">Aguardar antes de enviar (0 = imediato, máx. 300s).</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowCreate(false); setEditingId(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={isPending}>
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {editingId ? "Salvar" : "Criar Automação"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Página principal (com abas) ──────────────────────────────────────────────
+export default function Groups() {
+  const [activeTab, setActiveTab] = useState<"grupos" | "automacoes">("grupos");
+
+  return (
+    <AppLayout title="Configurar Ofertas">
+      <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-bold">Configurar Ofertas</h1>
+          <p className="text-sm text-muted-foreground">Gerencie grupos e automações de substituição de links</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 bg-muted rounded-xl w-fit">
+          <button
+            data-tab="grupos"
+            onClick={() => setActiveTab("grupos")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "grupos"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Grupos
+          </button>
+          <button
+            data-tab="automacoes"
+            onClick={() => setActiveTab("automacoes")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "automacoes"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Bot className="w-4 h-4" />
+            Automações
+          </button>
+        </div>
+
+        {/* Tab content */}
+        {activeTab === "grupos" ? <GroupsTab /> : <AutomationsTab />}
+      </div>
     </AppLayout>
   );
 }

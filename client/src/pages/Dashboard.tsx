@@ -1,4 +1,5 @@
 import AppLayout from "@/components/AppLayout";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -13,6 +14,7 @@ import {
   Eye,
   Link2,
   Loader2,
+  Mail,
   MessageSquarePlus,
   Send,
   Settings,
@@ -49,12 +51,23 @@ function useTrialCountdown(trialEndsAt: Date | number | null | undefined) {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: instances } = trpc.whatsapp.listInstances.useQuery();
   const { data: automations } = trpc.automations.list.useQuery();
   const { data: stats } = trpc.logs.stats.useQuery();
   const { data: sub } = trpc.subscription.get.useQuery(undefined, { refetchInterval: 30000 });
   const [showGuide, setShowGuide] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
+
+  const resendVerification = trpc.auth.resendVerification.useMutation({
+    onSuccess: () => {
+      import("sonner").then(({ toast }) => toast.success("E-mail de verificação reenviado!"));
+    },
+    onError: (e) => {
+      import("sonner").then(({ toast }) => toast.error(e.message));
+    },
+  });
 
   const connectedInstance = instances?.find((i) => i.status === "connected");
   const isOnline = !!connectedInstance;
@@ -73,6 +86,43 @@ export default function Dashboard() {
   return (
     <AppLayout title="Dashboard">
       <div className="p-4 md:p-6 space-y-3 max-w-3xl mx-auto">
+
+        {/* BANNER E-MAIL NÃO VERIFICADO */}
+        {user && !user.emailVerified && !emailBannerDismissed && (
+          <div className="flex items-center justify-between p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-300">E-mail não verificado</p>
+                <p className="text-xs text-yellow-400/80">
+                  Verifique seu e-mail <span className="font-medium">{user.email}</span> para garantir acesso total.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 text-xs"
+                onClick={() => resendVerification.mutate()}
+                disabled={resendVerification.isPending}
+              >
+                {resendVerification.isPending ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Mail className="w-3 h-3 mr-1" />
+                )}
+                Reenviar
+              </Button>
+              <button
+                onClick={() => setEmailBannerDismissed(true)}
+                className="text-yellow-400/60 hover:text-yellow-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* BANNER TRIAL / ASSINATURA */}
         {isTrial && !trial.expired && (

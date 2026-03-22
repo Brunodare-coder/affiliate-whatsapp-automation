@@ -11,7 +11,7 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import WhatsAppConnect from "./pages/WhatsAppConnect";
 import Groups from "./pages/Groups";
-import Automations from "./pages/Automations";
+import { Redirect } from "wouter";
 import Logs from "./pages/Logs";
 import LogDetail from "./pages/LogDetail";
 import Settings from "./pages/Settings";
@@ -58,7 +58,7 @@ function Router() {
         <ProtectedRoute><Groups /></ProtectedRoute>
       </Route>
       <Route path="/automations">
-        <ProtectedRoute><Automations /></ProtectedRoute>
+        <Redirect to="/groups" />
       </Route>
       <Route path="/logs">
         <ProtectedRoute><Logs /></ProtectedRoute>

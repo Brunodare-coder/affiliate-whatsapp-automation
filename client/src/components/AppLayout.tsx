@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   BarChart3,
-  Bot,
   ChevronLeft,
   ChevronRight,
   Crown,
@@ -29,7 +28,6 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { path: "/whatsapp", label: "WhatsApp", icon: Smartphone },
   { path: "/groups", label: "Configurar Ofertas", icon: Users },
-  { path: "/automations", label: "Automações", icon: Bot },
   { path: "/feed-global", label: "Feed Global", icon: Globe },
   { path: "/logs", label: "Logs", icon: FileText },
   { path: "/subscription", label: "Assinatura", icon: Shield },
