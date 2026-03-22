@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -24,7 +25,9 @@ import {
   CheckCircle2,
   Clock,
   Crown,
+  KeyRound,
   Loader2,
+  Mail,
   RefreshCw,
   Shield,
   Users,
@@ -69,12 +72,21 @@ export default function Admin() {
 
   const { data: users, isLoading, refetch } = trpc.admin.listUsers.useQuery();
 
+  // ── Grant subscription modal state ──────────────────────────────────────────
   const [grantModal, setGrantModal] = useState<{ open: boolean; userId: number; userName: string }>({
     open: false, userId: 0, userName: "",
   });
   const [grantPlan, setGrantPlan] = useState<"basic" | "premium">("premium");
   const [grantMonths, setGrantMonths] = useState("1");
 
+  // ── Password modal state ─────────────────────────────────────────────────────
+  const [pwModal, setPwModal] = useState<{ open: boolean; userId: number; userName: string; userEmail: string }>({
+    open: false, userId: 0, userName: "", userEmail: "",
+  });
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // ── Mutations ────────────────────────────────────────────────────────────────
   const grantMutation = trpc.admin.grantSubscription.useMutation({
     onSuccess: () => {
       toast.success("Assinatura ativada com sucesso!");
@@ -92,7 +104,30 @@ export default function Admin() {
     onError: (e) => toast.error(e.message),
   });
 
-  // Proteção: somente admin
+  const setPasswordMutation = trpc.admin.setUserPassword.useMutation({
+    onSuccess: () => {
+      toast.success("Senha redefinida com sucesso!");
+      setPwModal({ open: false, userId: 0, userName: "", userEmail: "" });
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const sendResetLinkMutation = trpc.admin.sendPasswordResetLink.useMutation({
+    onSuccess: (data) => {
+      if (data.emailSent) {
+        toast.success("Link de recuperação enviado por e-mail!");
+      } else if (data.fallback) {
+        toast.success("Link enviado como notificação (Resend não configurado).");
+      } else {
+        toast.success("Link de recuperação gerado.");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // ── Access control ───────────────────────────────────────────────────────────
   if (user && user.role !== "admin") {
     return (
       <AppLayout title="Admin">
@@ -112,6 +147,18 @@ export default function Admin() {
   const premiumUsers = users?.filter((u) => u.subscription?.plan === "premium" && u.subscription.isActive).length ?? 0;
   const basicUsers = users?.filter((u) => u.subscription?.plan === "basic" && u.subscription.isActive).length ?? 0;
 
+  const handleSetPassword = () => {
+    if (newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("As senhas não coincidem.");
+      return;
+    }
+    setPasswordMutation.mutate({ userId: pwModal.userId, newPassword });
+  };
+
   return (
     <AppLayout title="Painel Admin">
       <div className="p-6 space-y-6">
@@ -122,8 +169,8 @@ export default function Admin() {
               <Crown className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Gerenciar Assinaturas</h2>
-              <p className="text-sm text-muted-foreground">Ative, cancele ou estenda planos de qualquer usuário</p>
+              <h2 className="text-xl font-bold">Painel Administrativo</h2>
+              <p className="text-sm text-muted-foreground">Gerencie assinaturas e senhas de usuários</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -199,7 +246,7 @@ export default function Admin() {
             ) : (
               <div className="divide-y divide-border">
                 {users.map((u) => (
-                  <div key={u.id} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors">
+                  <div key={u.id} className="flex flex-wrap items-center gap-3 px-6 py-4 hover:bg-muted/30 transition-colors">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-bold text-primary">
@@ -222,7 +269,7 @@ export default function Admin() {
                     </div>
 
                     {/* Status e Plano */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                       <StatusBadge sub={u.subscription} />
                       <PlanBadge sub={u.subscription} />
                       {u.subscription?.currentPeriodEnd && u.subscription.isActive && (
@@ -233,8 +280,8 @@ export default function Admin() {
                       )}
                     </div>
 
-                    {/* Ações */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Ações de Assinatura */}
+                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-white"
@@ -254,6 +301,37 @@ export default function Admin() {
                           disabled={revokeMutation.isPending}
                         >
                           <Ban className="w-3 h-3 mr-1" /> Cancelar
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Ações de Senha */}
+                    <div className="flex items-center gap-2 flex-shrink-0 border-l border-border pl-3 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                        onClick={() => {
+                          setPwModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}`, userEmail: u.email ?? "" });
+                          setNewPassword("");
+                          setConfirmPassword("");
+                        }}
+                      >
+                        <KeyRound className="w-3 h-3 mr-1" /> Redefinir Senha
+                      </Button>
+                      {u.email && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+                          onClick={() => {
+                            if (confirm(`Enviar link de recuperação para ${u.email}?`)) {
+                              sendResetLinkMutation.mutate({ userId: u.id });
+                            }
+                          }}
+                          disabled={sendResetLinkMutation.isPending}
+                        >
+                          <Mail className="w-3 h-3 mr-1" /> Enviar Link
                         </Button>
                       )}
                     </div>
@@ -323,7 +401,6 @@ export default function Admin() {
               </p>
             </div>
 
-            {/* Resumo */}
             <div className="rounded-lg bg-muted/50 p-3 space-y-1">
               <p className="text-sm font-medium">Resumo</p>
               <p className="text-xs text-muted-foreground">
@@ -358,6 +435,76 @@ export default function Admin() {
                 <CheckCircle2 className="w-4 h-4 mr-2" />
               )}
               Ativar Assinatura
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Redefinir Senha */}
+      <Dialog open={pwModal.open} onOpenChange={(open) => setPwModal((s) => ({ ...s, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-blue-400" />
+              Redefinir Senha
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+              <p className="text-sm text-blue-300">
+                Redefinindo senha de: <span className="font-semibold text-white">{pwModal.userName}</span>
+              </p>
+              {pwModal.userEmail && (
+                <p className="text-xs text-blue-400 mt-1">{pwModal.userEmail}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova senha</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSetPassword()}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Repita a senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSetPassword()}
+              />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">As senhas não coincidem.</p>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Alternativamente, use o botão <strong>"Enviar Link"</strong> na tabela para enviar um link de recuperação diretamente para o e-mail do usuário.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPwModal((s) => ({ ...s, open: false }))}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleSetPassword}
+              disabled={setPasswordMutation.isPending || newPassword.length < 6 || newPassword !== confirmPassword}
+            >
+              {setPasswordMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <KeyRound className="w-4 h-4 mr-2" />
+              )}
+              Redefinir Senha
             </Button>
           </DialogFooter>
         </DialogContent>
