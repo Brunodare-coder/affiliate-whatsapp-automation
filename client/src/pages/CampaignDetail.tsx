@@ -119,126 +119,125 @@ export default function CampaignDetail() {
 
   return (
     <AppLayout title={campaign.name}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
+
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground gap-1 -ml-2">
             <Link href="/campaigns">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Campanhas
+              <ArrowLeft className="w-4 h-4" /> Campanhas
             </Link>
           </Button>
-          <div className="flex items-center gap-2">
+          <span className="text-muted-foreground/40">/</span>
+          <div className="flex items-center gap-2.5 min-w-0">
             <div
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: campaign.color || "#22c55e" }}
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: campaign.color || "#22c55e", boxShadow: `0 0 8px ${campaign.color || "#22c55e"}60` }}
             />
-            <h2 className="font-semibold">{campaign.name}</h2>
+            <h2 className="font-bold section-title truncate">{campaign.name}</h2>
             {campaign.category && (
-              <Badge variant="outline" className="text-xs">{campaign.category}</Badge>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-muted-foreground border border-white/10">{campaign.category}</span>
             )}
-            <Badge variant={campaign.isActive ? "default" : "secondary"} className="text-xs">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${ campaign.isActive ? "bg-green-500/15 text-green-300 border-green-500/20" : "bg-white/5 text-muted-foreground border-white/10" }`}>
+              {campaign.isActive && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
               {campaign.isActive ? "Ativa" : "Inativa"}
-            </Badge>
+            </span>
           </div>
         </div>
 
         {campaign.description && (
-          <p className="text-muted-foreground text-sm">{campaign.description}</p>
+          <p className="text-sm text-muted-foreground">{campaign.description}</p>
         )}
 
-        {/* Links section */}
+        {/* Links section header */}
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Links de Afiliado ({links?.length || 0})</h3>
-          <Button onClick={() => { setEditingId(null); setForm({ name: "", originalPattern: "", affiliateUrl: "", keywords: "" }); setShowCreate(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> Adicionar Link
+          <p className="text-sm font-bold section-title">Links de Afiliado <span className="text-muted-foreground font-normal">({links?.length || 0})</span></p>
+          <Button
+            onClick={() => { setEditingId(null); setForm({ name: "", originalPattern: "", affiliateUrl: "", keywords: "" }); setShowCreate(true); }}
+            className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20"
+          >
+            <Plus className="w-4 h-4" /> Adicionar Link
           </Button>
         </div>
 
         {linksLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-4 h-20" />
-              </Card>
+              <div key={i} className="animate-pulse rounded-2xl border border-white/8 h-24" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }} />
             ))}
           </div>
         ) : links?.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-border rounded-xl">
-            <Link2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <h4 className="font-medium mb-1">Nenhum link ainda</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Adicione links de afiliado para esta campanha.
-            </p>
-            <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Adicionar primeiro link
+          <div className="text-center py-14 rounded-2xl border border-dashed border-white/10">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+              <Link2 className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h4 className="font-bold section-title mb-1">Nenhum link ainda</h4>
+            <p className="text-sm text-muted-foreground mb-5">Adicione links de afiliado para esta campanha.</p>
+            <Button size="sm" onClick={() => setShowCreate(true)} className="gap-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0">
+              <Plus className="w-3.5 h-3.5" /> Adicionar primeiro link
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
             {links?.map((link) => (
-              <Card key={link.id} className="hover:border-primary/30 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm">{link.name}</h4>
-                        <Badge variant={link.isActive ? "default" : "secondary"} className="text-xs">
-                          {link.isActive ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">Padrão:</span>{" "}
-                          <code className="bg-secondary px-1 rounded">{link.originalPattern}</code>
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          <span className="font-medium text-foreground">Afiliado:</span>{" "}
-                          <a
-                            href={link.affiliateUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline inline-flex items-center gap-1"
-                          >
-                            {link.affiliateUrl.slice(0, 60)}{link.affiliateUrl.length > 60 ? "..." : ""}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </p>
-                        {link.keywords && (
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Palavras-chave:</span>{" "}
-                            {link.keywords}
-                          </p>
-                        )}
-                      </div>
+              <div key={link.id} className="rounded-2xl border border-white/8 hover:border-white/15 transition-all p-4" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${ link.isActive ? "bg-green-400" : "bg-muted-foreground" }`} />
+                      <h4 className="font-bold text-sm section-title">{link.name}</h4>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${ link.isActive ? "bg-green-500/15 text-green-300 border-green-500/20" : "bg-white/5 text-muted-foreground border-white/10" }`}>
+                        {link.isActive ? "Ativo" : "Inativo"}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-xs"
-                        onClick={() => toggleMutation.mutate({ id: link.id, isActive: !link.isActive })}
-                      >
-                        {link.isActive ? "Desativar" : "Ativar"}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(link)}>
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          if (confirm(`Remover link "${link.name}"?`)) {
-                            deleteMutation.mutate({ id: link.id });
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground/70">Padrão:</span>{" "}
+                        <code className="bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md font-mono">{link.originalPattern}</code>
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        <span className="font-semibold text-foreground/70">Afiliado:</span>{" "}
+                        <a
+                          href={link.affiliateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1"
+                        >
+                          {link.affiliateUrl.slice(0, 60)}{link.affiliateUrl.length > 60 ? "..." : ""}
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        </a>
+                      </p>
+                      {link.keywords && (
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-semibold text-foreground/70">Palavras-chave:</span>{" "}
+                          {link.keywords}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${ link.isActive ? "bg-white/5 text-muted-foreground hover:bg-white/10" : "bg-green-500/15 text-green-300 border border-green-500/20 hover:bg-green-500/25" }`}
+                      onClick={() => toggleMutation.mutate({ id: link.id, isActive: !link.isActive })}
+                    >
+                      {link.isActive ? "Desativar" : "Ativar"}
+                    </button>
+                    <button className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/8 transition-all" onClick={() => openEdit(link)}>
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      onClick={() => {
+                        if (confirm(`Remover link "${link.name}"?`)) {
+                          deleteMutation.mutate({ id: link.id });
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}

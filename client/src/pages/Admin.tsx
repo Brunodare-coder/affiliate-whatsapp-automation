@@ -53,17 +53,17 @@ type UserRow = {
 };
 
 function StatusBadge({ sub }: { sub: UserRow["subscription"] }) {
-  if (!sub) return <Badge variant="outline" className="text-muted-foreground">Sem assinatura</Badge>;
-  if (sub.isActive && sub.status === "trial") return <Badge className="bg-blue-600">Trial</Badge>;
-  if (sub.isActive && sub.status === "active") return <Badge className="bg-green-600">Ativa</Badge>;
-  if (sub.status === "expired" || sub.status === "cancelled") return <Badge variant="destructive">Expirada</Badge>;
-  return <Badge variant="outline">{sub.status}</Badge>;
+  if (!sub) return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/8 text-muted-foreground border border-white/10">Sem plano</span>;
+  if (sub.isActive && sub.status === "trial") return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/15 text-blue-300 border border-blue-500/20"><span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Trial</span>;
+  if (sub.isActive && sub.status === "active") return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500/15 text-green-300 border border-green-500/20"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />Ativa</span>;
+  if (sub.status === "expired" || sub.status === "cancelled") return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/15 text-red-300 border border-red-500/20">Expirada</span>;
+  return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/8 text-muted-foreground border border-white/10">{sub.status}</span>;
 }
 
 function PlanBadge({ sub }: { sub: UserRow["subscription"] }) {
   if (!sub || sub.status === "trial") return null;
-  if (sub.plan === "premium") return <Badge className="bg-purple-600 text-white">Premium R$100</Badge>;
-  if (sub.plan === "basic") return <Badge className="bg-orange-500 text-white">Basic R$50</Badge>;
+  if (sub.plan === "premium") return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/15 text-purple-300 border border-purple-500/20">Premium</span>;
+  if (sub.plan === "basic") return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500/15 text-orange-300 border border-orange-500/20">Basic</span>;
   return null;
 }
 
@@ -180,219 +180,176 @@ export default function Admin() {
 
   return (
     <AppLayout title="Painel Admin">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-              <Crown className="w-5 h-5 text-yellow-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Painel Administrativo</h2>
-              <p className="text-sm text-muted-foreground">Gerencie assinaturas e senhas de usuários</p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
+          <p className="text-sm text-muted-foreground">Gerencie assinaturas e senhas de usuários</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10 gap-2">
+            <RefreshCw className="w-3.5 h-3.5" /> Atualizar
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Total de usuários", value: totalUsers, icon: Users, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/15" },
+            { label: "Com acesso ativo", value: activeUsers, icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/15" },
+            { label: "Premium R$100", value: premiumUsers, icon: Shield, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/15" },
+            { label: "Basic R$50", value: basicUsers, icon: Shield, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/15" },
+          ].map((s) => (
+            <div key={s.label} className={`stat-card p-4 border ${s.border}`}>
+              <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
+                <s.icon className={`w-4 h-4 ${s.color}`} />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{totalUsers}</p>
-                <p className="text-xs text-muted-foreground">Total de usuários</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-400">{activeUsers}</p>
-                <p className="text-xs text-muted-foreground">Com acesso ativo</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-400">{premiumUsers}</p>
-                <p className="text-xs text-muted-foreground">Premium R$100</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-orange-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-orange-400">{basicUsers}</p>
-                <p className="text-xs text-muted-foreground">Basic R$50</p>
-              </div>
-            </CardContent>
-          </Card>
+              <p className={`text-2xl font-black section-title ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Tabela de usuários */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="w-4 h-4" /> Usuários ({filteredUsers.length}{filteredUsers.length !== totalUsers ? `/${totalUsers}` : ""})
-              </CardTitle>
-              <div className="flex flex-1 gap-2">
-                {/* Search input */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por nome ou e-mail..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-                {/* Status filter */}
-                <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
-                  <SelectTrigger className="w-36 h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="trial">Trial</SelectItem>
-                    <SelectItem value="active">Ativos</SelectItem>
-                    <SelectItem value="expired">Expirados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <div className="rounded-2xl border border-white/8 overflow-hidden" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}>
+          {/* Table header */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <span className="font-bold text-sm section-title">Usuários ({filteredUsers.length}{filteredUsers.length !== totalUsers ? `/${totalUsers}` : ""})</span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-1 gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome ou e-mail..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-green-500/40"
+                />
               </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                <p>{searchQuery || filterStatus !== "all" ? "Nenhum usuário encontrado para este filtro" : "Nenhum usuário cadastrado"}</p>
-                {(searchQuery || filterStatus !== "all") && (
-                  <button
-                    className="mt-2 text-xs text-primary hover:underline"
-                    onClick={() => { setSearchQuery(""); setFilterStatus("all"); }}
-                  >Limpar filtros</button>
-                )}
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {filteredUsers.map((u) => (
-                  <div key={u.id} className="flex flex-wrap items-center gap-3 px-6 py-4 hover:bg-muted/30 transition-colors">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-primary">
-                        {(u.name ?? u.email ?? "?")[0].toUpperCase()}
-                      </span>
-                    </div>
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
+                <SelectTrigger className="w-36 h-8 text-xs border-white/10 bg-white/5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="expired">Expirados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-sm truncate">{u.name ?? "Sem nome"}</p>
-                        {u.role === "admin" && (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Admin</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{u.email ?? "Sem email"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Criado: {new Date(u.createdAt).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p>{searchQuery || filterStatus !== "all" ? "Nenhum usuário encontrado para este filtro" : "Nenhum usuário cadastrado"}</p>
+              {(searchQuery || filterStatus !== "all") && (
+                <button className="mt-2 text-xs text-green-400 hover:underline" onClick={() => { setSearchQuery(""); setFilterStatus("all"); }}>Limpar filtros</button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {filteredUsers.map((u) => (
+                <div key={u.id} className="flex flex-wrap items-center gap-3 px-5 py-4 hover:bg-white/3 transition-colors">
+                  {/* Avatar */}
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500/30 to-emerald-500/20 border border-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-black text-green-300">
+                      {(u.name ?? u.email ?? "?")[0].toUpperCase()}
+                    </span>
+                  </div>
 
-                    {/* Status e Plano */}
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                      <StatusBadge sub={u.subscription} />
-                      <PlanBadge sub={u.subscription} />
-                      {u.subscription?.currentPeriodEnd && u.subscription.isActive && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Vence: {new Date(u.subscription.currentPeriodEnd).toLocaleDateString("pt-BR")}
-                        </span>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-sm section-title truncate">{u.name ?? "Sem nome"}</p>
+                      {u.role === "admin" && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">Admin</span>
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground truncate">{u.email ?? "Sem email"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Criado: {new Date(u.createdAt).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
 
-                    {/* Ações de Assinatura */}
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                  {/* Status e Plano */}
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <StatusBadge sub={u.subscription} />
+                    <PlanBadge sub={u.subscription} />
+                    {u.subscription?.currentPeriodEnd && u.subscription.isActive && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Vence: {new Date(u.subscription.currentPeriodEnd).toLocaleDateString("pt-BR")}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Ações de Assinatura */}
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20"
+                      onClick={() => setGrantModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}` })}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" /> Ativar
+                    </Button>
+                    {u.subscription?.isActive && (
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => setGrantModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}` })}
+                        variant="destructive"
+                        className="bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25"
+                        onClick={() => {
+                          if (confirm(`Cancelar assinatura de ${u.name ?? u.email}?`)) {
+                            revokeMutation.mutate({ userId: u.id });
+                          }
+                        }}
+                        disabled={revokeMutation.isPending}
                       >
-                        <CheckCircle2 className="w-3 h-3 mr-1" /> Ativar
+                        <Ban className="w-3 h-3 mr-1" /> Cancelar
                       </Button>
-                      {u.subscription?.isActive && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            if (confirm(`Cancelar assinatura de ${u.name ?? u.email}?`)) {
-                              revokeMutation.mutate({ userId: u.id });
-                            }
-                          }}
-                          disabled={revokeMutation.isPending}
-                        >
-                          <Ban className="w-3 h-3 mr-1" /> Cancelar
-                        </Button>
-                      )}
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Ações de Senha */}
-                    <div className="flex items-center gap-2 flex-shrink-0 border-l border-border pl-3 flex-wrap">
+                  {/* Ações de Senha */}
+                  <div className="flex items-center gap-2 flex-shrink-0 border-l border-white/8 pl-3 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-400 border-blue-500/25 hover:bg-blue-500/10"
+                      onClick={() => {
+                        setPwModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}`, userEmail: u.email ?? "" });
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      }}
+                    >
+                      <KeyRound className="w-3 h-3 mr-1" /> Redefinir Senha
+                    </Button>
+                    {u.email && (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                        className="text-purple-400 border-purple-500/25 hover:bg-purple-500/10"
                         onClick={() => {
-                          setPwModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}`, userEmail: u.email ?? "" });
-                          setNewPassword("");
-                          setConfirmPassword("");
+                          if (confirm(`Enviar link de recuperação para ${u.email}?`)) {
+                            sendResetLinkMutation.mutate({ userId: u.id });
+                          }
                         }}
+                        disabled={sendResetLinkMutation.isPending}
                       >
-                        <KeyRound className="w-3 h-3 mr-1" /> Redefinir Senha
+                        <Mail className="w-3 h-3 mr-1" /> Enviar Link
                       </Button>
-                      {u.email && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
-                          onClick={() => {
-                            if (confirm(`Enviar link de recuperação para ${u.email}?`)) {
-                              sendResetLinkMutation.mutate({ userId: u.id });
-                            }
-                          }}
-                          disabled={sendResetLinkMutation.isPending}
-                        >
-                          <Mail className="w-3 h-3 mr-1" /> Enviar Link
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de Ativar Assinatura */}

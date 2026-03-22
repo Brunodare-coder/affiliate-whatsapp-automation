@@ -288,3 +288,15 @@
 - [x] Unificar páginas "Configurar Ofertas" e "Automações" em abas dentro de /groups
 - [x] Remover item "Automações" do menu lateral (AppLayout)
 - [x] Redirecionar /automations para /groups automaticamente
+
+## Redesign Completo das Páginas Internas (Fase 10)
+- [x] AppLayout: sidebar premium com gradientes e glassmorphism igual à landing page
+- [x] Dashboard: cards stat premium, gradientes, tipografia Space Grotesk
+- [x] WhatsApp Connect: redesign com visual premium
+- [x] Groups/Automações: abas premium, cards de grupo e automação com glassmorphism
+- [x] Subscription: redesign com visual premium
+- [x] Logs: redesign com visual premium
+- [x] Settings: redesign com cards premium e seções bem definidas
+- [x] Admin: redesign com stats cards, tabela de usuários premium
+- [x] Campaigns: redesign com grid de cards premium
+- [x] CampaignDetail: redesign com cards de links premium

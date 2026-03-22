@@ -393,7 +393,7 @@ function GroupsTab() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => { refetchSaved(); refetchTargets(); }} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => { refetchSaved(); refetchTargets(); }} className="gap-2 border-white/10 bg-white/5 hover:bg-white/10">
             <RefreshCw className="w-3.5 h-3.5" /> Atualizar
           </Button>
           {firstConnectedId && (
@@ -402,23 +402,23 @@ function GroupsTab() {
               size="sm"
               onClick={() => syncGroups.mutate({ instanceId: firstConnectedId })}
               disabled={syncGroups.isPending}
-              className="gap-2"
+              className="gap-2 border-blue-500/25 bg-blue-500/10 hover:bg-blue-500/15 text-blue-300"
             >
               {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               Sincronizar do WA
             </Button>
           )}
-          <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
+          <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20">
             <Plus className="w-3.5 h-3.5" /> Adicionar Grupo
           </Button>
         </div>
       </div>
 
       {/* Como usar */}
-      <div className="rounded-xl bg-card border border-border p-4">
+      <div className="rounded-2xl border border-white/8 p-4" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}>
         <details>
-          <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
-            <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">ℹ</span>
+          <summary className="flex items-center gap-2 cursor-pointer text-sm font-bold text-green-400">
+            <span className="w-5 h-5 rounded-lg bg-green-500/15 border border-green-500/20 flex items-center justify-center text-xs">ℹ</span>
             Como usar as configurações
           </summary>
           <div className="mt-3 space-y-2 text-sm text-muted-foreground pl-7">
@@ -455,7 +455,7 @@ function GroupsTab() {
           placeholder="Buscar grupos ou canais..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
+          className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-green-500/40 placeholder:text-muted-foreground"
         />
       </div>
 
@@ -503,34 +503,40 @@ function GroupsTab() {
           {filteredGroups.map((group) => {
             const targetCount = getTargetCount(group.id);
             const groupType = group.groupJid.endsWith("@broadcast") ? "CANAL" : "GRUPO";
-            const groupTypeColor = groupType === "CANAL" ? "text-green-400" : "text-blue-400";
+            const isCanal = groupType === "CANAL";
 
             return (
-              <div key={group.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3 bg-[#0f172a]">
+              <div key={group.id} className="rounded-2xl overflow-hidden border border-white/8 hover:border-white/12 transition-all" style={{ background: "oklch(0.12 0.018 250 / 0.9)" }}>
+                <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: "oklch(0.10 0.015 250 / 0.8)" }}>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${ isCanal ? "bg-green-500/15 border border-green-500/20" : "bg-blue-500/15 border border-blue-500/20" }`}>
+                    {isCanal
+                      ? <Zap className="w-4 h-4 text-green-400" />
+                      : <Users className="w-4 h-4 text-blue-400" />
+                    }
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">
+                    <p className="font-bold text-sm section-title truncate">
                       {group.groupName || group.groupJid}
                     </p>
-                    <p className="text-xs text-muted-foreground font-mono truncate opacity-60">
+                    <p className="text-xs text-muted-foreground font-mono truncate opacity-50">
                       {group.groupJid}
                     </p>
                   </div>
-                  <Badge variant="outline" className={`text-xs font-bold border-current flex-shrink-0 ${groupTypeColor}`}>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${ isCanal ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20" }`}>
                     {groupType}
-                  </Badge>
+                  </span>
                   <button
                     onClick={() => {
                       if (confirm(`Remover "${group.groupName || group.groupJid}"?`)) {
                         removeGroup.mutate({ id: group.id });
                       }
                     }}
-                    className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                    className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-red-500/10"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="divide-y divide-border/40 bg-[#1e293b]/50">
+                <div className="divide-y divide-white/5">
                   <GroupOptionRow
                     icon={<BarChart2 className="w-4 h-4" />}
                     label="Buscar Ofertas"
@@ -803,57 +809,57 @@ function AutomationsTab() {
       ) : (
         <div className="space-y-3">
           {automations?.map((automation) => (
-            <Card key={automation.id} className="hover:border-primary/30 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${automation.isActive ? "bg-green-400" : "bg-muted-foreground"}`}
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium truncate">{automation.name}</h3>
-                        {automation.useLlmSuggestion && (
-                          <Badge variant="outline" className="text-xs gap-1 flex-shrink-0">
-                            <Zap className="w-2.5 h-2.5" /> IA
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          Origem: {allGroups?.find((g) => g.id === automation.sourceGroupId)?.groupName || `Grupo #${automation.sourceGroupId}`}
+            <div key={automation.id} className="rounded-2xl border border-white/8 hover:border-white/15 transition-all p-4" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${ automation.isActive ? "bg-green-500/15 border border-green-500/20" : "bg-white/5 border border-white/8" }`}>
+                    <Bot className={`w-4 h-4 ${ automation.isActive ? "text-green-400" : "text-muted-foreground" }`} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-bold text-sm section-title truncate">{automation.name}</h3>
+                      {automation.useLlmSuggestion && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/15 text-purple-300 border border-purple-500/20 flex-shrink-0">
+                          <Zap className="w-2.5 h-2.5" /> IA
                         </span>
-                        {automation.sendDelay > 0 && <span>Delay: {automation.sendDelay}s</span>}
-                      </div>
+                      )}
+                      {automation.isActive
+                        ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-green-500/15 text-green-300 border border-green-500/20 flex-shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />Ativa</span>
+                        : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-muted-foreground border border-white/10 flex-shrink-0">Inativa</span>
+                      }
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        Origem: {allGroups?.find((g) => g.id === automation.sourceGroupId)?.groupName || `Grupo #${automation.sourceGroupId}`}
+                      </span>
+                      {automation.sendDelay > 0 && <span className="flex items-center gap-1"><span>Delay: {automation.sendDelay}s</span></span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Switch
-                      checked={automation.isActive}
-                      onCheckedChange={(checked) =>
-                        toggleMutation.mutate({ id: automation.id, isActive: checked })
-                      }
-                    />
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(automation)}>
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => {
-                        if (confirm(`Remover automação "${automation.name}"?`)) {
-                          deleteMutation.mutate({ id: automation.id });
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Switch
+                    checked={automation.isActive}
+                    onCheckedChange={(checked) =>
+                      toggleMutation.mutate({ id: automation.id, isActive: checked })
+                    }
+                  />
+                  <button className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/8 transition-all" onClick={() => openEdit(automation)}>
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    onClick={() => {
+                      if (confirm(`Remover automação "${automation.name}"?`)) {
+                        deleteMutation.mutate({ id: automation.id });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -990,39 +996,28 @@ export default function Groups() {
 
   return (
     <AppLayout title="Configurar Ofertas">
-      <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-bold">Configurar Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Gerencie grupos e automações de substituição de links</p>
-        </div>
+      <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-muted rounded-xl w-fit">
-          <button
-            data-tab="grupos"
-            onClick={() => setActiveTab("grupos")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "grupos"
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            Grupos
-          </button>
-          <button
-            data-tab="automacoes"
-            onClick={() => setActiveTab("automacoes")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "automacoes"
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Bot className="w-4 h-4" />
-            Automações
-          </button>
+        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "oklch(0.10 0.015 250 / 0.8)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+          {([
+            { id: "grupos", label: "Grupos", icon: Users },
+            { id: "automacoes", label: "Automações", icon: Bot },
+          ] as const).map((tab) => (
+            <button
+              key={tab.id}
+              data-tab={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-black shadow-lg shadow-green-500/20"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <tab.icon className="w-3.5 h-3.5" />
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Tab content */}

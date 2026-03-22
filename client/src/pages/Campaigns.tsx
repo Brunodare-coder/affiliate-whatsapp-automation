@@ -85,85 +85,82 @@ export default function Campaigns() {
 
   return (
     <AppLayout title="Campanhas">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">
-              Organize seus links de afiliado em campanhas temáticas.
-            </p>
-          </div>
-          <Button onClick={() => { setEditingId(null); setForm({ name: "", description: "", category: "", color: "#22c55e" }); setShowCreate(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> Nova Campanha
+          <p className="text-sm text-muted-foreground">Organize seus links de afiliado em campanhas temáticas.</p>
+          <Button
+            onClick={() => { setEditingId(null); setForm({ name: "", description: "", category: "", color: "#22c55e" }); setShowCreate(true); }}
+            className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0 shadow-sm shadow-green-500/20"
+          >
+            <Plus className="w-4 h-4" /> Nova Campanha
           </Button>
         </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-5 h-32" />
-              </Card>
+              <div key={i} className="animate-pulse rounded-2xl border border-white/8 h-40" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }} />
             ))}
           </div>
         ) : campaigns?.length === 0 ? (
-          <div className="text-center py-16">
-            <Link2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma campanha ainda</h3>
-            <p className="text-muted-foreground text-sm mb-4">Crie sua primeira campanha para organizar seus links de afiliado.</p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Criar campanha
+          <div className="text-center py-16 rounded-2xl border border-dashed border-white/10">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+              <Link2 className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-bold section-title mb-2">Nenhuma campanha ainda</h3>
+            <p className="text-muted-foreground text-sm mb-5">Crie sua primeira campanha para organizar seus links de afiliado.</p>
+            <Button onClick={() => setShowCreate(true)} className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold border-0">
+              <Plus className="w-4 h-4" /> Criar campanha
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {campaigns?.map((campaign) => (
-              <Card key={campaign.id} className="hover:border-primary/40 transition-colors">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: campaign.color || "#22c55e" }}
-                      />
-                      <h3 className="font-semibold truncate">{campaign.name}</h3>
-                    </div>
-                    <Badge variant={campaign.isActive ? "default" : "secondary"} className="text-xs ml-2 flex-shrink-0">
-                      {campaign.isActive ? "Ativa" : "Inativa"}
-                    </Badge>
+              <div key={campaign.id} className="rounded-2xl border border-white/8 hover:border-white/15 transition-all duration-150 p-5 flex flex-col gap-3 hover:-translate-y-0.5" style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}>
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
+                      style={{ backgroundColor: campaign.color || "#22c55e", boxShadow: `0 0 8px ${campaign.color || "#22c55e"}60` }}
+                    />
+                    <h3 className="font-bold text-sm section-title truncate">{campaign.name}</h3>
                   </div>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ml-2 ${ campaign.isActive ? "bg-green-500/15 text-green-300 border-green-500/20" : "bg-white/5 text-muted-foreground border-white/10" }`}>
+                    {campaign.isActive && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
+                    {campaign.isActive ? "Ativa" : "Inativa"}
+                  </span>
+                </div>
 
-                  {campaign.description && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{campaign.description}</p>
-                  )}
+                {campaign.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">{campaign.description}</p>
+                )}
 
-                  {campaign.category && (
-                    <Badge variant="outline" className="text-xs mb-3">{campaign.category}</Badge>
-                  )}
+                {campaign.category && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-muted-foreground border border-white/10 w-fit">{campaign.category}</span>
+                )}
 
-                  <div className="flex items-center gap-2 mt-4">
-                    <Button size="sm" variant="outline" asChild className="flex-1">
-                      <Link href={`/campaigns/${campaign.id}`}>
-                        <Link2 className="w-3 h-3 mr-1" /> Ver Links
-                      </Link>
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(campaign)}>
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => {
-                        if (confirm(`Remover campanha "${campaign.name}"?`)) {
-                          deleteMutation.mutate({ id: campaign.id });
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="flex items-center gap-2 mt-auto pt-1">
+                  <Button size="sm" variant="outline" asChild className="flex-1 border-white/10 bg-white/5 hover:bg-white/10 text-xs">
+                    <Link href={`/campaigns/${campaign.id}`}>
+                      <Link2 className="w-3 h-3 mr-1" /> Ver Links
+                    </Link>
+                  </Button>
+                  <button className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/8 transition-all" onClick={() => openEdit(campaign)}>
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    onClick={() => {
+                      if (confirm(`Remover campanha "${campaign.name}"?`)) {
+                        deleteMutation.mutate({ id: campaign.id });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}

@@ -694,18 +694,28 @@ function CredCard({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left w-full group"
+      className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-150 text-left w-full group hover:-translate-y-0.5 ${
+        configured
+          ? "border-green-500/20 hover:border-green-500/35"
+          : "border-white/8 hover:border-white/15"
+      }`}
+      style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}
     >
-      <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
+      <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm">{label}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+        <p className="font-bold text-sm section-title">{label}</p>
+        <p className="text-xs text-muted-foreground truncate">{desc}</p>
       </div>
       <div className="flex items-center gap-2">
-        {configured && <div className="w-2 h-2 rounded-full bg-green-400" />}
-        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        {configured && (
+          <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/15 border border-green-500/20 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+            Ativo
+          </span>
+        )}
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
       </div>
     </button>
   );
@@ -720,16 +730,17 @@ function ToolCard({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left w-full group"
+      className="flex items-center gap-3 p-4 rounded-2xl border border-white/8 hover:border-white/15 transition-all duration-150 text-left w-full group hover:-translate-y-0.5"
+      style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}
     >
-      <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
+      <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm">{label}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+        <p className="font-bold text-sm section-title">{label}</p>
+        <p className="text-xs text-muted-foreground truncate">{desc}</p>
       </div>
-      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
     </button>
   );
 }
@@ -773,7 +784,7 @@ export default function Settings() {
       <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
 
         {/* Feed Global */}
-        <div className="rounded-xl bg-card border border-border p-4">
+        <div className="rounded-2xl border border-blue-500/20 p-5" style={{ background: "linear-gradient(135deg, oklch(0.58 0.20 220 / 0.08) 0%, oklch(0.12 0.018 250 / 0.6) 100%)" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
@@ -790,7 +801,7 @@ export default function Settings() {
             />
           </div>
           {botSettings?.feedGlobalEnabled && (
-            <div className="mt-3 bg-blue-950/30 border border-blue-800/30 rounded-lg p-3 text-sm text-blue-300">
+            <div className="mt-4 rounded-xl border border-blue-500/20 p-4 text-sm text-blue-300/80" style={{ background: "oklch(0.58 0.20 220 / 0.06)" }}>
               <p className="font-semibold mb-1">O que é o Feed Global?</p>
               <p>Quando ativado, você recebe automaticamente <strong>links de afiliado</strong> detectados em <strong>todos os grupos monitorados</strong> por outros usuários do sistema. Assim você não precisa configurar seus próprios grupos de monitoramento — aproveite os links que outras pessoas já encontraram!</p>
               <div className="flex gap-2 mt-2 flex-wrap">
@@ -819,11 +830,11 @@ export default function Settings() {
 
         {/* CREDENCIAIS */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-full bg-yellow-500/20 border border-yellow-500/40 flex items-center justify-center">
-              <SettingsIcon className="w-3 h-3 text-yellow-400" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center">
+              <SettingsIcon className="w-3.5 h-3.5 text-yellow-400" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-yellow-400">Credenciais</span>
+            <span className="text-xs font-black uppercase tracking-widest text-yellow-400">Credenciais de Afiliado</span>
           </div>
           <div className="grid grid-cols-1 gap-2">
             <CredCard
@@ -871,11 +882,11 @@ export default function Settings() {
 
         {/* AUTOMAÇÃO */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center">
-              <Zap className="w-3 h-3 text-green-400" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-green-500/15 border border-green-500/25 flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-green-400" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-green-400">Automação</span>
+            <span className="text-xs font-black uppercase tracking-widest text-green-400">Automação</span>
           </div>
           <div className="grid grid-cols-1 gap-2">
             <ToolCard
@@ -911,11 +922,11 @@ export default function Settings() {
 
         {/* FERRAMENTAS */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
-              <Wrench className="w-3 h-3 text-purple-400" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/25 flex items-center justify-center">
+              <Wrench className="w-3.5 h-3.5 text-purple-400" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-purple-400">Ferramentas</span>
+            <span className="text-xs font-black uppercase tracking-widest text-purple-400">Ferramentas</span>
           </div>
           <div className="grid grid-cols-1 gap-2">
             <ToolCard
@@ -951,102 +962,104 @@ export default function Settings() {
 
         {/* Envio Manual */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-full bg-yellow-500/20 border border-yellow-500/40 flex items-center justify-center">
-              <Zap className="w-3 h-3 text-yellow-400" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-yellow-400" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-yellow-400">Disparo</span>
+            <span className="text-xs font-black uppercase tracking-widest text-yellow-400">Disparo</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setModal("manualsend")}
-              className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-yellow-500/40 transition-all text-left group"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-yellow-500/20 hover:border-yellow-500/35 transition-all duration-150 text-left group hover:-translate-y-0.5"
+              style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}
             >
-              <div className="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-yellow-500 flex items-center justify-center flex-shrink-0 shadow-lg">
                 <Link2 className="w-5 h-5 text-black" />
               </div>
               <div>
-                <p className="font-semibold text-sm">Envio Manual</p>
-                <p className="text-xs text-muted-foreground">Cole um link e envie já com su...</p>
+                <p className="font-bold text-sm section-title">Envio Manual</p>
+                <p className="text-xs text-muted-foreground">Cole um link e envie agora</p>
               </div>
             </button>
             <button
               onClick={() => toast.info("Em breve!")}
-              className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-green-500/40 transition-all text-left group"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-white/8 hover:border-white/15 transition-all duration-150 text-left group hover:-translate-y-0.5"
+              style={{ background: "oklch(0.12 0.018 250 / 0.8)" }}
             >
-              <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0 shadow-lg">
                 <SettingsIcon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-sm">Envio em Massa</p>
+                <p className="font-bold text-sm section-title">Envio em Massa</p>
                 <p className="text-xs text-muted-foreground">Texto e/ou foto para grupos</p>
               </div>
             </button>
           </div>
         </div>
 
-      </div>
+        {/* ── Conta e Segurança ──────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-blue-500/20 p-5 space-y-4" style={{ background: "linear-gradient(135deg, oklch(0.58 0.20 220 / 0.08) 0%, oklch(0.12 0.018 250 / 0.6) 100%)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+              <Lock className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="font-bold section-title">Conta e Segurança</p>
+              <p className="text-xs text-muted-foreground">{user?.email ?? "Sua conta"}</p>
+            </div>
+          </div>
 
-      {/* ── Conta e Segurança ──────────────────────────────────────────────── */}
-      <div className="rounded-xl bg-card border border-border p-5 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-blue-400" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="current-pw" className="text-xs font-semibold">Senha atual</Label>
+              <Input
+                id="current-pw"
+                type="password"
+                placeholder="Senha atual"
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                className="border-white/10 bg-white/5 focus:border-blue-500/40"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-pw" className="text-xs font-semibold">Nova senha</Label>
+              <Input
+                id="new-pw"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                className="border-white/10 bg-white/5 focus:border-blue-500/40"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-pw" className="text-xs font-semibold">Confirmar nova senha</Label>
+              <Input
+                id="confirm-pw"
+                type="password"
+                placeholder="Repita a nova senha"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                className="border-white/10 bg-white/5 focus:border-blue-500/40"
+              />
+            </div>
           </div>
-          <div>
-            <p className="font-semibold">Conta e Segurança</p>
-            <p className="text-xs text-muted-foreground">{user?.email ?? "Sua conta"}</p>
-          </div>
+
+          {confirmPw && newPw !== confirmPw && (
+            <p className="text-xs text-destructive">As senhas não coincidem.</p>
+          )}
+
+          <Button
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold border-0 shadow-lg shadow-blue-500/20 flex items-center gap-2"
+            onClick={handleChangePassword}
+            disabled={changePasswordMutation.isPending || newPw.length < 6 || newPw !== confirmPw}
+          >
+            <KeyRound className="w-4 h-4" />
+            {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="current-pw" className="text-xs">Senha atual</Label>
-            <Input
-              id="current-pw"
-              type="password"
-              placeholder="Senha atual"
-              value={currentPw}
-              onChange={(e) => setCurrentPw(e.target.value)}
-              className="bg-muted/30"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="new-pw" className="text-xs">Nova senha</Label>
-            <Input
-              id="new-pw"
-              type="password"
-              placeholder="Mínimo 6 caracteres"
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              className="bg-muted/30"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="confirm-pw" className="text-xs">Confirmar nova senha</Label>
-            <Input
-              id="confirm-pw"
-              type="password"
-              placeholder="Repita a nova senha"
-              value={confirmPw}
-              onChange={(e) => setConfirmPw(e.target.value)}
-              className="bg-muted/30"
-            />
-          </div>
-        </div>
-
-        {confirmPw && newPw !== confirmPw && (
-          <p className="text-xs text-destructive">As senhas não coincidem.</p>
-        )}
-
-        <Button
-          className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-          onClick={handleChangePassword}
-          disabled={changePasswordMutation.isPending || newPw.length < 6 || newPw !== confirmPw}
-        >
-          <KeyRound className="w-4 h-4" />
-          {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
-        </Button>
       </div>
 
       {/* Modals */}
