@@ -387,3 +387,6 @@
 - [x] listSendLogs: JOIN com post_logs para trazer llmSuggestion e originalContent
 - [x] Adicionar badge ✨ IA no header do card quando frase foi gerada
 - [x] Botão expandir/recolher para ver mensagem original (antes da IA)
+
+## Bug Fix - Feed Global (Fase 24)
+- [x] Corrigir botão "Atualizar" da página /feed-global — agora chama syncGroupsFromWA (sincroniza grupos do WhatsApp) em vez de apenas refetchGroups (recarregar banco)

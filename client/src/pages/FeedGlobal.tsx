@@ -15,6 +15,18 @@ export default function FeedGlobal() {
   const { data: savedGroups, isLoading: loadingGroups, refetch: refetchGroups } =
     trpc.whatsapp.listMonitoredGroups.useQuery({ instanceId: undefined });
 
+  const syncGroups = trpc.whatsapp.syncGroupsFromWA.useMutation({
+    onSuccess: (data) => {
+      refetchGroups();
+      if (data.added > 0) {
+        toast.success(`${data.added} novo(s) grupo(s) sincronizado(s) do WhatsApp!`);
+      } else {
+        toast.success(`Grupos atualizados (${data.total} grupos no total).`);
+      }
+    },
+    onError: (e) => toast.error("Erro ao sincronizar: " + e.message),
+  });
+
   const saveBotSettings = trpc.botSettings.save.useMutation({
     onSuccess: () => {
       refetchSettings();
@@ -153,15 +165,23 @@ export default function FeedGlobal() {
                   variant="outline"
                   size="sm"
                   className="h-7 text-xs gap-1.5"
-                  onClick={() => refetchGroups()}
-                  disabled={loadingGroups}
+                  onClick={() => {
+                    const firstInstance = instances?.[0];
+                    if (firstInstance) {
+                      syncGroups.mutate({ instanceId: firstInstance.id });
+                    } else {
+                      refetchGroups();
+                      toast.info("Nenhuma instância WhatsApp encontrada. Recarregando lista do banco.");
+                    }
+                  }}
+                  disabled={loadingGroups || syncGroups.isPending}
                 >
-                  {loadingGroups ? (
+                  {(loadingGroups || syncGroups.isPending) ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
                     <RefreshCw className="w-3 h-3" />
                   )}
-                  Atualizar
+                  {syncGroups.isPending ? "Sincronizando..." : "Atualizar"}
                 </Button>
                 <Button
                   variant="outline"
