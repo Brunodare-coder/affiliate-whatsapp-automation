@@ -13,6 +13,7 @@ import Groups from "./pages/Groups";
 import Automations from "./pages/Automations";
 import Logs from "./pages/Logs";
 import LogDetail from "./pages/LogDetail";
+import Settings from "./pages/Settings";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/automations" component={Automations} />
       <Route path="/logs" component={Logs} />
       <Route path="/logs/:id" component={LogDetail} />
+      <Route path="/settings" component={Settings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

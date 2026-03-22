@@ -29,6 +29,7 @@ const navItems = [
   { path: "/groups", label: "Grupos & Destinos", icon: Users },
   { path: "/automations", label: "Automações", icon: Bot },
   { path: "/logs", label: "Logs", icon: FileText },
+  { path: "/settings", label: "Configurações", icon: Settings },
 ];
 
 interface AppLayoutProps {

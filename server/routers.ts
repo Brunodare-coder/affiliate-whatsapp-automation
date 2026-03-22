@@ -42,6 +42,20 @@ import {
   upsertMercadoLivreConfig,
   getGroupTargets,
   setGroupTargets,
+  getShopeeConfig,
+  upsertShopeeConfig,
+  deleteShopeeConfig,
+  getAmazonConfig,
+  upsertAmazonConfig,
+  deleteAmazonConfig,
+  getMagazineLuizaConfig,
+  upsertMagazineLuizaConfig,
+  deleteMagazineLuizaConfig,
+  getAliexpressConfig,
+  upsertAliexpressConfig,
+  deleteAliexpressConfig,
+  getBotSettings,
+  upsertBotSettings,
 } from "./db";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
@@ -459,6 +473,148 @@ export const appRouter = router({
         }
         const affiliateUrl = buildMercadoLivreAffiliateUrl(input.productUrl, config);
         return { affiliateUrl };
+      }),
+  }),
+
+  // ── Shopee Config ────────────────────────────────────────────────────────
+  shopee: router({
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getShopeeConfig(ctx.user.id);
+      return config ?? null;
+    }),
+    saveConfig: protectedProcedure
+      .input(z.object({ appId: z.string().optional(), secret: z.string().optional(), isActive: z.boolean().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertShopeeConfig(ctx.user.id, { appId: input.appId || null, secret: input.secret || null, isActive: input.isActive ?? true });
+        return { success: true };
+      }),
+    deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteShopeeConfig(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ── Amazon Config ────────────────────────────────────────────────────────
+  amazon: router({
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getAmazonConfig(ctx.user.id);
+      return config ?? null;
+    }),
+    saveConfig: protectedProcedure
+      .input(z.object({ tag: z.string().optional(), cookieSession: z.string().optional(), isActive: z.boolean().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertAmazonConfig(ctx.user.id, { tag: input.tag || null, cookieSession: input.cookieSession || null, isActive: input.isActive ?? true });
+        return { success: true };
+      }),
+    deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteAmazonConfig(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ── Magazine Luiza Config ────────────────────────────────────────────────
+  magazineLuiza: router({
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getMagazineLuizaConfig(ctx.user.id);
+      return config ?? null;
+    }),
+    saveConfig: protectedProcedure
+      .input(z.object({ tag: z.string().optional(), isActive: z.boolean().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertMagazineLuizaConfig(ctx.user.id, { tag: input.tag || null, isActive: input.isActive ?? true });
+        return { success: true };
+      }),
+    deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteMagazineLuizaConfig(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ── AliExpress Config ────────────────────────────────────────────────────
+  aliexpress: router({
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getAliexpressConfig(ctx.user.id);
+      return config ?? null;
+    }),
+    saveConfig: protectedProcedure
+      .input(z.object({ trackId: z.string().optional(), cookie: z.string().optional(), isActive: z.boolean().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertAliexpressConfig(ctx.user.id, { trackId: input.trackId || null, cookie: input.cookie || null, isActive: input.isActive ?? true });
+        return { success: true };
+      }),
+    deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteAliexpressConfig(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ── Bot Settings ─────────────────────────────────────────────────────────
+  botSettings: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await getBotSettings(ctx.user.id);
+      return settings ?? {
+        scheduleEnabled: false,
+        scheduleWindows: [],
+        delayMinutes: 0,
+        delayPerGroup: false,
+        delayGlobal: false,
+        includeGroupLink: false,
+        feedGlobalEnabled: false,
+        feedGlobalTargets: [],
+        clickablePreview: false,
+        linkOrder: 'first' as const,
+        cmdStickerEnabled: false,
+        cmdDeleteLinksEnabled: false,
+      };
+    }),
+    save: protectedProcedure
+      .input(z.object({
+        scheduleEnabled: z.boolean().optional(),
+        scheduleWindows: z.array(z.object({ start: z.string(), end: z.string() })).optional(),
+        delayMinutes: z.number().min(0).optional(),
+        delayPerGroup: z.boolean().optional(),
+        delayGlobal: z.boolean().optional(),
+        includeGroupLink: z.boolean().optional(),
+        feedGlobalEnabled: z.boolean().optional(),
+        feedGlobalTargets: z.array(z.number()).optional(),
+        clickablePreview: z.boolean().optional(),
+        linkOrder: z.enum(['first', 'last']).optional(),
+        cmdStickerEnabled: z.boolean().optional(),
+        cmdDeleteLinksEnabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertBotSettings(ctx.user.id, input as any);
+        return { success: true };
+      }),
+  }),
+
+  // ── Envio Manual ─────────────────────────────────────────────────────────
+  manualSend: router({
+    send: protectedProcedure
+      .input(z.object({
+        instanceId: z.number(),
+        targetGroupIds: z.array(z.number()),
+        message: z.string().min(1),
+        replaceLinks: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const instance = await getWhatsappInstanceById(input.instanceId, ctx.user.id);
+        if (!instance) throw new Error("Instância não encontrada");
+        const isConnected = whatsappManager.isConnected(input.instanceId);
+        if (!isConnected) throw new Error("WhatsApp não está conectado");
+        const groups = await getMonitoredGroups(ctx.user.id);
+        const targets = groups.filter(g => input.targetGroupIds.includes(g.id) && g.enviarOfertas);
+        if (targets.length === 0) throw new Error("Nenhum grupo de destino válido selecionado");
+        let sentCount = 0;
+        for (const target of targets) {
+          try {
+            const ok = await whatsappManager.sendTextMessage(input.instanceId, target.groupJid, input.message);
+            if (ok) sentCount++;
+          } catch (err) {
+            console.error(`[ManualSend] Erro ao enviar para ${target.groupName}:`, err);
+          }
+        }
+        return { success: true, sentCount };
       }),
   }),
 });

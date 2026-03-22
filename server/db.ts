@@ -27,6 +27,7 @@ import {
   affiliateLinks,
   automationTargets,
   automations,
+  botSettings,
   campaigns,
   groupTargets,
   mercadoLivreConfig,
@@ -34,6 +35,10 @@ import {
   postLogs,
   sendLogs,
   sendTargets,
+  shopeeConfig,
+  amazonConfig,
+  magazineLuizaConfig,
+  aliexpressConfig,
   users,
   whatsappInstances,
 } from "../drizzle/schema";
@@ -423,4 +428,97 @@ export async function upsertMercadoLivreConfig(userId: number, data: Omit<Insert
       isActive: data.isActive,
     },
   });
+}
+
+// ── Shopee Config ──────────────────────────────────────────────────────────
+export async function getShopeeConfig(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(shopeeConfig).where(eq(shopeeConfig.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+export async function upsertShopeeConfig(userId: number, data: { appId?: string | null; secret?: string | null; isActive?: boolean }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(shopeeConfig).values({ userId, appId: data.appId, secret: data.secret, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
+    set: { appId: data.appId, secret: data.secret, isActive: data.isActive ?? true },
+  });
+}
+export async function deleteShopeeConfig(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(shopeeConfig).where(eq(shopeeConfig.userId, userId));
+}
+
+// ── Amazon Config ──────────────────────────────────────────────────────────
+export async function getAmazonConfig(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(amazonConfig).where(eq(amazonConfig.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+export async function upsertAmazonConfig(userId: number, data: { tag?: string | null; cookieSession?: string | null; isActive?: boolean }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(amazonConfig).values({ userId, tag: data.tag, cookieSession: data.cookieSession, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
+    set: { tag: data.tag, cookieSession: data.cookieSession, isActive: data.isActive ?? true },
+  });
+}
+export async function deleteAmazonConfig(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(amazonConfig).where(eq(amazonConfig.userId, userId));
+}
+
+// ── Magazine Luiza Config ──────────────────────────────────────────────────
+export async function getMagazineLuizaConfig(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(magazineLuizaConfig).where(eq(magazineLuizaConfig.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+export async function upsertMagazineLuizaConfig(userId: number, data: { tag?: string | null; isActive?: boolean }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(magazineLuizaConfig).values({ userId, tag: data.tag, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
+    set: { tag: data.tag, isActive: data.isActive ?? true },
+  });
+}
+export async function deleteMagazineLuizaConfig(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(magazineLuizaConfig).where(eq(magazineLuizaConfig.userId, userId));
+}
+
+// ── AliExpress Config ──────────────────────────────────────────────────────
+export async function getAliexpressConfig(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(aliexpressConfig).where(eq(aliexpressConfig.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+export async function upsertAliexpressConfig(userId: number, data: { trackId?: string | null; cookie?: string | null; isActive?: boolean }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(aliexpressConfig).values({ userId, trackId: data.trackId, cookie: data.cookie, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
+    set: { trackId: data.trackId, cookie: data.cookie, isActive: data.isActive ?? true },
+  });
+}
+export async function deleteAliexpressConfig(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(aliexpressConfig).where(eq(aliexpressConfig.userId, userId));
+}
+
+// ── Bot Settings ───────────────────────────────────────────────────────────
+export async function getBotSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(botSettings).where(eq(botSettings.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+export async function upsertBotSettings(userId: number, data: Partial<Omit<typeof botSettings.$inferInsert, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(botSettings).values({ userId, ...data } as any).onDuplicateKeyUpdate({ set: data as any });
 }

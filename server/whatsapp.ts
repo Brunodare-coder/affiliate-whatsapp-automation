@@ -16,6 +16,11 @@ import {
   getSendTargets,
   getActiveAffiliateLinks,
   getMercadoLivreConfig,
+  getShopeeConfig,
+  getAmazonConfig,
+  getMagazineLuizaConfig,
+  getAliexpressConfig,
+  getBotSettings,
   createPostLog,
   updatePostLog,
   createSendLog,
@@ -275,11 +280,16 @@ export class WhatsAppManager extends EventEmitter {
       // Get active affiliate links
       const links = await getActiveAffiliateLinks(userId);
 
-      // Get Mercado Livre config for ML link replacement
+      // Get affiliate configs for all platforms
       const mlConfig = await getMercadoLivreConfig(userId);
+      const shopeeConfig = await getShopeeConfig(userId);
+      const amazonConfig = await getAmazonConfig(userId);
+      const magaluConfig = await getMagazineLuizaConfig(userId);
+      const aliConfig = await getAliexpressConfig(userId);
+      const botSettings = await getBotSettings(userId);
 
       for (const automation of matchingAutomations) {
-        await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null);
+        await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
       }
     } catch (err) {
       console.error("[WhatsApp] Error handling incoming message:", err);
@@ -296,7 +306,12 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean } | null = null
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean } | null = null,
+    shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
+    amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
+    magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
+    aliConfig: { trackId?: string | null; isActive?: boolean } | null = null,
+    botSettings: { linkOrder?: string | null; includeGroupLink?: boolean | null; clickablePreview?: boolean | null; delayMinutes?: number | null } | null = null
   ): Promise<void> {
     const groupMeta = await this.getGroupName(instanceId, sourceGroupJid);
 
@@ -359,6 +374,60 @@ export class WhatsAppManager extends EventEmitter {
           processedText = mlResult.text;
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
+        }
+      }
+
+      // Replace Shopee links with affiliate tag
+      if (shopeeConfig && shopeeConfig.isActive && shopeeConfig.appId && processedText) {
+        const shopeeResult = replaceShopeeLinks(processedText, shopeeConfig);
+        if (shopeeResult.replaced > 0) {
+          processedText = shopeeResult.text;
+          linksFound = Math.max(linksFound, shopeeResult.found);
+          linksReplaced += shopeeResult.replaced;
+        }
+      }
+
+      // Replace Amazon links with affiliate tag
+      if (amazonConfig && amazonConfig.isActive && amazonConfig.tag && processedText) {
+        const amazonResult = replaceAmazonLinks(processedText, amazonConfig);
+        if (amazonResult.replaced > 0) {
+          processedText = amazonResult.text;
+          linksFound = Math.max(linksFound, amazonResult.found);
+          linksReplaced += amazonResult.replaced;
+        }
+      }
+
+      // Replace Magazine Luiza links with affiliate tag
+      if (magaluConfig && magaluConfig.isActive && magaluConfig.tag && processedText) {
+        const magaluResult = replaceMagazineLuizaLinks(processedText, magaluConfig);
+        if (magaluResult.replaced > 0) {
+          processedText = magaluResult.text;
+          linksFound = Math.max(linksFound, magaluResult.found);
+          linksReplaced += magaluResult.replaced;
+        }
+      }
+
+      // Replace AliExpress links with affiliate tag
+      if (aliConfig && aliConfig.isActive && aliConfig.trackId && processedText) {
+        const aliResult = replaceAliexpressLinks(processedText, aliConfig);
+        if (aliResult.replaced > 0) {
+          processedText = aliResult.text;
+          linksFound = Math.max(linksFound, aliResult.found);
+          linksReplaced += aliResult.replaced;
+        }
+      }
+
+      // Apply link order (first or last)
+      if (botSettings?.linkOrder === 'last' && processedText) {
+        // Move links to end of message
+        const urlRegexOrder = /https?:\/\/\S+/gi;
+        const urls = processedText.match(urlRegexOrder) || [];
+        if (urls.length > 0) {
+          let textWithoutUrls = processedText;
+          for (const url of urls) {
+            textWithoutUrls = textWithoutUrls.replace(url, '').trim();
+          }
+          processedText = textWithoutUrls + '\n\n' + urls.join('\n');
         }
       }
 
@@ -519,6 +588,116 @@ export function replaceMercadoLivreLinks(
       if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
       // Adiciona Matt Tool ID se disponível
       if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+      replaced++;
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  });
+
+  return { text: processedText, found, replaced };
+}
+
+// ── Substituição de links Shopee ─────────────────────────────────────────────
+export function replaceShopeeLinks(
+  text: string,
+  config: { appId?: string | null }
+): { text: string; found: number; replaced: number } {
+  // Padrão para links da Shopee (s.shopee.com.br, shopee.com.br)
+  const shopeePattern = /https?:\/\/(?:[a-z0-9-]+\.)?shopee\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = text.match(shopeePattern) || [];
+  const found = matches.length;
+  let replaced = 0;
+
+  if (!config.appId || found === 0) return { text, found, replaced };
+
+  // Para Shopee, o link de afiliado é gerado via API; aqui apenas marcamos com o appId como parâmetro
+  const processedText = text.replace(shopeePattern, (url) => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set("af_id", config.appId!);
+      replaced++;
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  });
+
+  return { text: processedText, found, replaced };
+}
+
+// ── Substituição de links Amazon ─────────────────────────────────────────────
+export function replaceAmazonLinks(
+  text: string,
+  config: { tag?: string | null }
+): { text: string; found: number; replaced: number } {
+  // Padrão para links da Amazon Brasil
+  const amazonPattern = /https?:\/\/(?:[a-z0-9-]+\.)?amazon\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = text.match(amazonPattern) || [];
+  const found = matches.length;
+  let replaced = 0;
+
+  if (!config.tag || found === 0) return { text, found, replaced };
+
+  const processedText = text.replace(amazonPattern, (url) => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set("tag", config.tag!);
+      replaced++;
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  });
+
+  return { text: processedText, found, replaced };
+}
+
+// ── Substituição de links Magazine Luiza ─────────────────────────────────────
+export function replaceMagazineLuizaLinks(
+  text: string,
+  config: { tag?: string | null }
+): { text: string; found: number; replaced: number } {
+  // Padrão para links da Magazine Luiza
+  const magaluPattern = /https?:\/\/(?:[a-z0-9-]+\.)?magazineluiza\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = text.match(magaluPattern) || [];
+  const found = matches.length;
+  let replaced = 0;
+
+  if (!config.tag || found === 0) return { text, found, replaced };
+
+  const processedText = text.replace(magaluPattern, (url) => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set("utm_source", "afiliados");
+      urlObj.searchParams.set("utm_medium", config.tag!);
+      replaced++;
+      return urlObj.toString();
+    } catch {
+      return url;
+    }
+  });
+
+  return { text: processedText, found, replaced };
+}
+
+// ── Substituição de links AliExpress ─────────────────────────────────────────
+export function replaceAliexpressLinks(
+  text: string,
+  config: { trackId?: string | null }
+): { text: string; found: number; replaced: number } {
+  // Padrão para links do AliExpress
+  const aliPattern = /https?:\/\/(?:[a-z0-9-]+\.)?aliexpress\.com\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = text.match(aliPattern) || [];
+  const found = matches.length;
+  let replaced = 0;
+
+  if (!config.trackId || found === 0) return { text, found, replaced };
+
+  const processedText = text.replace(aliPattern, (url) => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set("aff_trace_key", config.trackId!);
       replaced++;
       return urlObj.toString();
     } catch {

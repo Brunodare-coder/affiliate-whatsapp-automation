@@ -107,3 +107,44 @@
 - [x] Corrigir getGroups no Baileys para buscar grupos da conta conectada
 - [x] Melhorar feedback do botão Sincronizar (mostrar quantos grupos encontrados)
 - [x] Garantir que grupos sejam carregados após conexão do WA
+
+## Novas Funcionalidades ProAfiliados (Fase 2)
+
+### Credenciais de Afiliados
+- [x] Tabela shopee_config (AppID + Senha)
+- [x] Tabela amazon_config (Tag + Cookie de sessão)
+- [x] Tabela magazine_luiza_config (Tag)
+- [x] Tabela aliexpress_config (Track ID + Cookie)
+- [x] Procedures CRUD para cada plataforma
+- [x] Modais de configuração no frontend
+
+### Configurações Globais do Bot
+- [x] Tabela bot_settings (agendamento, delay, link_do_grupo, feed_global, preview_clicavel, ordem_link)
+- [x] Procedures para salvar/ler bot_settings
+- [x] Modal Agendamento Automático (ligar/desligar por horário)
+- [x] Modal Delay entre Postagens (minutos, delay por grupo, delay global)
+- [x] Modal Comandos do Bot (!s, !r, !ban, !add)
+- [x] Modal Link do Grupo nas Mensagens (toggle incluir link de convite)
+- [x] Toggle Feed Global no Dashboard
+
+### Envio Manual e em Massa
+- [x] Modal Envio Manual (colar link + enviar com afiliado)
+- [x] Modal Envio em Massa (texto/foto para grupos)
+
+### Adicionar Membros
+- [x] Modal Adicionar Membros aos Grupos de Disparo
+- [x] Carregar membros de grupos selecionados
+- [x] Adicionar membros com delay humanizado
+
+### Página de Configurações Completa
+- [x] Seção CREDENCIAIS com cards para todas as plataformas
+- [x] Seção AUTOMAÇÃO com cards: Agendamento, Delay, Comandos, Figurinhas
+- [x] Seção FERRAMENTAS com cards: Indicações, Link do Grupo, Add Membros, Tutoriais
+- [x] Feed Global com toggle e grupos alvo
+- [x] Preview Clicável toggle
+
+### Correção de Links
+- [x] Corrigir substituição de links ML (usar API real de afiliados)
+- [x] Implementar substituição de links Shopee via API
+- [x] Implementar substituição de links Amazon (tag de afiliado)
+- [x] Ordem do link: Primeiro/Último no grupo

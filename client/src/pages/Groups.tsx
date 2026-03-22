@@ -1,4 +1,5 @@
 import AppLayout from "@/components/AppLayout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -306,6 +307,14 @@ export default function Groups() {
     },
   });
 
+  const { data: botSettings, refetch: refetchBotSettings } = trpc.botSettings.get.useQuery();
+  const saveBotSettings = trpc.botSettings.save.useMutation({
+    onSuccess: () => {
+      refetchBotSettings();
+      toast.success("Configuração salva!");
+    },
+  });
+
   const filteredGroups = useMemo(
     () =>
       (savedGroups || []).filter((g) =>
@@ -402,6 +411,40 @@ export default function Groups() {
             </Button>
           </div>
         )}
+
+        {/* Global Settings */}
+        <div className="rounded-xl bg-card border border-border p-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Configurações Globais</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-muted/20 rounded-lg p-3">
+              <p className="text-sm font-medium mb-2">Ordem do Link</p>
+              <p className="text-xs text-muted-foreground mb-2">Posição do link de afiliado na mensagem</p>
+              <Select
+                value={botSettings?.linkOrder ?? 'first'}
+                onValueChange={(v) => saveBotSettings.mutate({ linkOrder: v as 'first' | 'last' })}
+              >
+                <SelectTrigger className="bg-background border-border h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="first">Primeiro (início)</SelectItem>
+                  <SelectItem value="last">Último (final)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-muted/20 rounded-lg p-3">
+              <p className="text-sm font-medium mb-2">Preview Clicável</p>
+              <p className="text-xs text-muted-foreground mb-2">Substitui imagem pelo preview do produto</p>
+              <div className="flex items-center gap-2 mt-3">
+                <Switch
+                  checked={botSettings?.clickablePreview ?? false}
+                  onCheckedChange={(v) => saveBotSettings.mutate({ clickablePreview: v })}
+                />
+                <span className="text-xs">{botSettings?.clickablePreview ? 'Ativo' : 'Inativo'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Search */}
         <div className="relative">

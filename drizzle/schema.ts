@@ -211,3 +211,88 @@ export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
 
 export type MercadoLivreConfig = typeof mercadoLivreConfig.$inferSelect;
 export type InsertMercadoLivreConfig = typeof mercadoLivreConfig.$inferInsert;
+
+// Configurações da Shopee Afiliados
+export const shopeeConfig = mysqlTable("shopee_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  appId: varchar("appId", { length: 255 }),
+  secret: text("secret"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ShopeeConfig = typeof shopeeConfig.$inferSelect;
+export type InsertShopeeConfig = typeof shopeeConfig.$inferInsert;
+
+// Configurações da Amazon Afiliados
+export const amazonConfig = mysqlTable("amazon_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  tag: varchar("tag", { length: 255 }),
+  cookieSession: text("cookieSession"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AmazonConfig = typeof amazonConfig.$inferSelect;
+export type InsertAmazonConfig = typeof amazonConfig.$inferInsert;
+
+// Configurações do Magazine Luiza Afiliados
+export const magazineLuizaConfig = mysqlTable("magazine_luiza_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  tag: varchar("tag", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MagazineLuizaConfig = typeof magazineLuizaConfig.$inferSelect;
+export type InsertMagazineLuizaConfig = typeof magazineLuizaConfig.$inferInsert;
+
+// Configurações do AliExpress Afiliados
+export const aliexpressConfig = mysqlTable("aliexpress_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  trackId: varchar("trackId", { length: 255 }),
+  cookie: text("cookie"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AliexpressConfig = typeof aliexpressConfig.$inferSelect;
+export type InsertAliexpressConfig = typeof aliexpressConfig.$inferInsert;
+
+// Configurações globais do bot
+export const botSettings = mysqlTable("bot_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  // Agendamento
+  scheduleEnabled: boolean("scheduleEnabled").default(false).notNull(),
+  scheduleWindows: json("scheduleWindows"),  // [{start: "08:00", end: "22:00"}]
+  // Delay entre postagens
+  delayMinutes: int("delayMinutes").default(0).notNull(),
+  delayPerGroup: boolean("delayPerGroup").default(false).notNull(),
+  delayGlobal: boolean("delayGlobal").default(false).notNull(),
+  // Link do grupo
+  includeGroupLink: boolean("includeGroupLink").default(false).notNull(),
+  // Feed Global
+  feedGlobalEnabled: boolean("feedGlobalEnabled").default(false).notNull(),
+  feedGlobalTargets: json("feedGlobalTargets"),  // array de groupIds alvo
+  // Preview Clicável
+  clickablePreview: boolean("clickablePreview").default(false).notNull(),
+  // Ordem do link
+  linkOrder: mysqlEnum("linkOrder", ["first", "last"]).default("first").notNull(),
+  // Comandos do bot
+  cmdStickerEnabled: boolean("cmdStickerEnabled").default(false).notNull(),
+  cmdDeleteLinksEnabled: boolean("cmdDeleteLinksEnabled").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BotSettings = typeof botSettings.$inferSelect;
+export type InsertBotSettings = typeof botSettings.$inferInsert;
