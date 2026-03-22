@@ -357,3 +357,9 @@
 
 ## Melhoria Seção de Ajuda (Fase 19)
 - [x] Reescrever seção "Como usar" com fluxo passo a passo visual (Origem → Disparo)
+
+## Auditoria de Isolamento por Usuário (Fase 20)
+- [x] Verificar que getMonitoredGroups filtra por userId — OK
+- [x] Verificar que getGroupTargets filtra por userId — OK
+- [x] Verificar que todas as mutations (add, update, remove) validam que o grupo pertence ao userId — OK
+- [x] Confirmar que o modal Grupos de Disparo mostra apenas grupos do usuário logado — OK (query usa ctx.user.id)
