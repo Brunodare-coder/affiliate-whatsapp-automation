@@ -33,6 +33,7 @@ import {
   getSendTargets,
   getWhatsappInstanceById,
   getWhatsappInstances,
+  getWhatsappInstancesLight,
   setAutomationTargets,
   updateAffiliateLink,
   updateAutomation,
@@ -457,7 +458,10 @@ export const appRouter = router({
 
   // ── WhatsApp Instances ─────────────────────────────────────────────────
   whatsapp: router({
-    listInstances: protectedProcedure.query(({ ctx }) => getWhatsappInstances(ctx.user.id)),
+    // Light query: no qrCode/sessionData - used for status polling in sidebar/dashboard
+    listInstances: protectedProcedure.query(({ ctx }) => getWhatsappInstancesLight(ctx.user.id)),
+    // Full query: includes qrCode - used only in WhatsApp connect page
+    listInstancesFull: protectedProcedure.query(({ ctx }) => getWhatsappInstances(ctx.user.id)),
 
     createInstance: protectedProcedure
       .input(z.object({ name: z.string().min(1).max(255) }))

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, QrCode, RefreshCw, Smartphone, Trash2, Wifi, WifiOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 function QRCodeDisplay({ instanceId }: { instanceId: number }) {
@@ -132,15 +132,26 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
 export default function WhatsAppConnect() {
   const utils = trpc.useUtils();
   const { data: sub, isLoading: subLoading } = trpc.subscription.get.useQuery();
-  const { data: instances, isLoading } = trpc.whatsapp.listInstances.useQuery(undefined, {
-    refetchInterval: 5000,
+  // Use full query (includes qrCode) only on this page; sidebar uses light query
+  const [qrPollInterval, setQrPollInterval] = useState(2000);
+  const { data: instances, isLoading } = trpc.whatsapp.listInstancesFull.useQuery(undefined, {
+    refetchInterval: qrPollInterval,
   });
+  // Adjust poll interval based on connection state
+  useEffect(() => {
+    if (!instances) return;
+    const hasActive = (instances as Array<{status: string}>).some(
+      (i) => i.status === "qr_pending" || i.status === "connecting"
+    );
+    setQrPollInterval(hasActive ? 2000 : 5000);
+  }, [instances]);
   const [showCreate, setShowCreate] = useState(false);
   const [instanceName, setInstanceName] = useState("");
   const [selectedInstance, setSelectedInstance] = useState<number | null>(null);
 
   const createMutation = trpc.whatsapp.createInstance.useMutation({
     onSuccess: (data) => {
+      utils.whatsapp.listInstancesFull.invalidate();
       utils.whatsapp.listInstances.invalidate();
       setShowCreate(false);
       setInstanceName("");
@@ -151,17 +162,17 @@ export default function WhatsAppConnect() {
   });
 
   const connectMutation = trpc.whatsapp.connect.useMutation({
-    onSuccess: () => { utils.whatsapp.listInstances.invalidate(); toast.success("Iniciando conexão..."); },
+    onSuccess: () => { utils.whatsapp.listInstancesFull.invalidate(); utils.whatsapp.listInstances.invalidate(); toast.success("Iniciando conexão..."); },
     onError: (e) => toast.error(e.message),
   });
 
   const disconnectMutation = trpc.whatsapp.disconnect.useMutation({
-    onSuccess: () => { utils.whatsapp.listInstances.invalidate(); toast.success("Desconectado!"); },
+    onSuccess: () => { utils.whatsapp.listInstancesFull.invalidate(); utils.whatsapp.listInstances.invalidate(); toast.success("Desconectado!"); },
     onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = trpc.whatsapp.deleteInstance.useMutation({
-    onSuccess: () => { utils.whatsapp.listInstances.invalidate(); setSelectedInstance(null); toast.success("Instância removida!"); },
+    onSuccess: () => { utils.whatsapp.listInstancesFull.invalidate(); utils.whatsapp.listInstances.invalidate(); setSelectedInstance(null); toast.success("Instância removida!"); },
     onError: (e) => toast.error(e.message),
   });
 

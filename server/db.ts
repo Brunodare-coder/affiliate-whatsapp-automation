@@ -242,6 +242,22 @@ export async function getWhatsappInstances(userId: number): Promise<WhatsappInst
   return db.select().from(whatsappInstances).where(eq(whatsappInstances.userId, userId)).orderBy(desc(whatsappInstances.createdAt));
 }
 
+// Light version: excludes qrCode and sessionData for fast polling (status indicator)
+export async function getWhatsappInstancesLight(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: whatsappInstances.id,
+    userId: whatsappInstances.userId,
+    name: whatsappInstances.name,
+    phoneNumber: whatsappInstances.phoneNumber,
+    status: whatsappInstances.status,
+    lastConnectedAt: whatsappInstances.lastConnectedAt,
+    createdAt: whatsappInstances.createdAt,
+    updatedAt: whatsappInstances.updatedAt,
+  }).from(whatsappInstances).where(eq(whatsappInstances.userId, userId)).orderBy(desc(whatsappInstances.createdAt));
+}
+
 export async function getWhatsappInstanceById(id: number, userId: number): Promise<WhatsappInstance | undefined> {
   const db = await getDb();
   if (!db) return undefined;

@@ -433,3 +433,11 @@
 - [x] Auto-reconexão: delay de 30s quando estava conectado, 5s quando ainda estava conectando
 - [x] Sidebar: badge mostra ●1234 (últimos 4 dígitos do número) quando conectado
 - [x] Sidebar: badge mostra OFF (vermelho) quando desconectado, ... (amarelo) quando conectando
+
+## Bug Fix - Lentidão QR Code e Página WhatsApp (Fase 31)
+- [x] Diagnosticado: listInstances retornava qrCode (base64 ~3KB) em TODAS as páginas a cada 5s
+- [x] Criada getWhatsappInstancesLight no db.ts: exclui qrCode e sessionData
+- [x] listInstances agora usa versão light (rápida) para polling do sidebar/dashboard
+- [x] listInstancesFull: nova procedure com qrCode, usada APENAS na página WhatsApp
+- [x] WhatsAppConnect: polling adaptativo (2s quando conectando, 5s quando idle)
+- [x] getQRCode: já usa memória primeiro (Map<instanceId, qrDataUrl>) - confirma que é rápido
