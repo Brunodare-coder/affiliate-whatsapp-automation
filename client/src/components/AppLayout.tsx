@@ -8,6 +8,7 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
+  Crown,
   Globe,
   Link2,
   LogOut,
@@ -33,6 +34,10 @@ const navItems = [
   { path: "/logs", label: "Logs", icon: FileText },
   { path: "/subscription", label: "Assinatura", icon: Shield },
   { path: "/settings", label: "Configurações", icon: Settings },
+];
+
+const adminNavItems = [
+  { path: "/admin", label: "Painel Admin", icon: Crown },
 ];
 
 interface AppLayoutProps {
@@ -118,6 +123,34 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 </Link>
               );
             })}
+            {/* Admin items - apenas para admins */}
+            {user?.role === "admin" && (
+              <>
+                {!collapsed && (
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="text-xs font-semibold text-yellow-400/70 uppercase tracking-wider">Admin</p>
+                  </div>
+                )}
+                {adminNavItems.map((item) => {
+                  const isActive = location === item.path;
+                  return (
+                    <Link key={item.path} href={item.path}>
+                      <div
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                          isActive
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "text-yellow-400/70 hover:bg-yellow-500/10 hover:text-yellow-400"
+                        } ${collapsed ? "justify-center" : ""}`}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
         </ScrollArea>
 

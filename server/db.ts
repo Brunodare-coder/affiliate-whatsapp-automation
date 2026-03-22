@@ -705,3 +705,107 @@ export async function isSubscriptionActive(userId: number): Promise<boolean> {
   }
   return false;
 }
+
+// ============================================================
+// ADMIN FUNCTIONS
+// ============================================================
+
+export async function adminListUsers(): Promise<Array<{
+  id: number;
+  name: string | null;
+  email: string | null;
+  role: string;
+  createdAt: Date;
+  subscription: {
+    plan: string;
+    status: string;
+    currentPeriodEnd: Date | null;
+    hasAds: boolean;
+    isActive: boolean;
+  } | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+  const result = [];
+  for (const u of allUsers) {
+    const sub = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, u.id))
+      .limit(1);
+    const s = sub[0] ?? null;
+    const now = Date.now();
+    let isActive = false;
+    if (s) {
+      if (s.status === "active" && s.currentPeriodEnd && s.currentPeriodEnd.getTime() > now) isActive = true;
+      if (s.status === "trial" && s.trialEndsAt && s.trialEndsAt.getTime() > now) isActive = true;
+    }
+    result.push({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      createdAt: u.createdAt,
+      subscription: s
+        ? {
+            plan: s.plan,
+            status: s.status,
+            currentPeriodEnd: s.currentPeriodEnd,
+            hasAds: s.hasAds,
+            isActive,
+          }
+        : null,
+    });
+  }
+  return result;
+}
+
+export async function adminGrantSubscription(
+  userId: number,
+  plan: "basic" | "premium",
+  months: number
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+  const now = new Date();
+  // Se já tem assinatura ativa, estende a partir do vencimento atual
+  let baseDate = now;
+  if (existing[0]?.currentPeriodEnd && existing[0].currentPeriodEnd > now) {
+    baseDate = existing[0].currentPeriodEnd;
+  }
+  const newPeriodEnd = new Date(baseDate);
+  newPeriodEnd.setMonth(newPeriodEnd.getMonth() + months);
+  const hasAds = plan === "basic";
+  if (existing[0]) {
+    await db
+      .update(subscriptions)
+      .set({ plan, status: "active", currentPeriodEnd: newPeriodEnd, currentPeriodStart: now, hasAds, updatedAt: now })
+      .where(eq(subscriptions.userId, userId));
+  } else {
+    await db.insert(subscriptions).values({
+      userId,
+      plan,
+      status: "active",
+      currentPeriodEnd: newPeriodEnd,
+      currentPeriodStart: now,
+      hasAds,
+      trialEndsAt: now,
+    });
+  }
+}
+
+export async function adminRevokeSubscription(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const now = new Date();
+  await db
+    .update(subscriptions)
+    .set({ status: "expired", currentPeriodEnd: now, updatedAt: now })
+      .where(eq(subscriptions.userId, userId));
+}

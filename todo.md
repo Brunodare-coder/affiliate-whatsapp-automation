@@ -188,3 +188,11 @@
 - [ ] Página /assinatura com card gradiente roxo/azul igual ao print
 - [ ] Modal de pagamento PIX com QR Code, Copia e Cola e timer de expiração
 - [ ] Notificação ao owner quando pagamento é confirmado
+
+## Painel Admin
+- [ ] Backend: procedure admin.listUsers (listar todos os usuários com status de assinatura)
+- [ ] Backend: procedure admin.grantSubscription (ativar plano + N meses para qualquer usuário)
+- [ ] Backend: procedure admin.revokeSubscription (cancelar assinatura de qualquer usuário)
+- [ ] Página /admin com tabela de usuários, status, plano, vencimento e ações
+- [ ] Proteção da rota /admin (somente role=admin)
+- [ ] Formulário para selecionar plano e quantidade de meses ao ativar

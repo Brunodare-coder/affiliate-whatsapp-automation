@@ -4,6 +4,9 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  adminGrantSubscription,
+  adminListUsers,
+  adminRevokeSubscription,
   createAffiliateLink,
   createAutomation,
   createMonitoredGroup,
@@ -71,9 +74,41 @@ import { generatePixQRCode, generateTxid } from "./pix";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 
+// ── Admin Router ────────────────────────────────────────────────────────
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new Error("Acesso negado: apenas administradores podem acessar este recurso");
+  }
+  return next({ ctx });
+});
+
+const adminRouter = router({
+  listUsers: adminProcedure.query(async () => {
+    return await adminListUsers();
+  }),
+  grantSubscription: adminProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+        plan: z.enum(["basic", "premium"]),
+        months: z.number().min(1).max(24),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await adminGrantSubscription(input.userId, input.plan, input.months);
+      return { success: true };
+    }),
+  revokeSubscription: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ input }) => {
+      await adminRevokeSubscription(input.userId);
+      return { success: true };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
-
+  admin: adminRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
