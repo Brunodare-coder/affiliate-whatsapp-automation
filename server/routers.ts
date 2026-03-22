@@ -42,6 +42,8 @@ import {
   updateSendTarget,
   updateWhatsappInstance,
   createCampaign,
+  clearPostLogs,
+  clearSendLogs,
   deleteMercadoLivreConfig,
   getMercadoLivreConfig,
   upsertMercadoLivreConfig,
@@ -749,9 +751,12 @@ export const appRouter = router({
         return { ...log, sendDetails };
       }),
 
-    stats: protectedProcedure.query(({ ctx }) => getPostLogStats(ctx.user.id)),
+     stats: protectedProcedure.query(({ ctx }) => getPostLogStats(ctx.user.id)),
+    clearAll: protectedProcedure.mutation(async ({ ctx }) => {
+      await clearPostLogs(ctx.user.id);
+      return { success: true };
+    }),
   }),
-
   // ── Mercado Livre Config ─────────────────────────────────────────────────────────
   mercadoLivre: router({
     getConfig: protectedProcedure.query(async ({ ctx }) => {
@@ -1056,6 +1061,10 @@ export const appRouter = router({
         const logs = await listSendLogs(ctx.user.id, "sent", 1);
         return logs[0] ?? null;
       }),
+    clearAll: protectedProcedure.mutation(async ({ ctx }) => {
+      await clearSendLogs(ctx.user.id);
+      return { success: true };
+    }),
   }),
   // ── Suporte / Recuperação de Acesso ────────────────────────────────────
   support: router({

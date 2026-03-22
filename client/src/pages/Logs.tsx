@@ -33,6 +33,13 @@ type FilterStatus = "all" | "sent" | "failed" | "pending";
 export default function Logs() {
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set());
+  const utils = trpc.useUtils();
+  const clearSendLogsMutation = trpc.sendLogs.clearAll.useMutation({
+    onSuccess: () => {
+      utils.sendLogs.list.invalidate();
+      utils.sendLogs.stats.invalidate();
+    },
+  });
 
   const toggleExpand = (id: number) => {
     setExpandedLogs((prev) => {
@@ -72,16 +79,32 @@ export default function Logs() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">Histórico de mensagens disparadas pelo bot</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="gap-2 border-white/10 bg-white/5 hover:bg-white/10"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (confirm("Limpar todos os logs de envio? Esta ação não pode ser desfeita.")) {
+                  clearSendLogsMutation.mutate();
+                }
+              }}
+              disabled={clearSendLogsMutation.isPending}
+              className="gap-2 border-red-500/30 bg-red-500/5 hover:bg-red-500/15 text-red-400 hover:text-red-300"
+            >
+              {clearSendLogsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+              Limpar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {/* Stats Row */}

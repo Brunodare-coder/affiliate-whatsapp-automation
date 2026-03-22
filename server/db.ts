@@ -500,6 +500,18 @@ export async function upsertMercadoLivreConfig(userId: number, data: Omit<Insert
   });
 }
 
+export async function clearPostLogs(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(postLogs).where(eq(postLogs.userId, userId));
+}
+
+export async function clearSendLogs(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(sendLogs).where(eq(sendLogs.userId, userId));
+}
+
 export async function deleteMercadoLivreConfig(userId: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
