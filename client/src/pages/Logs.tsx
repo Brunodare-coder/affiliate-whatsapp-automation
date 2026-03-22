@@ -43,9 +43,18 @@ export default function Logs() {
     });
   };
 
-  const { data: logs, isLoading, refetch, isFetching } = trpc.sendLogs.list.useQuery(
+  const { data: logs, isLoading, isError, error, refetch, isFetching } = trpc.sendLogs.list.useQuery(
     { status: filter, limit: 100 },
-    { refetchInterval: 30000 }
+    {
+      refetchInterval: 30000,
+      // Retry up to 3x on transient 502/503 errors (server restart)
+      retry: (count, err: any) => {
+        if (count >= 3) return false;
+        const msg = err?.message ?? "";
+        return msg.includes("Unexpected token") || msg.includes("<!doctype") || msg.includes("502");
+      },
+      retryDelay: (attempt) => Math.min(1500 * 2 ** attempt, 8000),
+    }
   );
   const { data: stats } = trpc.sendLogs.stats.useQuery(undefined, { refetchInterval: 30000 });
 
@@ -111,7 +120,18 @@ export default function Logs() {
         </div>
 
         {/* Logs List */}
-        {isLoading ? (
+        {isError && !isFetching ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-dashed border-red-500/20" style={{ background: "oklch(0.12 0.018 250 / 0.5)" }}>
+            <XCircle className="w-10 h-10 text-red-400/60" />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">Erro ao carregar logs</p>
+              <p className="text-xs text-muted-foreground mt-1">O servidor pode estar reiniciando. Tente novamente.</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10">
+              <RefreshCw className="w-3 h-3 mr-1.5" /> Tentar novamente
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>

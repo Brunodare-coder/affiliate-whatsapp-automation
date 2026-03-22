@@ -408,3 +408,9 @@
 - [x] Botão "Atualizar QR" agora chama refreshQR.mutate() em vez de refetch()
 - [x] Botão mostra spinner "Gerando novo QR..." enquanto aguarda
 - [x] Tela "QR Code não disponível" agora tem botão "Gerar QR" que também chama refreshQR
+
+## Bug Fix - Erro JSON na página /logs (Fase 27)
+- [x] Diagnosticado: erro era transitório (502 do proxy durante restart do servidor)
+- [x] QueryClient global: retry automático até 3x para erros 502/503/HTML com backoff exponencial
+- [x] Query sendLogs.list: retry local específico para erros de HTML/502
+- [x] UI: estado de erro amigável "Erro ao carregar logs" com botão "Tentar novamente"

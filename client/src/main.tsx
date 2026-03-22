@@ -8,7 +8,27 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Retry up to 3 times for transient server errors (502/503 during restarts)
+      retry: (failureCount, error) => {
+        if (failureCount >= 3) return false;
+        // Retry on HTML responses (502/503 proxy errors during server restart)
+        if (error instanceof TRPCClientError) {
+          const isTransient =
+            error.message.includes("<!doctype") ||
+            error.message.includes("Unexpected token") ||
+            error.message.includes("502") ||
+            error.message.includes("503");
+          return isTransient;
+        }
+        return false;
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
