@@ -500,6 +500,11 @@ export async function upsertMercadoLivreConfig(userId: number, data: Omit<Insert
   });
 }
 
+export async function deleteMercadoLivreConfig(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(mercadoLivreConfig).where(eq(mercadoLivreConfig.userId, userId));
+}
 // ── Shopee Config ──────────────────────────────────────────────────────────
 export async function getShopeeConfig(userId: number) {
   const db = await getDb();

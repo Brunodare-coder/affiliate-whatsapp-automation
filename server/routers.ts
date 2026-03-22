@@ -42,6 +42,7 @@ import {
   updateSendTarget,
   updateWhatsappInstance,
   createCampaign,
+  deleteMercadoLivreConfig,
   getMercadoLivreConfig,
   upsertMercadoLivreConfig,
   getGroupTargets,
@@ -782,6 +783,11 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {
+      await deleteMercadoLivreConfig(ctx.user.id);
+      invalidateUserCache(ctx.user.id);
+      return { success: true };
+    }),
     // Gera um link de afiliado ML a partir de uma URL de produto
     generateLink: protectedProcedure
       .input(z.object({ productUrl: z.string().url() }))
