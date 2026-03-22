@@ -510,3 +510,8 @@
 ## Fallback Encurtamento ML (Fase 41)
 - [x] shortenMeliLinksInText: capturar erro da API e retornar texto com link longo (tag já substituída)
 - [x] Log de aviso no Diagnóstico quando fallback for acionado
+
+## Cole Cookies Rápido ML (Fase 42)
+- [x] Adicionar área "Colar cookies completos" no modal ML
+- [x] Ao colar, extrair automaticamente ssid e _csrf da string
+- [x] Mostrar preview dos valores extraídos antes de salvar
