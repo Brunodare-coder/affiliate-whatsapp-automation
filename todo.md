@@ -368,3 +368,13 @@
 - [x] Ocultar botão "Grupos de Disparo" em grupos com Enviar Ofertas ativo (grupos de disparo não precisam configurar alvos)
 - [x] Mostrar botão "Grupos de Disparo" apenas quando Buscar Ofertas está ativo
 - [x] Mostrar info azul "Este grupo recebe ofertas de outros grupos de origem" quando só Enviar Ofertas está ativo
+
+## Imagem + Frase de Marketing (Fase 22)
+- [x] Copiar e reenviar imagem do produto original junto com a mensagem
+- [x] Gerar frase de marketing com IA (invokeLLM) antes de repostar a oferta
+- [x] Toggle "Substituir Imagem" implementado — busca imagem do ML/Amazon quando mensagem não tem imagem
+- [x] Toggle "Gerar Frase com IA" adicionado — reescreve texto da oferta com linguagem persuasiva
+- [x] Adicionar campo generateMarketing ao schema Zod do updateMonitoredGroup no routers.ts
+- [x] Adicionar toggle "Gerar Frase com IA" na UI de grupos (Groups.tsx) com ícone Sparkles
+- [x] Atualizar seção "Como usar" com descrição dos novos toggles
+- [x] Atualizar botão "Desativar Todos" para incluir generateMarketing

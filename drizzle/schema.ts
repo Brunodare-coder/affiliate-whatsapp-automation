@@ -96,6 +96,7 @@ export const monitoredGroups = mysqlTable("monitored_groups", {
   espelharConteudo: boolean("espelharConteudo").default(false).notNull(), // replicar sem converter
   enviarOfertas: boolean("enviarOfertas").default(false).notNull(),   // receber mensagens processadas
   substituirImagem: boolean("substituirImagem").default(false).notNull(), // buscar imagem da loja
+  generateMarketing: boolean("generateMarketing").default(false).notNull(), // gerar frase de marketing com IA
   inviteLink: varchar("inviteLink", { length: 500 }), // link de convite do grupo (chat.whatsapp.com/...)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

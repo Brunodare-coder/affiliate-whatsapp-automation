@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Search,
   Smartphone,
+  Sparkles,
   Target,
   Trash2,
   Users,
@@ -40,7 +41,7 @@ import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
-type GroupFlag = "buscarOfertas" | "espelharConteudo" | "enviarOfertas" | "substituirImagem";
+type GroupFlag = "buscarOfertas" | "espelharConteudo" | "enviarOfertas" | "substituirImagem" | "generateMarketing";
 
 // ─── Modal Configurar Grupos de Disparo ──────────────────────────────────────
 function ConfigureTargetsModal({
@@ -375,7 +376,7 @@ function GroupsTab() {
     if (!confirm(`Desativar todos os toggles de ${groups.length} grupo(s)?`)) return;
     try {
       await Promise.all(groups.map((g) =>
-        updateGroup.mutateAsync({ id: g.id, buscarOfertas: false, enviarOfertas: false, espelharConteudo: false, substituirImagem: false })
+        updateGroup.mutateAsync({ id: g.id, buscarOfertas: false, enviarOfertas: false, espelharConteudo: false, substituirImagem: false, generateMarketing: false })
       ));
       await refetchSaved();
       toast.success("Todos os grupos foram desativados!");
@@ -552,7 +553,8 @@ function GroupsTab() {
             <div className="space-y-1.5 border-t border-white/8 pt-3">
               <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">Outros toggles</p>
               <p className="text-xs text-muted-foreground">🔄 <strong className="text-foreground">Espelhar</strong> — copia a mensagem sem trocar links (para canais de notícias)</p>
-              <p className="text-xs text-muted-foreground">🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
+              <p className="text-xs text-muted-foreground">🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja quando a mensagem original não tem imagem</p>
+              <p className="text-xs text-muted-foreground">✨ <strong className="text-foreground">Gerar Frase com IA</strong> — reescreve o texto da oferta com linguagem persuasiva usando inteligência artificial</p>
             </div>
           </div>
         </details>
@@ -748,6 +750,14 @@ function GroupsTab() {
                     sublabelColor={group.substituirImagem ? "text-purple-400" : "text-muted-foreground"}
                     checked={group.substituirImagem}
                     onToggle={(v) => handleToggle(group, "substituirImagem", v)}
+                  />
+                  <GroupOptionRow
+                    icon={<Sparkles className="w-4 h-4 text-yellow-400" />}
+                    label="Gerar Frase com IA"
+                    sublabel={group.generateMarketing ? "● Reescreve com IA" : "○ Inativo"}
+                    sublabelColor={group.generateMarketing ? "text-yellow-400" : "text-muted-foreground"}
+                    checked={group.generateMarketing}
+                    onToggle={(v) => handleToggle(group, "generateMarketing", v)}
                   />
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Target className="w-4 h-4 text-muted-foreground flex-shrink-0" />

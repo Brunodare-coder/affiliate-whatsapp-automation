@@ -445,6 +445,7 @@ export class WhatsAppManager extends EventEmitter {
           useLlmSuggestion: false,
           sendDelay: 0,
           isActive: true,
+          generateMarketing: activeMonitored[0].generateMarketing || false,
         };
         await this.processAutomation(instanceId, userId, syntheticAutomation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
         return;
@@ -466,7 +467,14 @@ export class WhatsAppManager extends EventEmitter {
       ]);
 
       for (const automation of matchingAutomations) {
-        await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
+        // Enrich automation with source group flags (generateMarketing, replaceImage)
+        const sourceGroup = activeMonitored.find((g) => g.id === automation.sourceGroupId);
+        const enrichedAutomation = {
+          ...automation,
+          generateMarketing: sourceGroup?.generateMarketing || false,
+          replaceImage: sourceGroup?.substituirImagem || false,
+        };
+        await this.processAutomation(instanceId, userId, enrichedAutomation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
       }
 
       // ── Feed Global: dispatch to other users who have Feed Global enabled ──
@@ -766,6 +774,51 @@ export class WhatsAppManager extends EventEmitter {
         processedText = processedText.replace(/\n{3,}/g, '\n\n').trim();
       }
 
+      // Generate marketing phrase with AI if enabled
+      if (automation.generateMarketing && processedText) {
+        try {
+          const { invokeLLM } = await import("./_core/llm");
+          const marketingResponse = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Você é um especialista em marketing de afiliados para grupos de WhatsApp. 
+Sua tarefa é reescrever mensagens de oferta de produtos para torná-las mais persuasivas e atraentes.
+
+Regras:
+- Mantenha TODOS os links exatamente como estão (não altere nenhuma URL)
+- Mantenha os preços e informações do produto
+- Use emojis estrategicamente (máx 5 por mensagem)
+- Tom urgente e persuasivo (ex: "Corre!", "Só hoje!", "Imperdível!")
+- Máximo 200 palavras
+- Não adicione hashtags
+- Não invente informações que não estão na mensagem original`,
+              },
+              {
+                role: "user",
+                content: `Reescreva esta mensagem de oferta com linguagem de marketing mais persuasiva:\n\n${processedText}`,
+              },
+            ],
+          });
+          const rawContent = marketingResponse?.choices?.[0]?.message?.content;
+          const marketingText = typeof rawContent === 'string' ? rawContent : null;
+          if (marketingText && marketingText.trim()) {
+            // Verify all original URLs are preserved in the marketing text
+            const urlRegex = /https?:\/\/\S+/gi;
+            const originalUrls = processedText.match(urlRegex) || [];
+            const marketingUrls = marketingText.match(urlRegex) || [];
+            const allUrlsPreserved = originalUrls.every(url => marketingUrls.some(mu => mu.includes(url.substring(0, 30))));
+            if (allUrlsPreserved || originalUrls.length === 0) {
+              processedText = marketingText.trim();
+              llmSuggestion = marketingText.trim();
+            }
+          }
+        } catch (llmErr) {
+          console.error(`[WhatsApp] Failed to generate marketing text:`, llmErr);
+          // Continue with original text if LLM fails
+        }
+      }
+
       // Apply link order (first or last)
       if (botSettings?.linkOrder === 'last' && processedText) {
         // Move links to end of message
@@ -864,6 +917,7 @@ export class WhatsAppManager extends EventEmitter {
 
       // Download media from WhatsApp if present, upload to S3 for reliable reuse
       let uploadedMediaUrl: string | null = null;
+      let uploadedMediaType = mediaType;
       if ((mediaType === "image" || mediaType === "video") && msg.message) {
         try {
           const buffer = await downloadMediaMessage(
@@ -882,6 +936,36 @@ export class WhatsAppManager extends EventEmitter {
         } catch (mediaErr) {
           console.error(`[WhatsApp] Failed to download/upload media:`, mediaErr);
           // Continue with text-only if media download fails
+        }
+      }
+
+      // If replaceImage is enabled and no media was found, try to fetch product image from ML/Amazon
+      if (automation.replaceImage && !uploadedMediaUrl && processedText) {
+        try {
+          const productImageUrl = await fetchProductImage(processedText);
+          if (productImageUrl) {
+            // Download the product image and upload to S3
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const imgResponse = await fetch(productImageUrl, {
+              signal: controller.signal,
+              headers: { "User-Agent": "Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36" },
+            });
+            clearTimeout(timeout);
+            if (imgResponse.ok) {
+              const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+              const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+              const ext = contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg';
+              const fileKey = `product-images/${userId}-${Date.now()}.${ext}`;
+              const { url } = await storagePut(fileKey, imgBuffer, contentType);
+              uploadedMediaUrl = url;
+              uploadedMediaType = 'image';
+              console.log(`[WhatsApp] Product image fetched and uploaded: ${uploadedMediaUrl}`);
+            }
+          }
+        } catch (imgErr) {
+          console.error(`[WhatsApp] Failed to fetch product image:`, imgErr);
+          // Continue without image if fetch fails
         }
       }
 
@@ -922,9 +1006,9 @@ export class WhatsAppManager extends EventEmitter {
         });
         let sent = false;
         try {
-          if (uploadedMediaUrl && mediaType === "image") {
+          if (uploadedMediaUrl && uploadedMediaType === "image") {
             sent = await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, finalText || undefined);
-          } else if (uploadedMediaUrl && mediaType === "video") {
+          } else if (uploadedMediaUrl && uploadedMediaType === "video") {
             sent = await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, finalText || undefined);
           } else if (finalText) {
             sent = await this.sendTextMessage(instanceId, target.jid, finalText);
@@ -1278,4 +1362,137 @@ export function replaceAliexpressLinks(
   });
 
   return { text: processedText, found, replaced };
+}
+
+// ── Busca de imagem do produto ────────────────────────────────────────────────
+/**
+ * Tenta buscar a imagem principal de um produto a partir de um link de produto.
+ * Suporta Mercado Livre e Amazon Brasil.
+ * Retorna a URL da imagem ou null se não encontrar.
+ */
+async function fetchProductImage(text: string): Promise<string | null> {
+  // Extrair o primeiro link de produto do texto
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+  const urls = text.match(urlRegex) || [];
+  
+  for (const url of urls) {
+    try {
+      const hostname = new URL(url).hostname.toLowerCase();
+      
+      // Mercado Livre
+      if (hostname.includes('mercadolivre.com.br') || hostname.includes('mercadolibre.com')) {
+        const imageUrl = await fetchMercadoLivreImage(url);
+        if (imageUrl) return imageUrl;
+      }
+      
+      // Amazon Brasil
+      if (hostname.includes('amazon.com.br')) {
+        const imageUrl = await fetchAmazonImage(url);
+        if (imageUrl) return imageUrl;
+      }
+    } catch {
+      // Continue to next URL
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Busca a imagem principal de um produto do Mercado Livre via Open Graph meta tag.
+ */
+async function fetchMercadoLivreImage(productUrl: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(productUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+      },
+    });
+    clearTimeout(timeout);
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Try og:image meta tag first
+    const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (ogImageMatch?.[1]) {
+      const imgUrl = ogImageMatch[1];
+      // ML images are usually in format: http2.mlstatic.com/D_NQ_NP_...
+      if (imgUrl.includes('mlstatic.com') || imgUrl.includes('mercadolivre')) {
+        return imgUrl;
+      }
+    }
+    
+    // Try to find product image in JSON-LD or data attributes
+    const jsonLdMatch = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch?.[1]) {
+      try {
+        const jsonData = JSON.parse(jsonLdMatch[1]);
+        const imageUrl = jsonData?.image?.[0] || jsonData?.image;
+        if (typeof imageUrl === 'string' && imageUrl.startsWith('http')) return imageUrl;
+      } catch {
+        // ignore JSON parse errors
+      }
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Busca a imagem principal de um produto da Amazon via Open Graph meta tag.
+ */
+async function fetchAmazonImage(productUrl: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(productUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+      },
+    });
+    clearTimeout(timeout);
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Try og:image meta tag
+    const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (ogImageMatch?.[1]) {
+      const imgUrl = ogImageMatch[1];
+      if (imgUrl.includes('amazon') || imgUrl.includes('ssl-images-amazon') || imgUrl.includes('images-amazon')) {
+        return imgUrl;
+      }
+    }
+    
+    // Try to find main product image in data-a-dynamic-image attribute
+    const dynamicImageMatch = html.match(/data-a-dynamic-image=["']({[^"']+})["']/);
+    if (dynamicImageMatch?.[1]) {
+      try {
+        const images = JSON.parse(dynamicImageMatch[1].replace(/&quot;/g, '"'));
+        const imageUrls = Object.keys(images);
+        if (imageUrls.length > 0) return imageUrls[0];
+      } catch {
+        // ignore
+      }
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
 }
