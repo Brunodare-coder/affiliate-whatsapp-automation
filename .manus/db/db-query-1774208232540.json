@@ -1,0 +1,647 @@
+{
+  "query": "SELECT id, instanceId, groupName, buscarOfertas, isActive FROM monitored_groups WHERE userId = 1 ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, instanceId, groupName, buscarOfertas, isActive FROM monitored_groups WHERE userId = 1 ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "instanceId": "30003",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "2",
+      "instanceId": "30003",
+      "groupName": "",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "3",
+      "instanceId": "30003",
+      "groupName": "Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "4",
+      "instanceId": "30003",
+      "groupName": "bruno files",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "5",
+      "instanceId": "30003",
+      "groupName": "Texas Chain Saw",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "6",
+      "instanceId": "30003",
+      "groupName": "Liverpool ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "7",
+      "instanceId": "30003",
+      "groupName": "Ratos Da Academia ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "8",
+      "instanceId": "30003",
+      "groupName": "Red dead",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "9",
+      "instanceId": "30003",
+      "groupName": "Cirurgia Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "10",
+      "instanceId": "30003",
+      "groupName": "Arden - Computing",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "11",
+      "instanceId": "30003",
+      "groupName": "❤Familia linda🍻",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "12",
+      "instanceId": "30003",
+      "groupName": "MSc Supply Chain Management and Logistics-Arden University",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "13",
+      "instanceId": "30003",
+      "groupName": "Vendas Brasil 🇧🇷",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "14",
+      "instanceId": "30003",
+      "groupName": "Top Achados",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "15",
+      "instanceId": "30003",
+      "groupName": "✅BESTWAY ROMFORD 🛵✅🤝",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "16",
+      "instanceId": "30003",
+      "groupName": "Divulgação do seu trabalho para mais de 1 milhão pessoas",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "17",
+      "instanceId": "30003",
+      "groupName": "🔥 Ofertas Insanas 🛒",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "18",
+      "instanceId": "30003",
+      "groupName": "Solução Deliveroo/uber facial",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "19",
+      "instanceId": "30003",
+      "groupName": "🇬🇧 LONDON 4 ALL 🇬🇧",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "20",
+      "instanceId": "30003",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "buscarOfertas": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "21",
+      "instanceId": "30003",
+      "groupName": "BRAZUKA CLASSIFICADOS UK",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "22",
+      "instanceId": "30003",
+      "groupName": "𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "23",
+      "instanceId": "30003",
+      "groupName": "Quartos na Terra da Rainha 🇬🇧",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "24",
+      "instanceId": "30003",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "25",
+      "instanceId": "30003",
+      "groupName": "Liverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "26",
+      "instanceId": "30003",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "buscarOfertas": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "27",
+      "instanceId": "30003",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "buscarOfertas": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "28",
+      "instanceId": "30003",
+      "groupName": "@sopromosoriginais 943",
+      "buscarOfertas": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "29",
+      "instanceId": "30003",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "buscarOfertas": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "30001",
+      "instanceId": "30003",
+      "groupName": "TV",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30002",
+      "instanceId": "30003",
+      "groupName": "Divulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30003",
+      "instanceId": "30002",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30004",
+      "instanceId": "30002",
+      "groupName": "",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30005",
+      "instanceId": "30002",
+      "groupName": "Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30006",
+      "instanceId": "30002",
+      "groupName": "TV",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30007",
+      "instanceId": "30002",
+      "groupName": "bruno files",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30008",
+      "instanceId": "30002",
+      "groupName": "Texas Chain Saw",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30009",
+      "instanceId": "30002",
+      "groupName": "Liverpool ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30010",
+      "instanceId": "30002",
+      "groupName": "Ratos Da Academia ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30011",
+      "instanceId": "30002",
+      "groupName": "Red dead",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30012",
+      "instanceId": "30002",
+      "groupName": "Cirurgia Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30013",
+      "instanceId": "30002",
+      "groupName": "Arden - Computing",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30014",
+      "instanceId": "30002",
+      "groupName": "❤Familia linda🍻",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30015",
+      "instanceId": "30002",
+      "groupName": "MSc Supply Chain Management and Logistics-Arden University",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30016",
+      "instanceId": "30002",
+      "groupName": "Top Achados",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30017",
+      "instanceId": "30002",
+      "groupName": "Vendas Brasil 🇧🇷",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30018",
+      "instanceId": "30002",
+      "groupName": "✅BESTWAY ROMFORD 🛵✅🤝",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30019",
+      "instanceId": "30002",
+      "groupName": "🔥 Ofertas Insanas 🛒",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30020",
+      "instanceId": "30002",
+      "groupName": "Divulgação do seu trabalho para mais de 1 milhão pessoas",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30021",
+      "instanceId": "30002",
+      "groupName": "Solução Deliveroo/uber facial",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30022",
+      "instanceId": "30002",
+      "groupName": "🇬🇧 LONDON 4 ALL 🇬🇧",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30023",
+      "instanceId": "30002",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30024",
+      "instanceId": "30002",
+      "groupName": "BRAZUKA CLASSIFICADOS UK",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30025",
+      "instanceId": "30002",
+      "groupName": "𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30026",
+      "instanceId": "30002",
+      "groupName": "Divulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30027",
+      "instanceId": "30002",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30028",
+      "instanceId": "30002",
+      "groupName": "Liverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30029",
+      "instanceId": "30002",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30030",
+      "instanceId": "30002",
+      "groupName": "@sopromosoriginais 943",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30031",
+      "instanceId": "30002",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30032",
+      "instanceId": "30002",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30033",
+      "instanceId": "30003",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30034",
+      "instanceId": "30003",
+      "groupName": "",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30035",
+      "instanceId": "30003",
+      "groupName": "Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30036",
+      "instanceId": "30003",
+      "groupName": "TV",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30037",
+      "instanceId": "30003",
+      "groupName": "bruno files",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30038",
+      "instanceId": "30003",
+      "groupName": "Texas Chain Saw",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30039",
+      "instanceId": "30003",
+      "groupName": "Liverpool ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30040",
+      "instanceId": "30003",
+      "groupName": "Ratos Da Academia ",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30041",
+      "instanceId": "30003",
+      "groupName": "Red dead",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30042",
+      "instanceId": "30003",
+      "groupName": "Cirurgia Bruno",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30043",
+      "instanceId": "30003",
+      "groupName": "Arden - Computing",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30044",
+      "instanceId": "30003",
+      "groupName": "❤Familia linda🍻",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30045",
+      "instanceId": "30003",
+      "groupName": "MSc Supply Chain Management and Logistics-Arden University",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30046",
+      "instanceId": "30003",
+      "groupName": "Top Achados",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30047",
+      "instanceId": "30003",
+      "groupName": "Vendas Brasil 🇧🇷",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30048",
+      "instanceId": "30003",
+      "groupName": "✅BESTWAY ROMFORD 🛵✅🤝",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30049",
+      "instanceId": "30003",
+      "groupName": "🔥 Ofertas Insanas 🛒",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30050",
+      "instanceId": "30003",
+      "groupName": "Divulgação do seu trabalho para mais de 1 milhão pessoas",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30051",
+      "instanceId": "30003",
+      "groupName": "Solução Deliveroo/uber facial",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30052",
+      "instanceId": "30003",
+      "groupName": "🇬🇧 LONDON 4 ALL 🇬🇧",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30053",
+      "instanceId": "30003",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30054",
+      "instanceId": "30003",
+      "groupName": "BRAZUKA CLASSIFICADOS UK",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30055",
+      "instanceId": "30003",
+      "groupName": "𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30056",
+      "instanceId": "30003",
+      "groupName": "Divulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30057",
+      "instanceId": "30003",
+      "groupName": "Brasileiros em Manchester",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30058",
+      "instanceId": "30003",
+      "groupName": "Liverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30059",
+      "instanceId": "30003",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30060",
+      "instanceId": "30003",
+      "groupName": "@sopromosoriginais 943",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30061",
+      "instanceId": "30003",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "30062",
+      "instanceId": "30003",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "buscarOfertas": "0",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tinstanceId\tgroupName\tbuscarOfertas\tisActive\n1\t30003\tBrasileiros em Manchester\t0\t1\n2\t30003\t\t0\t1\n3\t30003\tBruno\t0\t1\n4\t30003\tbruno files\t0\t1\n5\t30003\tTexas Chain Saw\t0\t1\n6\t30003\tLiverpool \t0\t1\n7\t30003\tRatos Da Academia \t0\t1\n8\t30003\tRed dead\t0\t1\n9\t30003\tCirurgia Bruno\t0\t1\n10\t30003\tArden - Computing\t0\t1\n11\t30003\t❤Familia linda🍻\t0\t1\n12\t30003\tMSc Supply Chain Management and Logistics-Arden University\t0\t1\n13\t30003\tVendas Brasil 🇧🇷\t0\t1\n14\t30003\tTop Achados\t0\t1\n15\t30003\t✅BESTWAY ROMFORD 🛵✅🤝\t0\t1\n16\t30003\tDivulgação do seu trabalho para mais de 1 milhão pessoas\t0\t1\n17\t30003\t🔥 Ofertas Insanas 🛒\t0\t1\n18\t30003\tSolução Deliveroo/uber facial\t0\t1\n19\t30003\t🇬🇧 LONDON 4 ALL 🇬🇧\t0\t1\n20\t30003\tAchados Promocionais  do mercado Livre.  😱\t1\t1\n21\t30003\tBRAZUKA CLASSIFICADOS UK\t0\t1\n22\t30003\t𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬\t0\t1\n23\t30003\tQuartos na Terra da Rainha 🇬🇧\t0\t1\n24\t30003\tBrasileiros em Manchester\t0\t1\n25\t30003\tLiverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿\t0\t1\n26\t30003\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t1\t1\n27\t30003\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t1\t1\n28\t30003\t@sopromosoriginais 943\t1\t1\n29\t30003\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t1\t1\n30001\t30003\tTV\t0\t1\n30002\t30003\tDivulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com\t0\t1\n30003\t30002\tBrasileiros em Manchester\t0\t1\n30004\t30002\t\t0\t1\n30005\t30002\tBruno\t0\t1\n30006\t30002\tTV\t0\t1\n30007\t30002\tbruno files\t0\t1\n30008\t30002\tTexas Chain Saw\t0\t1\n30009\t30002\tLiverpool \t0\t1\n30010\t30002\tRatos Da Academia \t0\t1\n30011\t30002\tRed dead\t0\t1\n30012\t30002\tCirurgia Bruno\t0\t1\n30013\t30002\tArden - Computing\t0\t1\n30014\t30002\t❤Familia linda🍻\t0\t1\n30015\t30002\tMSc Supply Chain Management and Logistics-Arden University\t0\t1\n30016\t30002\tTop Achados\t0\t1\n30017\t30002\tVendas Brasil 🇧🇷\t0\t1\n30018\t30002\t✅BESTWAY ROMFORD 🛵✅🤝\t0\t1\n30019\t30002\t🔥 Ofertas Insanas 🛒\t0\t1\n30020\t30002\tDivulgação do seu trabalho para mais de 1 milhão pessoas\t0\t1\n30021\t30002\tSolução Deliveroo/uber facial\t0\t1\n30022\t30002\t🇬🇧 LONDON 4 ALL 🇬🇧\t0\t1\n30023\t30002\tAchados Promocionais  do mercado Livre.  😱\t0\t1\n30024\t30002\tBRAZUKA CLASSIFICADOS UK\t0\t1\n30025\t30002\t𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬\t0\t1\n30026\t30002\tDivulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com\t0\t1\n30027\t30002\tBrasileiros em Manchester\t0\t1\n30028\t30002\tLiverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿\t0\t1\n30029\t30002\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t0\t1\n30030\t30002\t@sopromosoriginais 943\t0\t1\n30031\t30002\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t0\t1\n30032\t30002\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t0\t1\n30033\t30003\tBrasileiros em Manchester\t0\t1\n30034\t30003\t\t0\t1\n30035\t30003\tBruno\t0\t1\n30036\t30003\tTV\t0\t1\n30037\t30003\tbruno files\t0\t1\n30038\t30003\tTexas Chain Saw\t0\t1\n30039\t30003\tLiverpool \t0\t1\n30040\t30003\tRatos Da Academia \t0\t1\n30041\t30003\tRed dead\t0\t1\n30042\t30003\tCirurgia Bruno\t0\t1\n30043\t30003\tArden - Computing\t0\t1\n30044\t30003\t❤Familia linda🍻\t0\t1\n30045\t30003\tMSc Supply Chain Management and Logistics-Arden University\t0\t1\n30046\t30003\tTop Achados\t0\t1\n30047\t30003\tVendas Brasil 🇧🇷\t0\t1\n30048\t30003\t✅BESTWAY ROMFORD 🛵✅🤝\t0\t1\n30049\t30003\t🔥 Ofertas Insanas 🛒\t0\t1\n30050\t30003\tDivulgação do seu trabalho para mais de 1 milhão pessoas\t0\t1\n30051\t30003\tSolução Deliveroo/uber facial\t0\t1\n30052\t30003\t🇬🇧 LONDON 4 ALL 🇬🇧\t0\t1\n30053\t30003\tAchados Promocionais  do mercado Livre.  😱\t0\t1\n30054\t30003\tBRAZUKA CLASSIFICADOS UK\t0\t1\n30055\t30003\t𝐃𝐢𝐯𝐮𝐥𝐠𝐚𝐜̧𝐚̃𝐨 𝟐𝟒 𝐇𝐨𝐫𝐚𝐬\t0\t1\n30056\t30003\tDivulgar Grátis na Internet - Grupos, Sites, Links, Produtos e Mais Acesse: seugrupo.com\t0\t1\n30057\t30003\tBrasileiros em Manchester\t0\t1\n30058\t30003\tLiverpool 🏴󠁧󠁢󠁥󠁮󠁧󠁿\t0\t1\n30059\t30003\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t0\t1\n30060\t30003\t@sopromosoriginais 943\t0\t1\n30061\t30003\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t0\t1\n30062\t30003\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t0\t1\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

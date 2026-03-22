@@ -197,6 +197,11 @@
 - [ ] Proteção da rota /admin (somente role=admin)
 - [ ] Formulário para selecionar plano e quantidade de meses ao ativar
 
+## Correção Bug Cache instanceId (Fase 35)
+- [x] Corrigir invalidateUserCache para usar invalidatePrefix e limpar todas as chaves de grupos (com e sem instanceId)
+- [x] Migrar grupos monitorados de instanceId=1 para instanceId=30003 (ID real da instância WhatsApp)
+- [x] Confirmar via logs de diagnóstico: 5 grupos com buscarOfertas ativos detectados corretamente
+
 ## Melhorias de Layout (Fase 5)
 - [x] Dashboard: remover seção "Mercado Livre Configurado" do rodapé
 - [x] Dashboard: adicionar banner trial/assinatura no topo com botão "Assinatura"
@@ -467,3 +472,7 @@
 - [x] Mostra: plataforma, grupo destino, prévia do conteúdo (80 chars)
 - [x] Auto-fechar após 5 segundos com botão X para fechar manualmente
 - [x] Não exibe na primeira carga (só quando chega envio novo após abrir o app)
+
+## Bug Fix - buscarOfertas não reconhecido (Fase 35)
+- [ ] Investigar por que grupos com buscarOfertas=true não são reconhecidos pelo bot
+- [ ] Corrigir a query de busca de grupos monitorados

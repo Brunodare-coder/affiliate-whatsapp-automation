@@ -1,0 +1,55 @@
+{
+  "query": "SELECT id, userId, groupJid, groupName, buscarOfertas, enviarOfertas, isActive FROM monitored_groups WHERE buscarOfertas = 1 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, userId, groupJid, groupName, buscarOfertas, enviarOfertas, isActive FROM monitored_groups WHERE buscarOfertas = 1 LIMIT 10;",
+  "rows": [
+    {
+      "id": "20",
+      "userId": "1",
+      "groupJid": "120363399706522399@g.us",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "26",
+      "userId": "1",
+      "groupJid": "120363404265871262@g.us",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "27",
+      "userId": "1",
+      "groupJid": "120363403753474842@g.us",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "28",
+      "userId": "1",
+      "groupJid": "120363405844728563@g.us",
+      "groupName": "@sopromosoriginais 943",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "isActive": "1"
+    },
+    {
+      "id": "29",
+      "userId": "1",
+      "groupJid": "120363406198839283@g.us",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tgroupJid\tgroupName\tbuscarOfertas\tenviarOfertas\tisActive\n20\t1\t120363399706522399@g.us\tAchados Promocionais  do mercado Livre.  😱\t1\t0\t1\n26\t1\t120363404265871262@g.us\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t1\t0\t1\n27\t1\t120363403753474842@g.us\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t1\t0\t1\n28\t1\t120363405844728563@g.us\t@sopromosoriginais 943\t1\t0\t1\n29\t1\t120363406198839283@g.us\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t1\t0\t1\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

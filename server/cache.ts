@@ -105,8 +105,11 @@ export function invalidateUserCache(userId: number): void {
   botCache.delete(cacheKey.magaluConfig(userId));
   botCache.delete(cacheKey.aliConfig(userId));
   botCache.delete(cacheKey.botSettings(userId));
-  botCache.delete(cacheKey.monitoredGroups(userId));
-  botCache.delete(cacheKey.automations(userId));
+  // Invalidate ALL monitored_groups keys for this user (with and without instanceId)
+  // e.g. monitored_groups:1, monitored_groups:1:30001, monitored_groups:1:30002
+  botCache.invalidatePrefix(`monitored_groups:${userId}`);
+  // Invalidate ALL automations keys for this user
+  botCache.invalidatePrefix(`automations:${userId}`);
   botCache.delete(cacheKey.affiliateLinks(userId));
   // Also invalidate feed subscribers since user's feed settings may have changed
   botCache.delete(cacheKey.feedSubscribers());
