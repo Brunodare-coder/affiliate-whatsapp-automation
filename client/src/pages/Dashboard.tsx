@@ -1,22 +1,22 @@
 import AppLayout from "@/components/AppLayout";
-import MercadoLivreConfigModal from "@/components/MercadoLivreConfigModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import {
   AlertTriangle,
-  ArrowRight,
   Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  Clock,
   Eye,
   Link2,
   Loader2,
   MessageSquarePlus,
   Send,
   Settings,
+  Shield,
   Smartphone,
   Users,
   Wifi,
@@ -24,35 +24,122 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
+
+function useTrialCountdown(trialEndsAt: Date | number | null | undefined) {
+  const [remaining, setRemaining] = useState<number>(0);
+
+  useEffect(() => {
+    if (!trialEndsAt) return;
+    const update = () => {
+      const ts = trialEndsAt instanceof Date ? trialEndsAt.getTime() : (trialEndsAt as number);
+      const diff = ts - Date.now();
+      setRemaining(Math.max(0, diff));
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [trialEndsAt]);
+
+  const totalSecs = Math.floor(remaining / 1000);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  return { remaining, mins, secs, expired: remaining === 0 };
+}
 
 export default function Dashboard() {
   const { data: instances } = trpc.whatsapp.listInstances.useQuery();
-  const { data: campaigns } = trpc.campaigns.list.useQuery();
   const { data: automations } = trpc.automations.list.useQuery();
-  const { data: recentLogs } = trpc.logs.list.useQuery({ limit: 3, offset: 0 });
   const { data: stats } = trpc.logs.stats.useQuery();
-  const { data: mlConfig } = trpc.mercadoLivre.getConfig.useQuery();
-  const [showMlModal, setShowMlModal] = useState(false);
+  const { data: sub } = trpc.subscription.get.useQuery(undefined, { refetchInterval: 30000 });
   const [showGuide, setShowGuide] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const connectedInstance = instances?.find((i) => i.status === "connected");
   const isOnline = !!connectedInstance;
-  const hasAffiliate = !!(mlConfig?.tag || (campaigns && campaigns.length > 0));
   const hasGroups = !!(automations && automations.length > 0);
   const activeAutomations = automations?.filter((a) => a.isActive) || [];
 
-  // Determine step completion
-  const step1Done = hasAffiliate;
+  const step1Done = !!(sub?.isActive);
   const step2Done = isOnline;
   const step3Done = hasGroups;
   const step4Done = step1Done && step2Done && step3Done && activeAutomations.length > 0;
 
+  const trial = useTrialCountdown(sub?.trialEndsAt);
+  const isTrial = sub?.status === "trial";
+  const isExpired = sub?.status === "expired" || (!sub?.isActive && trial.expired);
+
   return (
     <AppLayout title="Dashboard">
       <div className="p-4 md:p-6 space-y-3 max-w-3xl mx-auto">
+
+        {/* BANNER TRIAL / ASSINATURA */}
+        {isTrial && !trial.expired && (
+          <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-blue-300">Período de Teste</p>
+                <p className="text-xs text-blue-400/80">
+                  Tempo restante:{" "}
+                  <span className="font-mono font-bold text-blue-300">
+                    {String(trial.mins).padStart(2, "0")}:{String(trial.secs).padStart(2, "0")}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="bg-blue-500 hover:bg-blue-400 text-white font-semibold flex-shrink-0 ml-3">
+              <Link href="/subscription">
+                <Shield className="w-3.5 h-3.5 mr-1.5" />
+                Assinatura
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {isExpired && (
+          <div className="flex items-center justify-between p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-red-300">Período de Teste Expirado</p>
+                <p className="text-xs text-red-400/80">Assine para continuar usando o bot.</p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="bg-red-500 hover:bg-red-400 text-white font-semibold flex-shrink-0 ml-3">
+              <Link href="/subscription">
+                <Shield className="w-3.5 h-3.5 mr-1.5" />
+                Assinar Agora
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {sub?.isActive && !isTrial && (
+          <div className="flex items-center justify-between p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-300">
+                  Assinatura {sub.plan === "premium" ? "Premium" : "Basic"} Ativa
+                  {sub.hasAds && <span className="ml-1 text-xs text-green-400/70">(com anúncios)</span>}
+                </p>
+                {sub.currentPeriodEnd && (
+                  <p className="text-xs text-green-400/70">
+                    Vence em {new Date(sub.currentPeriodEnd).toLocaleDateString("pt-BR")}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button asChild size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10 flex-shrink-0 ml-3">
+              <Link href="/subscription">
+                <Shield className="w-3.5 h-3.5 mr-1.5" />
+                Assinatura
+              </Link>
+            </Button>
+          </div>
+        )}
 
         {/* STATUS DO BOT */}
         <Link href="/whatsapp">
@@ -68,9 +155,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Status do Bot</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-400" : "bg-muted-foreground"}`}
-                  />
+                  <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-400" : "bg-muted-foreground"}`} />
                   <span className={`font-bold text-base ${isOnline ? "text-green-400" : "text-foreground"}`}>
                     {isOnline ? "Online" : "Offline"}
                   </span>
@@ -211,19 +296,16 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                <p className="font-semibold text-sm">Configurar Afiliados</p>
+                <p className="font-semibold text-sm">Assinar Plano</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Insira suas credenciais de pelo menos uma loja (Shopee, ML, Amazon...).
+                  Ative sua assinatura para usar o bot sem limitações.
                 </p>
                 {step1Done ? (
-                  <p className="text-xs font-semibold text-green-400">Configurado</p>
+                  <p className="text-xs font-semibold text-green-400">Ativo</p>
                 ) : (
-                  <button
-                    onClick={() => setShowMlModal(true)}
-                    className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                  >
-                    Configurar agora →
-                  </button>
+                  <Link href="/subscription" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                    Ver planos →
+                  </Link>
                 )}
               </div>
 
@@ -242,13 +324,13 @@ export default function Dashboard() {
                 </div>
                 <p className="font-semibold text-sm">Conectar WhatsApp</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Escaneie o QR Code ou use o código de pareamento para vincular seu número.
+                  Escaneie o QR Code para vincular seu número.
                 </p>
                 {step2Done ? (
                   <p className="text-xs font-semibold text-green-400">Conectado</p>
                 ) : (
                   <Link href="/whatsapp" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                    Conecte seu WhatsApp acima →
+                    Conectar agora →
                   </Link>
                 )}
               </div>
@@ -266,15 +348,15 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                <p className="font-semibold text-sm">Adicionar Grupos</p>
+                <p className="font-semibold text-sm">Configurar Grupos</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Precisa de 1 grupo <strong>Buscar Ofertas</strong> + 1 <strong>Enviar Ofertas</strong>, ou ative o Feed Global com grupos alvo configurados.
+                  1 grupo <strong>Buscar Ofertas</strong> + 1 <strong>Enviar Ofertas</strong>.
                 </p>
                 {step3Done ? (
-                  <p className="text-xs font-semibold text-green-400">{automations?.length} automação(ões) ativa(s)</p>
+                  <p className="text-xs font-semibold text-green-400">{automations?.length} automação(ões)</p>
                 ) : (
-                  <Link href="/automations" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                    Precisa de 1 grupo Buscar Ofertas + 1 Enviar Ofertas →
+                  <Link href="/groups" className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                    Configurar grupos →
                   </Link>
                 )}
               </div>
@@ -294,7 +376,7 @@ export default function Dashboard() {
                 </div>
                 <p className="font-semibold text-sm">Bot no Ar!</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Com tudo configurado, o bot já funciona. Ajuste agendamento e delay quando quiser.
+                  Com tudo configurado, o bot já funciona automaticamente.
                 </p>
                 {step4Done ? (
                   <p className="text-xs font-semibold text-green-400">Funcionando!</p>
@@ -333,56 +415,56 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Configurar Ofertas */}
-            <Link href="/automations">
+            <Link href="/groups">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors cursor-pointer group">
                 <div className="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-500/30 transition-colors">
                   <Settings className="w-5 h-5 text-pink-400" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm leading-tight">Configurar Ofertas</p>
-                  <p className="text-xs text-muted-foreground truncate">Monitorar + grupos de disparo</p>
+                  <p className="text-xs text-muted-foreground truncate">Grupos de monitoramento</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-auto" />
               </div>
             </Link>
 
             {/* Envio Manual */}
-            <Link href="/campaigns">
+            <Link href="/settings">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors cursor-pointer group">
                 <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/30 transition-colors">
                   <Link2 className="w-5 h-5 text-orange-400" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm leading-tight">Envio Manual</p>
-                  <p className="text-xs text-muted-foreground truncate">Cole um link e envie já com su...</p>
+                  <p className="text-xs text-muted-foreground truncate">Cole um link e envie já</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-auto" />
               </div>
             </Link>
 
             {/* Envio em Massa */}
-            <Link href="/groups">
+            <Link href="/settings">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors cursor-pointer group">
                 <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/30 transition-colors">
                   <Users className="w-5 h-5 text-green-400" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm leading-tight">Envio em Massa</p>
-                  <p className="text-xs text-muted-foreground truncate">Texto e/ou foto para grupos</p>
+                  <p className="text-xs text-muted-foreground truncate">Texto/foto para grupos</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-auto" />
               </div>
             </Link>
 
-            {/* Postar no Status */}
-            <Link href="/logs">
+            {/* Feed Global */}
+            <Link href="/feed-global">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors cursor-pointer group">
                 <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/30 transition-colors">
-                  <Eye className="w-5 h-5 text-cyan-400" />
+                  <Bot className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm leading-tight">Postar no Status</p>
-                  <p className="text-xs text-muted-foreground truncate">Postar ofertas no seu Status</p>
+                  <p className="font-semibold text-sm leading-tight">Feed Global</p>
+                  <p className="text-xs text-muted-foreground truncate">Links de todos os usuários</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-auto" />
               </div>
@@ -390,47 +472,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Mercado Livre config banner (se não configurado) */}
-        {!mlConfig?.tag && (
-          <div className="flex items-center justify-between p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-              <p className="text-sm text-yellow-300">
-                Configure sua <strong>Tag do Mercado Livre</strong> para substituir links ML automaticamente.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowMlModal(true)}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold flex-shrink-0 ml-3"
-            >
-              Configurar
-            </Button>
-          </div>
-        )}
-
-        {mlConfig?.tag && (
-          <div className="flex items-center justify-between p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-green-300">
-                Mercado Livre configurado — Tag: <strong>{mlConfig.tag}</strong>
-              </p>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowMlModal(true)}
-              className="border-green-500/30 text-green-400 hover:bg-green-500/10 flex-shrink-0 ml-3"
-            >
-              <Settings className="w-3 h-3 mr-1" /> Editar
-            </Button>
-          </div>
-        )}
-
       </div>
-
-      <MercadoLivreConfigModal open={showMlModal} onClose={() => setShowMlModal(false)} />
     </AppLayout>
   );
 }

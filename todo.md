@@ -196,3 +196,11 @@
 - [ ] Página /admin com tabela de usuários, status, plano, vencimento e ações
 - [ ] Proteção da rota /admin (somente role=admin)
 - [ ] Formulário para selecionar plano e quantidade de meses ao ativar
+
+## Melhorias de Layout (Fase 5)
+- [x] Dashboard: remover seção "Mercado Livre Configurado" do rodapé
+- [x] Dashboard: adicionar banner trial/assinatura no topo com botão "Assinatura"
+- [ ] Unificar "Configurar Ofertas" e "Automações" em uma única página
+- [ ] Remover aba "Automações" do menu (manter só "Configurar Ofertas")
+- [x] Painel Admin: garantir visível só para admins no menu
+- [ ] Corrigir duplicações gerais no layout
