@@ -34,6 +34,8 @@ import {
   Save,
   Search,
   Shield,
+  ShoppingBag,
+  Smartphone,
   Users,
   XCircle,
 } from "lucide-react";
@@ -86,6 +88,52 @@ export default function Admin() {
   // ── Search / filter state ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "trial" | "expired">("all");
+
+  // ── ML credentials modal state ─────────────────────────────────────────────
+  const [mlModal, setMlModal] = useState<{ open: boolean; userId: number; userName: string }>({ open: false, userId: 0, userName: "" });
+  const [mlForm, setMlForm] = useState({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", isActive: true });
+  const [mlCookiePaste, setMlCookiePaste] = useState("");
+  const [mlExtracted, setMlExtracted] = useState<{ ssid: string; csrf: string } | null>(null);
+  const [mlFormSynced, setMlFormSynced] = useState(false);
+
+  const { data: mlConfigData } = trpc.admin.getUserMlConfig.useQuery(
+    { userId: mlModal.userId },
+    { enabled: mlModal.open && mlModal.userId > 0 }
+  );
+
+  const updateMlMutation = trpc.admin.updateUserMlConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Credenciais ML atualizadas!");
+      setMlModal({ open: false, userId: 0, userName: "" });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (mlConfigData && !mlFormSynced && mlModal.open) {
+    setMlForm({
+      tag: mlConfigData.tag ?? "",
+      cookieSsid: mlConfigData.cookieSsid ?? "",
+      cookieCsrf: mlConfigData.cookieCsrf ?? "",
+      mattToolId: mlConfigData.mattToolId ?? "",
+      socialTag: mlConfigData.socialTag ?? "",
+      isActive: mlConfigData.isActive ?? true,
+    });
+    setMlFormSynced(true);
+  }
+
+  function extractMlCookies(raw: string) {
+    const ssidMatch = raw.match(/(?:^|;\s*)ssid=([^;]+)/);
+    const csrfMatch = raw.match(/(?:^|;\s*)_csrf=([^;]+)/);
+    if (ssidMatch || csrfMatch) {
+      const extracted = { ssid: ssidMatch?.[1] ?? "", csrf: csrfMatch?.[1] ?? "" };
+      setMlExtracted(extracted);
+      if (extracted.ssid) setMlForm((f) => ({ ...f, cookieSsid: extracted.ssid }));
+      if (extracted.csrf) setMlForm((f) => ({ ...f, cookieCsrf: extracted.csrf }));
+    } else {
+      setMlExtracted(null);
+      toast.error("Nenhum cookie ssid ou _csrf encontrado.");
+    }
+  }
 
   // ── Password modal state ─────────────────────────────────────────────────────
   const [pwModal, setPwModal] = useState<{ open: boolean; userId: number; userName: string; userEmail: string }>({
@@ -381,6 +429,24 @@ export default function Admin() {
                     )}
                   </div>
 
+                  {/* Ações de Credenciais ML */}
+                  <div className="flex items-center gap-2 flex-shrink-0 border-l border-white/8 pl-3 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-yellow-400 border-yellow-500/25 hover:bg-yellow-500/10"
+                      onClick={() => {
+                        setMlModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}` });
+                        setMlForm({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", isActive: true });
+                        setMlCookiePaste("");
+                        setMlExtracted(null);
+                        setMlFormSynced(false);
+                      }}
+                    >
+                      <ShoppingBag className="w-3 h-3 mr-1" /> Credenciais ML
+                    </Button>
+                  </div>
+
                   {/* Ações de Senha */}
                   <div className="flex items-center gap-2 flex-shrink-0 border-l border-white/8 pl-3 flex-wrap">
                     <Button
@@ -417,6 +483,86 @@ export default function Admin() {
           )}
         </div>
       </div>
+
+      {/* Modal de Credenciais ML */}
+      <Dialog open={mlModal.open} onOpenChange={(open) => { if (!open) setMlModal({ open: false, userId: 0, userName: "" }); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-yellow-400" />
+              Credenciais ML — {mlModal.userName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Atalho rápido */}
+            <div className="rounded-xl border border-blue-500/25 p-3 space-y-2" style={{ background: "oklch(0.55 0.18 240 / 0.08)" }}>
+              <p className="text-xs font-semibold text-blue-300">⚡ Atalho rápido — Cole os cookies do browser</p>
+              <ol className="text-xs text-muted-foreground space-y-0.5 list-decimal list-inside">
+                <li>Abra o gerador de links ML e gere um link</li>
+                <li>F12 → Network → clique em <code className="bg-white/10 px-1 rounded">createLink</code></li>
+                <li>Aba <strong>Cookies</strong> → copie o valor do cookie <code className="bg-white/10 px-1 rounded">ssid</code> e <code className="bg-white/10 px-1 rounded">_csrf</code></li>
+              </ol>
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Cole aqui: ssid=ghy-032103-... _csrf=vrR725..."
+                  value={mlCookiePaste}
+                  onChange={(e) => setMlCookiePaste(e.target.value)}
+                  className="bg-white/5 border-white/10 text-xs min-h-[60px] resize-none flex-1"
+                />
+                <Button size="sm" variant="outline" className="text-blue-400 border-blue-500/25 self-end" onClick={() => extractMlCookies(mlCookiePaste)}>
+                  Extrair
+                </Button>
+              </div>
+              {mlExtracted && (
+                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-2 text-xs text-green-300 space-y-0.5">
+                  {mlExtracted.ssid && <p>✓ ssid: <span className="text-white font-mono">{mlExtracted.ssid.substring(0, 30)}...</span></p>}
+                  {mlExtracted.csrf && <p>✓ _csrf: <span className="text-white font-mono">{mlExtracted.csrf}</span></p>}
+                </div>
+              )}
+            </div>
+
+            {/* Campos manuais */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Tag ML (matt_from)</Label>
+                <Input value={mlForm.tag} onChange={(e) => setMlForm((f) => ({ ...f, tag: e.target.value }))} placeholder="bq20260201142328" className="bg-white/5 border-white/10 text-xs h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Social Tag (/social/)</Label>
+                <Input value={mlForm.socialTag} onChange={(e) => setMlForm((f) => ({ ...f, socialTag: e.target.value }))} placeholder="bq20260201142328" className="bg-white/5 border-white/10 text-xs h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Matt Tool ID</Label>
+                <Input value={mlForm.mattToolId} onChange={(e) => setMlForm((f) => ({ ...f, mattToolId: e.target.value }))} placeholder="78912023" className="bg-white/5 border-white/10 text-xs h-8" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cookie SSID</Label>
+                <Input value={mlForm.cookieSsid} onChange={(e) => setMlForm((f) => ({ ...f, cookieSsid: e.target.value }))} placeholder="ghy-032103-..." className="bg-white/5 border-white/10 text-xs h-8 font-mono" />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Cookie _csrf</Label>
+                <Input value={mlForm.cookieCsrf} onChange={(e) => setMlForm((f) => ({ ...f, cookieCsrf: e.target.value }))} placeholder="vrR725i1gpfZ84j1PmeMZRF4" className="bg-white/5 border-white/10 text-xs h-8 font-mono" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="ml-active" checked={mlForm.isActive} onChange={(e) => setMlForm((f) => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 rounded" />
+              <Label htmlFor="ml-active" className="text-xs cursor-pointer">Ativar substituição ML para este usuário</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMlModal({ open: false, userId: 0, userName: "" })}>Cancelar</Button>
+            <Button
+              className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold"
+              onClick={() => updateMlMutation.mutate({ userId: mlModal.userId, ...mlForm })}
+              disabled={updateMlMutation.isPending}
+            >
+              {updateMlMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Salvar Credenciais
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Ativar Assinatura */}
       <Dialog open={grantModal.open} onOpenChange={(open) => setGrantModal((s) => ({ ...s, open }))}>

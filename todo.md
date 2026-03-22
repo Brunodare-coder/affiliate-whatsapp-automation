@@ -515,3 +515,12 @@
 - [x] Adicionar área "Colar cookies completos" no modal ML
 - [x] Ao colar, extrair automaticamente ssid e _csrf da string
 - [x] Mostrar preview dos valores extraídos antes de salvar
+
+## Suporte Multi-Usuário Completo (Fase 43)
+- [x] Auditar isolamento de dados: verificar se todas as queries usam userId corretamente
+- [x] Corrigir processamento do bot para carregar configs por userId da instância
+- [x] Garantir que grupos monitorados, configs ML, Shopee, Amazon etc. são isolados por userId
+- [x] Painel admin: procedures getUserMlConfig, updateUserMlConfig, getUserInstances
+- [x] Botão "Credenciais ML" no painel admin com modal de edição por usuário
+- [x] Atalho de cole cookies no modal admin ML (extrai ssid e _csrf automaticamente)
+- [x] Cada usuário pode ter suas próprias credenciais ML (tag, ssid, csrf) independentes
