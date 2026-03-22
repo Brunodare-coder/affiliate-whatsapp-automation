@@ -16,6 +16,12 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // ── Local auth fields ────────────────────────────────────────────────────────────
+  passwordHash: text("passwordHash"),                        // bcrypt hash
+  resetToken: varchar("resetToken", { length: 128 }),        // password reset token
+  resetTokenExpiresAt: timestamp("resetTokenExpiresAt"),     // token expiry
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  // ────────────────────────────────────────────────────────────────────────────────
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

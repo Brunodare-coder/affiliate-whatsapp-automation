@@ -226,3 +226,21 @@
 - [x] Fila de processamento de mensagens por usuário (enqueueForUser)
 - [x] Paralelização de fetch de configs com Promise.all
 - [x] Invalidação de cache automática ao salvar configurações
+
+## Auth Própria (Substituir Manus OAuth - Fase 8)
+- [ ] Schema: adicionar campos passwordHash, resetToken, resetTokenExpiresAt na tabela users
+- [ ] Instalar bcryptjs para hash de senha
+- [ ] Criar server/auth.ts com helpers: hashPassword, verifyPassword, createLocalSession
+- [ ] Atualizar server/_core/sdk.ts: authenticateRequest usar userId em vez de openId
+- [ ] Backend: procedure auth.register (e-mail + senha + nome)
+- [ ] Backend: procedure auth.login (e-mail + senha → cookie de sessão)
+- [ ] Backend: procedure auth.logout (limpar cookie)
+- [ ] Backend: procedure auth.forgotPassword (gerar token + notificar owner)
+- [ ] Backend: procedure auth.resetPassword (token + nova senha)
+- [ ] Frontend: página /login com formulário e-mail + senha
+- [ ] Frontend: página /register com formulário nome + e-mail + senha
+- [ ] Frontend: página /forgot-password com formulário de e-mail
+- [ ] Frontend: página /reset-password com formulário de nova senha
+- [ ] Atualizar const.ts: getLoginUrl() → retornar '/login'
+- [ ] Atualizar AppLayout e Home.tsx para usar /login em vez de OAuth URL
+- [ ] Remover rota /api/oauth/callback do servidor

@@ -18,6 +18,10 @@ import FeedGlobal from "./pages/FeedGlobal";
 import Subscription from "./pages/Subscription";
 import Admin from "./pages/Admin";
 import Support from "./pages/Support";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
   return (
@@ -37,6 +41,12 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/support" component={Support} />
       <Route path="/suporte" component={Support} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/cadastro" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/esqueci-senha" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

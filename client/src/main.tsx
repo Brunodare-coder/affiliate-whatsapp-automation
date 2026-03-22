@@ -18,7 +18,15 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // For local auth, /login is an internal SPA route
+  const loginUrl = getLoginUrl();
+  if (loginUrl.startsWith("/")) {
+    // Use history.pushState to avoid full reload inside SPA
+    window.history.pushState({}, "", loginUrl);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  } else {
+    window.location.href = loginUrl;
+  }
 };
 
 queryClient.getQueryCache().subscribe(event => {

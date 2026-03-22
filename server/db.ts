@@ -88,10 +88,60 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     values.role = "admin";
     updateSet.role = "admin";
   }
+  // Local auth fields
+  if (user.passwordHash !== undefined) {
+    values.passwordHash = user.passwordHash ?? null;
+    updateSet.passwordHash = user.passwordHash ?? null;
+  }
+  if (user.resetToken !== undefined) {
+    values.resetToken = user.resetToken ?? null;
+    updateSet.resetToken = user.resetToken ?? null;
+  }
+  if (user.resetTokenExpiresAt !== undefined) {
+    values.resetTokenExpiresAt = user.resetTokenExpiresAt ?? null;
+    updateSet.resetTokenExpiresAt = user.resetTokenExpiresAt ?? null;
+  }
+  if (user.emailVerified !== undefined) {
+    values.emailVerified = user.emailVerified;
+    updateSet.emailVerified = user.emailVerified;
+  }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
   await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result[0];
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result[0];
+}
+
+export async function updateUserResetToken(userId: number, token: string | null, expiresAt: Date | null): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ resetToken: token, resetTokenExpiresAt: expiresAt }).where(eq(users.id, userId));
+}
+
+export async function updateUserPassword(userId: number, passwordHash: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ passwordHash, resetToken: null, resetTokenExpiresAt: null }).where(eq(users.id, userId));
+}
+
+export async function getUserByResetToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
+  return result[0];
 }
 
 export async function getUserByOpenId(openId: string) {

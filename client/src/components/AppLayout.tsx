@@ -77,7 +77,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           <h2 className="text-2xl font-bold">Acesso restrito</h2>
           <p className="text-muted-foreground">Faça login para acessar a plataforma.</p>
           <Button asChild>
-            <a href={getLoginUrl()}>Fazer login</a>
+            <Link href={getLoginUrl()}>Fazer login</Link>
           </Button>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, getRegisterUrl } from "@/const";
+import { Link } from "wouter";
 import {
   ArrowRight,
   Bot,
@@ -176,13 +177,13 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild className="hidden sm:flex text-muted-foreground hover:text-foreground">
-              <a href={getLoginUrl()}>Entrar</a>
+              <Link href={getLoginUrl()}>Entrar</Link>
             </Button>
             <Button size="sm" asChild className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-bold shadow-lg shadow-green-500/30 border-0">
-              <a href={getLoginUrl()}>
+              <Link href={getRegisterUrl()}>
                 Começar grátis
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
@@ -223,10 +224,10 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
                 <Button size="lg" asChild className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-black text-base px-8 h-12 shadow-2xl shadow-green-500/30 border-0">
-                  <a href={getLoginUrl()}>
+                  <Link href={getRegisterUrl()}>
                     <Zap className="w-4 h-4 mr-2" />
                     Testar 60 minutos grátis
-                  </a>
+                  </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-semibold text-base px-8 h-12 backdrop-blur-sm">
                   <a href="#como-funciona">
@@ -401,7 +402,7 @@ export default function Home() {
                 </p>
               </div>
               <Button asChild className="bg-green-500 hover:bg-green-400 text-black font-bold flex-shrink-0 shadow-lg shadow-green-500/20">
-                <a href={getLoginUrl()}>Testar grátis <ArrowRight className="w-4 h-4 ml-1" /></a>
+                <Link href={getRegisterUrl()}>Testar grátis <ArrowRight className="w-4 h-4 ml-1" /></Link>
               </Button>
             </div>
           </div>
@@ -440,7 +441,7 @@ export default function Home() {
                 ))}
               </ul>
               <Button asChild variant="outline" className="w-full border-white/10 hover:bg-white/5">
-                <a href={getLoginUrl()}>Começar agora</a>
+                <Link href={getRegisterUrl()}>Começar agora</Link>
               </Button>
             </div>
 
@@ -471,7 +472,7 @@ export default function Home() {
                 ))}
               </ul>
               <Button asChild variant="outline" className="w-full border-white/10 hover:bg-white/5">
-                <a href={getLoginUrl()}>Assinar Basic</a>
+                <Link href={getRegisterUrl()}>Assinar Basic</Link>
               </Button>
             </div>
 
@@ -501,10 +502,10 @@ export default function Home() {
                 ))}
               </ul>
               <Button asChild className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-black shadow-lg shadow-green-500/20 border-0">
-                <a href={getLoginUrl()}>
+                <Link href={getRegisterUrl()}>
                   Assinar Premium
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
@@ -601,11 +602,11 @@ export default function Home() {
                 60 minutos grátis para testar. Sem cartão de crédito. Configure em menos de 10 minutos.
               </p>
               <Button size="lg" asChild className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-black text-base px-10 h-12 shadow-2xl shadow-green-500/30 border-0">
-                <a href={getLoginUrl()}>
+                <Link href={getRegisterUrl()}>
                   <Zap className="w-5 h-5 mr-2" />
                   Criar conta grátis
                   <ArrowRight className="w-5 h-5 ml-2" />
-                </a>
+                </Link>
               </Button>
               <p className="text-xs text-muted-foreground mt-4 flex items-center justify-center gap-3">
                 <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-400" /> Sem compromisso</span>
@@ -631,9 +632,12 @@ export default function Home() {
               </div>
             </div>
             <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {[["Como funciona", "#como-funciona"], ["Funcionalidades", "#funcionalidades"], ["Planos", "#planos"], ["FAQ", "#faq"], ["Suporte", "/support"], ["Entrar", getLoginUrl()]].map(([label, href]) => (
+              {[["Como funciona", "#como-funciona"], ["Funcionalidades", "#funcionalidades"], ["Planos", "#planos"], ["FAQ", "#faq"]].map(([label, href]) => (
                 <a key={label} href={href} className="hover:text-foreground transition-colors">{label}</a>
               ))}
+              <Link href="/support" className="hover:text-foreground transition-colors">Suporte</Link>
+              <Link href={getLoginUrl()} className="hover:text-foreground transition-colors">Entrar</Link>
+              <Link href={getRegisterUrl()} className="hover:text-foreground transition-colors font-semibold text-green-400">Cadastrar</Link>
             </nav>
           </div>
           <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">

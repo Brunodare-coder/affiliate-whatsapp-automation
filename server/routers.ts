@@ -74,6 +74,22 @@ import { generatePixQRCode, generateTxid } from "./pix";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 import { invalidateUserCache } from "./cache";
+import {
+  createLocalSessionToken,
+  verifyPassword,
+  hashPassword,
+  generateResetToken,
+  getResetTokenExpiry,
+  setSessionCookie,
+  clearSessionCookie,
+  registerUser,
+} from "./auth-local";
+import {
+  getUserByEmail,
+  getUserByResetToken,
+  updateUserResetToken,
+  updateUserPassword,
+} from "./db";
 
 // ── Admin Router ────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -112,11 +128,90 @@ export const appRouter = router({
   admin: adminRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
+
+    // ── Register (email + password) ───────────────────────────────────────────────
+    register: publicProcedure
+      .input(z.object({
+        name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+        email: z.string().email("E-mail inválido"),
+        password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const user = await registerUser(input);
+          const token = await createLocalSessionToken(user.id, user.name ?? "");
+          setSessionCookie(ctx.res, ctx.req, token);
+          return { success: true, userId: user.id };
+        } catch (error: any) {
+          throw new Error(error.message || "Erro ao criar conta");
+        }
+      }),
+
+    // ── Login (email + password) ─────────────────────────────────────────────────
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await getUserByEmail(input.email);
+        if (!user || !user.passwordHash) {
+          throw new Error("E-mail ou senha incorretos");
+        }
+        const valid = await verifyPassword(input.password, user.passwordHash);
+        if (!valid) {
+          throw new Error("E-mail ou senha incorretos");
+        }
+        const token = await createLocalSessionToken(user.id, user.name ?? "");
+        setSessionCookie(ctx.res, ctx.req, token);
+        return { success: true, userId: user.id };
+      }),
+
+    // ── Logout ────────────────────────────────────────────────────────────────────
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      clearSessionCookie(ctx.res, ctx.req);
       return { success: true } as const;
     }),
+
+    // ── Forgot Password ───────────────────────────────────────────────────────
+    forgotPassword: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const user = await getUserByEmail(input.email);
+        // Always return success to avoid email enumeration
+        if (!user || !user.passwordHash) {
+          return { success: true };
+        }
+        const token = generateResetToken();
+        const expiresAt = getResetTokenExpiry();
+        await updateUserResetToken(user.id, token, expiresAt);
+        // Notify owner with the reset link (since we don't have SMTP)
+        const resetUrl = `${process.env.VITE_FRONTEND_FORGE_API_URL ? '' : ''}/reset-password?token=${token}`;
+        await notifyOwner({
+          title: `Recuperação de senha solicitada`,
+          content: `Usuário ${user.email} solicitou recuperação de senha.\n\nToken: ${token}\n\nEnvie este link para o usuário: /reset-password?token=${token}`,
+        });
+        return { success: true };
+      }),
+
+    // ── Reset Password ────────────────────────────────────────────────────────
+    resetPassword: publicProcedure
+      .input(z.object({
+        token: z.string().min(1),
+        password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+      }))
+      .mutation(async ({ input }) => {
+        const user = await getUserByResetToken(input.token);
+        if (!user || !user.resetTokenExpiresAt) {
+          throw new Error("Token inválido ou expirado");
+        }
+        if (new Date() > user.resetTokenExpiresAt) {
+          throw new Error("Token expirado. Solicite um novo link de recuperação.");
+        }
+        const newHash = await hashPassword(input.password);
+        await updateUserPassword(user.id, newHash);
+        return { success: true };
+      }),
   }),
 
   // ── Campaigns ──────────────────────────────────────────────────────────
