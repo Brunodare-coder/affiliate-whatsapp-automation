@@ -219,6 +219,7 @@ export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
   cookieCsrf: varchar("cookieCsrf", { length: 255 }),       // Cookie _csrf para autenticação na API createLink
   mattToolId: varchar("mattToolId", { length: 100 }),      // Matt Tool ID (para links de listas/ofertas)
   socialTag: varchar("socialTag", { length: 255 }),        // Tag do Perfil Social (/social/SLUG)
+  linkMode: mysqlEnum("link_mode", ["long", "social", "tinyurl"]).default("long").notNull(), // Modo de envio: long=link longo, social=meli.la vitrine, tinyurl=encurtado
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

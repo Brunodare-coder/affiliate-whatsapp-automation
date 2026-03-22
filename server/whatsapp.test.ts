@@ -158,3 +158,42 @@ describe("replaceMagazineLuizaLinks", () => {
     expect(result.replaced).toBe(0);
   });
 });
+
+describe("shortenMeliLinksWithTinyUrl (unit - sem chamada real à API)", () => {
+  it("retorna texto original quando não há links ML", async () => {
+    const { shortenMeliLinksWithTinyUrl } = await import("./whatsapp");
+    const text = "Mensagem sem links do Mercado Livre";
+    const result = await shortenMeliLinksWithTinyUrl(text);
+    expect(result).toBe(text);
+  });
+
+  it("retorna texto original quando o texto está vazio", async () => {
+    const { shortenMeliLinksWithTinyUrl } = await import("./whatsapp");
+    const result = await shortenMeliLinksWithTinyUrl("");
+    expect(result).toBe("");
+  });
+});
+
+describe("replaceMercadoLivreLinks - linkMode logic", () => {
+  it("substitui link de produto com tag correta", () => {
+    const text = "Produto: https://www.mercadolivre.com.br/produto/MLB123?matt_from=outro&matt_tool=999";
+    const config = { tag: "bq20260201142328", mattToolId: "78912023", socialTag: "bq20260201142328" };
+    const result = replaceMercadoLivreLinks(text, config);
+    expect(result.replaced).toBe(1);
+    expect(result.text).toContain("matt_from=bq20260201142328");
+    expect(result.text).toContain("matt_tool=78912023");
+    // Parâmetros do afiliado original devem ser removidos
+    expect(result.text).not.toContain("matt_from=outro");
+    expect(result.text).not.toContain("matt_tool=999");
+  });
+
+  it("substitui link /social/ com socialTag correta", () => {
+    const text = "Social: https://www.mercadolivre.com.br/social/outro_usuario?matt_tool=999&matt_word=outro";
+    const config = { tag: "bq20260201142328", mattToolId: "78912023", socialTag: "bq20260201142328" };
+    const result = replaceMercadoLivreLinks(text, config);
+    expect(result.replaced).toBe(1);
+    expect(result.text).toContain("/social/bq20260201142328");
+    expect(result.text).toContain("matt_tool=78912023");
+    expect(result.text).toContain("matt_word=bq20260201142328");
+  });
+});

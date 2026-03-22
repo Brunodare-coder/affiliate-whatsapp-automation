@@ -91,7 +91,7 @@ export default function Admin() {
 
   // ── ML credentials modal state ─────────────────────────────────────────────
   const [mlModal, setMlModal] = useState<{ open: boolean; userId: number; userName: string }>({ open: false, userId: 0, userName: "" });
-  const [mlForm, setMlForm] = useState({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", isActive: true });
+  const [mlForm, setMlForm] = useState({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", linkMode: "long" as "long" | "social" | "tinyurl", isActive: true });
   const [mlCookiePaste, setMlCookiePaste] = useState("");
   const [mlExtracted, setMlExtracted] = useState<{ ssid: string; csrf: string } | null>(null);
   const [mlFormSynced, setMlFormSynced] = useState(false);
@@ -116,6 +116,7 @@ export default function Admin() {
       cookieCsrf: mlConfigData.cookieCsrf ?? "",
       mattToolId: mlConfigData.mattToolId ?? "",
       socialTag: mlConfigData.socialTag ?? "",
+      linkMode: ((mlConfigData as any).linkMode as "long" | "social" | "tinyurl") || "long",
       isActive: mlConfigData.isActive ?? true,
     });
     setMlFormSynced(true);
@@ -437,7 +438,7 @@ export default function Admin() {
                       className="text-yellow-400 border-yellow-500/25 hover:bg-yellow-500/10"
                       onClick={() => {
                         setMlModal({ open: true, userId: u.id, userName: u.name ?? u.email ?? `#${u.id}` });
-                        setMlForm({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", isActive: true });
+                        setMlForm({ tag: "", cookieSsid: "", cookieCsrf: "", mattToolId: "", socialTag: "", linkMode: "long", isActive: true });
                         setMlCookiePaste("");
                         setMlExtracted(null);
                         setMlFormSynced(false);
@@ -542,6 +543,32 @@ export default function Admin() {
               <div className="col-span-2 space-y-1">
                 <Label className="text-xs">Cookie _csrf</Label>
                 <Input value={mlForm.cookieCsrf} onChange={(e) => setMlForm((f) => ({ ...f, cookieCsrf: e.target.value }))} placeholder="vrR725i1gpfZ84j1PmeMZRF4" className="bg-white/5 border-white/10 text-xs h-8 font-mono" />
+              </div>
+            </div>
+
+            {/* Modo de envio de links */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Modo de envio de links</Label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(["long", "social", "tinyurl"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setMlForm((f) => ({ ...f, linkMode: mode }))}
+                    className={`rounded-md border p-2 text-xs transition-all text-left ${
+                      mlForm.linkMode === mode
+                        ? "border-yellow-500/60 bg-yellow-500/10 text-yellow-300"
+                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="font-semibold">
+                      {mode === "long" ? "Link longo" : mode === "social" ? "Vitrine Social" : "TinyURL"}
+                    </div>
+                    <div className="text-white/40 mt-0.5">
+                      {mode === "long" ? "Produto direto" : mode === "social" ? "meli.la + vitrine" : "tinyurl.com"}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 

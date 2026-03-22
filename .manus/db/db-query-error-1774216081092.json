@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE mercado_livre_config ADD COLUMN link_mode ENUM('long', 'social', 'tinyurl') NOT NULL DEFAULT 'long';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute ALTER TABLE mercado_livre_config ADD COLUMN link_mode ENUM('long', 'social', 'tinyurl') NOT NULL DEFAULT 'long';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'link_mode'"
+  ]
+}

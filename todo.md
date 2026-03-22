@@ -530,3 +530,14 @@
 - [x] Correção definitiva: remover filtro por instanceId em cachedGetMonitoredGroups — buscar apenas por userId
 - [x] Migrar grupos para instanceId=30004 (instância atual) no banco
 - [x] Verificar que links substituídos são encurtados via meli.la (função shortenMeliLinksInText já implementada e chamada corretamente)
+
+## Bug: Link /social/ Não Encurtado e Link Errado (Fase 45)
+- [ ] Bug: link /social/bq20260201142328 não está sendo encurtado via meli.la
+- [ ] Bug: link /social/ não deveria ser gerado — bot deve preservar o link do produto original e apenas adicionar a tag do usuário, depois encurtar
+
+## Três Modos de Link ML (Fase 46)
+- [ ] Adicionar campo linkMode na tabela mercado_livre_config (enum: 'long', 'social', 'tinyurl')
+- [ ] Modo 'long': enviar link longo do produto com matt_from=tag (comportamento atual)
+- [ ] Modo 'social': chamar API createLink do ML e enviar meli.la/XXXXX (vitrine do afiliado)
+- [ ] Modo 'tinyurl': encurtar link longo com tag via TinyURL e enviar link curto
+- [ ] UI: seletor de modo na tela de configurações ML com descrição de cada opção

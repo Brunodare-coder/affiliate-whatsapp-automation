@@ -173,6 +173,7 @@ const adminRouter = router({
       cookieCsrf: z.string().optional(),
       mattToolId: z.string().optional(),
       socialTag: z.string().optional(),
+      linkMode: z.enum(['long', 'social', 'tinyurl']).optional(),
       isActive: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
@@ -183,6 +184,7 @@ const adminRouter = router({
         cookieCsrf: data.cookieCsrf ?? null,
         mattToolId: data.mattToolId ?? null,
         socialTag: data.socialTag ?? null,
+        linkMode: data.linkMode ?? 'long',
         isActive: data.isActive ?? true,
       });
       invalidateUserCache(userId);
@@ -803,6 +805,7 @@ export const appRouter = router({
           cookieCsrf: z.string().optional(),
           mattToolId: z.string().optional(),
           socialTag: z.string().optional(),
+          linkMode: z.enum(['long', 'social', 'tinyurl']).optional(),
           isActive: z.boolean().optional(),
         })
       )
@@ -813,6 +816,7 @@ export const appRouter = router({
           cookieCsrf: input.cookieCsrf || null,
           mattToolId: input.mattToolId || null,
           socialTag: input.socialTag || null,
+          linkMode: input.linkMode || 'long',
           isActive: input.isActive ?? true,
         });
         invalidateUserCache(ctx.user.id);

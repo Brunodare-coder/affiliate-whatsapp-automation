@@ -714,7 +714,7 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null } | null = null,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null; linkMode?: string | null } | null = null,
     shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
     amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
     magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
@@ -739,7 +739,7 @@ export class WhatsAppManager extends EventEmitter {
       linksReplaced: 0,
     });
 
-    diagInfo(userId, 'AUTOMAÇÃO', `Processando | grupo=${sourceGroupJid} | texto=${text ? text.substring(0, 80) + '...' : 'VAZIO'} | mídia=${mediaType || 'nenhuma'}`);
+    diagInfo(userId, 'AUTOMAÇÃO', `Processando | grupo=${sourceGroupJid} | texto=${text ? text.substring(0, 200) + (text.length > 200 ? '...' : '') : 'VAZIO'} | mídia=${mediaType || 'nenhuma'}`);
     diagInfo(userId, 'CONFIG', `ML=${mlConfig?.isActive ? 'ativo (tag:' + mlConfig.tag + ')' : 'inativo'} | Shopee=${shopeeConfig?.isActive ? 'ativo' : 'inativo'} | Amazon=${amazonConfig?.isActive ? 'ativo' : 'inativo'} | Links=${links.length}`);
     try {
       let processedText = text || "";
@@ -795,23 +795,35 @@ export class WhatsAppManager extends EventEmitter {
 
       // Replace Mercado Livre links with affiliate tag
       if (mlConfig && mlConfig.isActive && mlConfig.tag && processedText) {
-        diagInfo(userId, 'LINKS', `Texto antes ML (150 chars): ${processedText.substring(0, 150)}`);
+        diagInfo(userId, 'LINKS', `Texto antes ML (500 chars): ${processedText.substring(0, 500)}`);
         const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
-        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
+        const linkMode = mlConfig.linkMode || 'long';
+        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'}, modo=${linkMode})`);
         if (mlResult.replaced > 0) {
-          // Se tiver cookies ML configurados, encurtar via API meli.la
-          if (mlConfig.cookieSsid && mlConfig.cookieCsrf) {
+          if (linkMode === 'social' && mlConfig.cookieSsid && mlConfig.cookieCsrf) {
+            // Modo social: encurtar via API meli.la (gera link de vitrine social)
             try {
               const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
               processedText = shortenedText;
-              diagSuccess(userId, 'LINKS', `ML encurtado via meli.la: ${mlResult.replaced} link(s)`);
+              diagSuccess(userId, 'LINKS', `ML modo=social: encurtado via meli.la (vitrine social): ${mlResult.replaced} link(s)`);
             } catch (err) {
-              // Fallback: usar link longo com tag substituída
               processedText = mlResult.text;
-              diagWarn(userId, 'LINKS', `Falha ao encurtar via meli.la, usando link longo: ${err}`);
+              diagWarn(userId, 'LINKS', `ML modo=social: falha ao encurtar via meli.la, usando link longo: ${err}`);
+            }
+          } else if (linkMode === 'tinyurl') {
+            // Modo tinyurl: encurtar via TinyURL (mantém produto específico)
+            try {
+              const shortenedText = await shortenMeliLinksWithTinyUrl(mlResult.text);
+              processedText = shortenedText;
+              diagSuccess(userId, 'LINKS', `ML modo=tinyurl: encurtado via TinyURL: ${mlResult.replaced} link(s)`);
+            } catch (err) {
+              processedText = mlResult.text;
+              diagWarn(userId, 'LINKS', `ML modo=tinyurl: falha ao encurtar via TinyURL, usando link longo: ${err}`);
             }
           } else {
+            // Modo long (padrão): link longo com tag substituída
             processedText = mlResult.text;
+            diagSuccess(userId, 'LINKS', `ML modo=long: link longo com tag substituída: ${mlResult.replaced} link(s)`);
           }
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
@@ -1711,5 +1723,43 @@ export async function shortenMeliLinksInText(
   urlMap.forEach((shortUrl, longUrl) => {
     result = result.split(longUrl).join(shortUrl);
   });
+  return result;
+}
+
+// ── Encurtamento de links via TinyURL ─────────────────────────────────────────
+/**
+ * Encurta um único link via TinyURL API (gratuita, sem autenticação).
+ * Retorna o link encurtado ou o original em caso de falha.
+ */
+export async function shortenWithTinyUrl(longUrl: string): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!response.ok) return longUrl;
+    const short = await response.text();
+    return short.trim().startsWith("https://tinyurl.com/") ? short.trim() : longUrl;
+  } catch {
+    return longUrl;
+  }
+}
+
+/**
+ * Encurta todos os links mercadolivre.com.br no texto via TinyURL.
+ * Retorna o texto com os links substituídos por tinyurl.com/XXXXX.
+ */
+export async function shortenMeliLinksWithTinyUrl(text: string): Promise<string> {
+  const mlPattern = /https?:\/\/[a-z0-9-]*\.?mercadolivre\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
+  const matches = Array.from(new Set(text.match(mlPattern) || []));
+  if (matches.length === 0) return text;
+
+  let result = text;
+  for (const longUrl of matches) {
+    const shortUrl = await shortenWithTinyUrl(longUrl);
+    if (shortUrl !== longUrl) {
+      result = result.split(longUrl).join(shortUrl);
+    }
+  }
   return result;
 }
