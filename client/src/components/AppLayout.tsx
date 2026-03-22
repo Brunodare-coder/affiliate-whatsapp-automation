@@ -13,6 +13,7 @@ import {
   LogOut,
   MessageSquare,
   Settings,
+  Shield,
   Smartphone,
   Users,
   Zap,
@@ -30,6 +31,7 @@ const navItems = [
   { path: "/automations", label: "Automações", icon: Bot },
   { path: "/feed-global", label: "Feed Global", icon: Globe },
   { path: "/logs", label: "Logs", icon: FileText },
+  { path: "/subscription", label: "Assinatura", icon: Shield },
   { path: "/settings", label: "Configurações", icon: Settings },
 ];
 

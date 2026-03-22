@@ -302,3 +302,41 @@ export const botSettings = mysqlTable("bot_settings", {
 
 export type BotSettings = typeof botSettings.$inferSelect;
 export type InsertBotSettings = typeof botSettings.$inferInsert;
+
+// ── Assinaturas ───────────────────────────────────────────────────────────
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  plan: mysqlEnum("plan", ["trial", "basic", "premium"]).default("trial").notNull(),
+  // basic = R$50/mês com anúncios, premium = R$100/mês sem anúncios
+  status: mysqlEnum("status", ["trial", "active", "expired", "cancelled"]).default("trial").notNull(),
+  hasAds: boolean("hasAds").default(true).notNull(), // true = plano com anúncios
+  trialEndsAt: timestamp("trialEndsAt"),   // 60 min após criação da conta
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),   // data de vencimento
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+// ── Pagamentos PIX ────────────────────────────────────────────────────────
+export const pixPayments = mysqlTable("pix_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  plan: mysqlEnum("plan", ["basic", "premium"]).notNull(),
+  // basic = R$50, premium = R$100
+  amount: int("amount").notNull(), // em centavos: 5000 ou 10000
+  pixKey: varchar("pixKey", { length: 255 }).notNull(),
+  txid: varchar("txid", { length: 64 }).notNull().unique(), // ID único da transação
+  qrCodePayload: text("qrCodePayload"), // string EMV (Copia e Cola)
+  qrCodeImage: text("qrCodeImage"),    // base64 do QR Code
+  status: mysqlEnum("status", ["pending", "paid", "expired", "cancelled"]).default("pending").notNull(),
+  expiresAt: timestamp("expiresAt"),   // PIX expira em 30 min
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PixPayment = typeof pixPayments.$inferSelect;
+export type InsertPixPayment = typeof pixPayments.$inferInsert;

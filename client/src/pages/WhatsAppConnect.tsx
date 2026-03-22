@@ -1,4 +1,6 @@
 import AppLayout from "@/components/AppLayout";
+import { Link } from "wouter";
+import { Shield, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +75,7 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
 
 export default function WhatsAppConnect() {
   const utils = trpc.useUtils();
+  const { data: sub, isLoading: subLoading } = trpc.subscription.get.useQuery();
   const { data: instances, isLoading } = trpc.whatsapp.listInstances.useQuery(undefined, {
     refetchInterval: 5000,
   });
@@ -131,6 +134,45 @@ export default function WhatsAppConnect() {
       case "qr_pending": return "Aguardando QR";
       default: return "Desconectado";
     }
+  }
+
+  // Bloqueio de acesso sem assinatura ativa
+  if (!subLoading && sub && !sub.isActive) {
+    return (
+      <AppLayout title="WhatsApp">
+        <div className="p-6 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md space-y-5">
+            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-10 h-10 text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Acesso Bloqueado</h2>
+            <p className="text-muted-foreground">
+              {sub.status === "trial"
+                ? "Seu período de teste de 60 minutos expirou."
+                : "Sua assinatura expirou."}
+              {" "}Para continuar usando o bot, assine um dos planos disponíveis.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/subscription">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Shield className="w-4 h-4 mr-2" />
+                  R$ 50/mês
+                </Button>
+              </Link>
+              <Link href="/subscription">
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Shield className="w-4 h-4 mr-2" />
+                  R$ 100/mês
+                </Button>
+              </Link>
+            </div>
+            <Link href="/subscription">
+              <p className="text-sm text-primary hover:underline cursor-pointer">Ver planos e assinar →</p>
+            </Link>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (

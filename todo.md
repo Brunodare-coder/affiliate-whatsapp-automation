@@ -172,3 +172,19 @@
 - [x] tRPC procedures: sendLogs.list, sendLogs.stats
 - [x] Integrar createSendLog no fluxo de envio do whatsapp.ts
 - [x] Redesenhar página /logs com contadores Total/Sucesso/Erros/Pendente, filtros e cards de log
+
+## Sistema de Assinatura e Pagamento PIX
+- [ ] Schema: tabela subscriptions (userId, plan, status, expiresAt, trialEndsAt, hasAds)
+- [ ] Schema: tabela pix_payments (id, userId, subscriptionId, amount, pixKey, txid, qrCode, status, paidAt)
+- [ ] DB helpers: getSubscription, upsertSubscription, createPixPayment, updatePixPayment
+- [ ] Backend: geração de QR Code PIX (EMV/Copia e Cola) com chave CPF 41186875852
+- [ ] Backend: procedure subscription.get (retorna status trial/ativo/expirado)
+- [ ] Backend: procedure subscription.createPayment (gera PIX para plano escolhido)
+- [ ] Backend: procedure subscription.checkPayment (verifica se pagamento foi confirmado)
+- [ ] Backend: procedure subscription.activatePlan (ativa plano após pagamento)
+- [ ] Trial automático de 60 minutos ao criar conta (campo trialEndsAt no user ou subscriptions)
+- [ ] Bloqueio de conectar WhatsApp se trial expirado e sem assinatura ativa
+- [ ] Lógica de anúncio automático nos links (plano com anúncios)
+- [ ] Página /assinatura com card gradiente roxo/azul igual ao print
+- [ ] Modal de pagamento PIX com QR Code, Copia e Cola e timer de expiração
+- [ ] Notificação ao owner quando pagamento é confirmado

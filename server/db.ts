@@ -39,6 +39,8 @@ import {
   amazonConfig,
   magazineLuizaConfig,
   aliexpressConfig,
+  subscriptions,
+  pixPayments,
   users,
   whatsappInstances,
 } from "../drizzle/schema";
@@ -563,4 +565,143 @@ export async function getSendLogStats(userId: number): Promise<{ total: number; 
     errors: all.filter((l) => l.status === "failed").length,
     pending: all.filter((l) => l.status === "pending").length,
   };
+}
+
+// ── Assinaturas ───────────────────────────────────────────────────────────
+
+export async function getOrCreateSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [existing] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+  if (existing) return existing;
+
+  // Criar trial de 60 minutos
+  const trialEndsAt = new Date(Date.now() + 60 * 60 * 1000);
+  await db.insert(subscriptions).values({
+    userId,
+    plan: "trial",
+    status: "trial",
+    hasAds: true,
+    trialEndsAt,
+  });
+  const [created] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+  return created;
+}
+
+export async function getSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [sub] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+  return sub ?? null;
+}
+
+export async function activateSubscription(
+  userId: number,
+  plan: "basic" | "premium"
+) {
+  const db = await getDb();
+  if (!db) return;
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+  const hasAds = plan === "basic";
+
+  await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      plan,
+      status: "active",
+      hasAds,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        plan,
+        status: "active",
+        hasAds,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+      },
+    });
+}
+
+// ── Pagamentos PIX ────────────────────────────────────────────────────────
+export async function createPixPayment(data: {
+  userId: number;
+  plan: "basic" | "premium";
+  amount: number;
+  pixKey: string;
+  txid: string;
+  qrCodePayload: string;
+  qrCodeImage: string;
+  expiresAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.insert(pixPayments).values(data);
+  const [payment] = await db
+    .select()
+    .from(pixPayments)
+    .where(eq(pixPayments.txid, data.txid))
+    .limit(1);
+  return payment;
+}
+
+export async function getPixPayment(txid: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const [payment] = await db
+    .select()
+    .from(pixPayments)
+    .where(eq(pixPayments.txid, txid))
+    .limit(1);
+  return payment ?? null;
+}
+
+export async function getPendingPixPayment(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [payment] = await db
+    .select()
+    .from(pixPayments)
+    .where(and(eq(pixPayments.userId, userId), eq(pixPayments.status, "pending")))
+    .orderBy(desc(pixPayments.createdAt))
+    .limit(1);
+  return payment ?? null;
+}
+
+export async function markPixPaymentPaid(txid: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(pixPayments)
+    .set({ status: "paid", paidAt: new Date() })
+    .where(eq(pixPayments.txid, txid));
+}
+
+export async function isSubscriptionActive(userId: number): Promise<boolean> {
+  const sub = await getSubscription(userId);
+  if (!sub) return false;
+  if (sub.status === "trial") {
+    return sub.trialEndsAt ? new Date() < sub.trialEndsAt : false;
+  }
+  if (sub.status === "active") {
+    return sub.currentPeriodEnd ? new Date() < sub.currentPeriodEnd : false;
+  }
+  return false;
 }

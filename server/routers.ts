@@ -58,7 +58,16 @@ import {
   upsertBotSettings,
   listSendLogs,
   getSendLogStats,
+  getOrCreateSubscription,
+  getSubscription,
+  activateSubscription,
+  createPixPayment,
+  getPixPayment,
+  getPendingPixPayment,
+  markPixPaymentPaid,
+  isSubscriptionActive,
 } from "./db";
+import { generatePixQRCode, generateTxid } from "./pix";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 
@@ -600,6 +609,108 @@ export const appRouter = router({
         await upsertBotSettings(ctx.user.id, input as any);
         return { success: true };
       }),
+  }),
+
+  // ── Assinatura e Pagamento PIX ────────────────────────────────────────────────────────
+  subscription: router({
+    // Retorna status da assinatura do usuário (cria trial se não existir)
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getOrCreateSubscription(ctx.user.id);
+      if (!sub) return null;
+      const now = new Date();
+      // Verificar se trial expirou
+      if (sub.status === "trial" && sub.trialEndsAt && now > sub.trialEndsAt) {
+        return { ...sub, status: "expired" as const, isActive: false };
+      }
+      // Verificar se assinatura expirou
+      if (sub.status === "active" && sub.currentPeriodEnd && now > sub.currentPeriodEnd) {
+        return { ...sub, status: "expired" as const, isActive: false };
+      }
+      const isActive =
+        (sub.status === "trial" && sub.trialEndsAt ? now < sub.trialEndsAt : false) ||
+        (sub.status === "active" && sub.currentPeriodEnd ? now < sub.currentPeriodEnd : false);
+      return { ...sub, isActive };
+    }),
+
+    // Gera QR Code PIX para o plano escolhido
+    createPayment: protectedProcedure
+      .input(z.object({ plan: z.enum(["basic", "premium"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const amount = input.plan === "basic" ? 50.0 : 100.0;
+        const txid = generateTxid();
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+
+        const { payload, qrCodeBase64 } = await generatePixQRCode({
+          pixKey: "41186875852",
+          amount,
+          merchantName: "ProAfiliados Bot",
+          merchantCity: "SAO PAULO",
+          txid,
+          description: input.plan === "basic" ? "Plano Basic 50" : "Plano Premium 100",
+        });
+
+        const payment = await createPixPayment({
+          userId: ctx.user.id,
+          plan: input.plan,
+          amount: amount * 100, // em centavos
+          pixKey: "41186875852",
+          txid,
+          qrCodePayload: payload,
+          qrCodeImage: qrCodeBase64,
+          expiresAt,
+        });
+
+        return {
+          txid,
+          qrCodePayload: payload,
+          qrCodeImage: qrCodeBase64,
+          amount,
+          expiresAt,
+          plan: input.plan,
+        };
+      }),
+
+    // Verifica se o pagamento foi confirmado (polling do frontend)
+    checkPayment: protectedProcedure
+      .input(z.object({ txid: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const payment = await getPixPayment(input.txid);
+        if (!payment || payment.userId !== ctx.user.id) {
+          return { status: "not_found" as const };
+        }
+        // Verificar se expirou
+        if (payment.status === "pending" && payment.expiresAt && new Date() > payment.expiresAt) {
+          return { status: "expired" as const };
+        }
+        return { status: payment.status };
+      }),
+
+    // Ativa o plano manualmente (admin ou após confirmação manual)
+    // Em produção, isso seria chamado por um webhook do banco
+    confirmPayment: protectedProcedure
+      .input(z.object({ txid: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const payment = await getPixPayment(input.txid);
+        if (!payment || payment.userId !== ctx.user.id) {
+          throw new Error("Pagamento não encontrado");
+        }
+        if (payment.status === "paid") {
+          return { success: true, alreadyPaid: true };
+        }
+        // Marcar como pago e ativar assinatura
+        await markPixPaymentPaid(input.txid);
+        await activateSubscription(ctx.user.id, payment.plan);
+        await notifyOwner({
+          title: "Novo pagamento recebido!",
+          content: `Usuário ${ctx.user.name || ctx.user.id} pagou o plano ${payment.plan} (R$ ${(payment.amount / 100).toFixed(2)}) - TXID: ${input.txid}`,
+        });
+        return { success: true, alreadyPaid: false };
+      }),
+
+    // Retorna pagamento pendente do usuário
+    getPendingPayment: protectedProcedure.query(async ({ ctx }) => {
+      return getPendingPixPayment(ctx.user.id);
+    }),
   }),
 
   // ── Logs de Envio ────────────────────────────────────────────────────────
