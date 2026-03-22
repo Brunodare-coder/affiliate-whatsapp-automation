@@ -1246,7 +1246,7 @@ export const whatsappManager = new WhatsAppManager();
 // Substitui links do Mercado Livre adicionando tag de afiliado
 export function replaceMercadoLivreLinks(
   text: string,
-  config: { tag?: string | null; mattToolId?: string | null }
+  config: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null }
 ): { text: string; found: number; replaced: number } {
   // Padrão único abrangente para todos os subdomínios do Mercado Livre
   const mlPattern = /https?:\/\/[a-z0-9-]*\.?mercadolivre\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
@@ -1262,6 +1262,10 @@ export function replaceMercadoLivreLinks(
 
       if (isSocialLink) {
         // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
+        // Substituir o slug /social/OUTRO_USUARIO pelo slug do nosso usuário
+        if (config.socialTag) {
+          urlObj.pathname = `/social/${config.socialTag}`;
+        }
         // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
         if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
         if (config.tag) urlObj.searchParams.set("matt_word", config.tag);

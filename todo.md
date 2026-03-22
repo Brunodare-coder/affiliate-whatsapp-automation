@@ -414,3 +414,9 @@
 - [x] QueryClient global: retry automático até 3x para erros 502/503/HTML com backoff exponencial
 - [x] Query sendLogs.list: retry local específico para erros de HTML/502
 - [x] UI: estado de erro amigável "Erro ao carregar logs" com botão "Tentar novamente"
+
+## Bug Fix - Substituição de afiliado ML errada (Fase 28)
+- [x] Diagnosticado: replaceMercadoLivreLinks não substituía o pathname /social/OUTRO_USUARIO
+- [x] Corrigido: agora substitui urlObj.pathname = /social/${config.socialTag} quando socialTag está configurado
+- [x] Testado: link /social/victorhugoborowski → /social/MEUTAG com matt_word e matt_tool corretos
+- [x] socialTag já estava no schema e retornado pelo getMercadoLivreConfig
