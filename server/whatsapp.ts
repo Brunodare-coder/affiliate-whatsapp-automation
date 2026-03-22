@@ -35,6 +35,7 @@ import {
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
 import { botCache, cacheKey, TTL } from "./cache";
+import { notifyOwner } from "./_core/notification";
 
 const SESSION_DIR = process.env.SESSION_DIR || "/tmp/whatsapp-sessions";
 
@@ -248,19 +249,31 @@ export class WhatsAppManager extends EventEmitter {
         }
 
         if (connection === "close") {
-          const shouldReconnect =
-            (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+          const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const wasConnected = this.sockets.has(instanceId); // was previously connected
 
           await updateWhatsappInstance(instanceId, { status: "disconnected", qrCode: null });
           this.sockets.delete(instanceId);
           this.qrCodes.delete(instanceId);
           this.emit("disconnected", instanceId);
 
+          // Notify owner when WhatsApp disconnects unexpectedly (not on manual logout)
+          if (shouldReconnect && wasConnected) {
+            notifyOwner({
+              title: "⚠️ WhatsApp Desconectado",
+              content: `Sua instância do WhatsApp (ID: ${instanceId}) foi desconectada inesperadamente. O sistema tentará reconectar automaticamente em 30 segundos.\n\nCódigo de erro: ${statusCode || "desconhecido"}`,
+            }).catch(console.error);
+          }
+
           if (shouldReconnect) {
+            // Auto-reconnect after 30s for unexpected disconnections
+            const delay = wasConnected ? 30000 : 5000;
+            console.log(`[WhatsApp] Instance ${instanceId} disconnected. Reconnecting in ${delay / 1000}s...`);
             const timer = setTimeout(() => {
               this.reconnectTimers.delete(instanceId);
               this.connectInstance(instanceId, userId).catch(console.error);
-            }, 5000);
+            }, delay);
             this.reconnectTimers.set(instanceId, timer);
           } else {
             // Logged out - clear session

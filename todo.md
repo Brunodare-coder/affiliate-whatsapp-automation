@@ -427,3 +427,9 @@
 - [x] Sidebar: badge ON/OFF/... ao lado do item WhatsApp com cores verde/amarelo/vermelho
 - [x] Ícone WhatsApp: ponto colorido no canto superior direito do ícone (verde=conectado, amarelo=conectando, vermelho=desconectado)
 - [x] Badge pisca em amarelo quando está conectando/aguardando QR
+
+## Melhorias WhatsApp (Fase 30)
+- [x] Notificação ao dono via notifyOwner quando WhatsApp desconectar inesperadamente (não em logout manual)
+- [x] Auto-reconexão: delay de 30s quando estava conectado, 5s quando ainda estava conectando
+- [x] Sidebar: badge mostra ●1234 (últimos 4 dígitos do número) quando conectado
+- [x] Sidebar: badge mostra OFF (vermelho) quando desconectado, ... (amarelo) quando conectando

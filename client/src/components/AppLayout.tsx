@@ -57,8 +57,13 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     refetchIntervalInBackground: true,
     enabled: isAuthenticated,
   });
-  const waConnected = waInstances?.some((i) => i.status === "connected") ?? false;
+  const connectedInstance = waInstances?.find((i) => i.status === "connected");
+  const waConnected = !!connectedInstance;
   const waConnecting = !waConnected && waInstances?.some((i) => i.status === "connecting" || i.status === "qr_pending");
+  // Show last 4 digits of phone number when connected
+  const waPhoneShort = connectedInstance?.phoneNumber
+    ? connectedInstance.phoneNumber.slice(-4)
+    : null;
 
   if (loading) {
     return (
@@ -158,7 +163,9 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                         waConnected ? "bg-green-500/20 text-green-400" : waConnecting ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/15 text-red-400"
                       }`}>
-                        {waConnected ? "ON" : waConnecting ? "..." : "OFF"}
+                        {waConnected
+                          ? (waPhoneShort ? `●${waPhoneShort}` : "ON")
+                          : waConnecting ? "..." : "OFF"}
                       </span>
                     )}
                     {isActive && !collapsed && !isWhatsApp && (
