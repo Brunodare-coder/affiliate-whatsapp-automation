@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, RefreshCw, Activity, CheckCircle, AlertTriangle, XCircle, Info } from "lucide-react";
+import AppLayout from "@/components/AppLayout";
 
 interface DiagLog {
   id: number;
@@ -103,7 +104,8 @@ export default function Diagnostico() {
     : logs.filter((l) => l.category === activeCategory);
 
   return (
-    <div className="flex flex-col h-full gap-4 p-6">
+    <AppLayout title="Diagnóstico">
+    <div className="flex flex-col h-full gap-4 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -235,5 +237,6 @@ export default function Diagnostico() {
         </button>
       )}
     </div>
+    </AppLayout>
   );
 }

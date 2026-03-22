@@ -479,3 +479,6 @@
 
 ## Navegação Rápida (Fase 36)
 - [x] Dashboard: adicionar botão/link "Ver Logs" que navega para a página /logs
+
+## Correção Layout Diagnóstico (Fase 37)
+- [x] Página /diagnostico: adicionar AppLayout com barra lateral e menus de navegação
