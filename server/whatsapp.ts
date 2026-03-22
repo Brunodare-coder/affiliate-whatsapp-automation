@@ -165,6 +165,22 @@ export interface WhatsAppMessage {
   messageTimestamp?: number | bigint | null;
 }
 
+// Cache the Baileys version so we don't fetch it on every connect (network roundtrip)
+let cachedBaileysVersion: [number, number, number] | null = null;
+async function getBaileysVersion(): Promise<[number, number, number]> {
+  if (cachedBaileysVersion) return cachedBaileysVersion;
+  try {
+    const { version } = await fetchLatestBaileysVersion();
+    cachedBaileysVersion = version;
+    // Refresh every 6 hours
+    setTimeout(() => { cachedBaileysVersion = null; }, 6 * 60 * 60 * 1000);
+    return version;
+  } catch {
+    // Fallback to a known stable version if network fails
+    return [2, 3000, 1023456789];
+  }
+}
+
 export class WhatsAppManager extends EventEmitter {
   private sockets: Map<number, ReturnType<typeof makeWASocket>> = new Map();
   private qrCodes: Map<number, string> = new Map();
@@ -175,6 +191,8 @@ export class WhatsAppManager extends EventEmitter {
     if (!fs.existsSync(SESSION_DIR)) {
       fs.mkdirSync(SESSION_DIR, { recursive: true });
     }
+    // Pre-warm the version cache on startup so first connect is instant
+    getBaileysVersion().catch(() => {});
   }
 
   async connectInstance(instanceId: number, userId: number): Promise<void> {
@@ -189,8 +207,10 @@ export class WhatsAppManager extends EventEmitter {
     }
 
     try {
-      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-      const { version } = await fetchLatestBaileysVersion();
+      const [{ state, saveCreds }, version] = await Promise.all([
+        useMultiFileAuthState(sessionPath),
+        getBaileysVersion(),
+      ]);
 
       const sock = makeWASocket({
         version,
@@ -201,6 +221,9 @@ export class WhatsAppManager extends EventEmitter {
         printQRInTerminal: false,
         syncFullHistory: false,
         generateHighQualityLinkPreview: false,
+        connectTimeoutMs: 20000,
+        defaultQueryTimeoutMs: 15000,
+        keepAliveIntervalMs: 10000,
         getMessage: async (_key) => {
           return undefined;
         },

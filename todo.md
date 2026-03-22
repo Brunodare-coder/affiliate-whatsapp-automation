@@ -390,3 +390,10 @@
 
 ## Bug Fix - Feed Global (Fase 24)
 - [x] Corrigir botão "Atualizar" da página /feed-global — agora chama syncGroupsFromWA (sincroniza grupos do WhatsApp) em vez de apenas refetchGroups (recarregar banco)
+
+## QR Code WhatsApp mais rápido (Fase 25)
+- [x] Investigar gargalo: fetchLatestBaileysVersion() fazia chamada HTTP a cada conexão
+- [x] Backend: cache da versão Baileys (6h TTL) + pre-warm no startup + Promise.all para paralelizar auth+version
+- [x] Backend: timeouts otimizados (connectTimeoutMs: 20s, keepAliveIntervalMs: 10s)
+- [x] Frontend: polling mais agressivo (1.5s no status connecting, 2s no qr_pending)
+- [x] Frontend: estado visual "Gerando QR Code..." com spinner enquanto status=connecting

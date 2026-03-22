@@ -19,10 +19,17 @@ import { toast } from "sonner";
 function QRCodeDisplay({ instanceId }: { instanceId: number }) {
   const { data, isLoading, refetch } = trpc.whatsapp.getQRCode.useQuery(
     { instanceId },
-    { refetchInterval: (query) => {
+    {
+      // Poll every 1.5s while connecting/waiting for QR, every 3s when QR is shown
+      refetchInterval: (query) => {
         const status = query.state.data?.status;
-        return status === "qr_pending" || status === "connecting" ? 3000 : false;
-      }
+        if (status === "connecting") return 1500;
+        if (status === "qr_pending") return 2000;
+        return false;
+      },
+      // Start polling immediately even before first data arrives
+      refetchIntervalInBackground: true,
+      staleTime: 0,
     }
   );
 
@@ -57,6 +64,19 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
         <Button size="sm" variant="outline" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10">
           <RefreshCw className="w-3 h-3 mr-1.5" /> Atualizar QR
         </Button>
+      </div>
+    );
+  }
+
+  // Status: connecting — show animated waiting state
+  if (data?.status === "connecting") {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 gap-3">
+        <div className="relative">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+        <p className="text-sm font-semibold text-foreground">Gerando QR Code...</p>
+        <p className="text-xs text-muted-foreground">Aguarde alguns segundos</p>
       </div>
     );
   }
