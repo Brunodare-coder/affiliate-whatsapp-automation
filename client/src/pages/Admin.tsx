@@ -29,6 +29,7 @@ import {
   Loader2,
   Mail,
   RefreshCw,
+  Search,
   Shield,
   Users,
   XCircle,
@@ -78,6 +79,10 @@ export default function Admin() {
   });
   const [grantPlan, setGrantPlan] = useState<"basic" | "premium">("premium");
   const [grantMonths, setGrantMonths] = useState("1");
+
+  // ── Search / filter state ──────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "trial" | "expired">("all");
 
   // ── Password modal state ─────────────────────────────────────────────────────
   const [pwModal, setPwModal] = useState<{ open: boolean; userId: number; userName: string; userEmail: string }>({
@@ -146,6 +151,20 @@ export default function Admin() {
   const activeUsers = users?.filter((u) => u.subscription?.isActive).length ?? 0;
   const premiumUsers = users?.filter((u) => u.subscription?.plan === "premium" && u.subscription.isActive).length ?? 0;
   const basicUsers = users?.filter((u) => u.subscription?.plan === "basic" && u.subscription.isActive).length ?? 0;
+
+  // Filtered users based on search query and status filter
+  const filteredUsers = (users ?? []).filter((u) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q ||
+      (u.name ?? "").toLowerCase().includes(q) ||
+      (u.email ?? "").toLowerCase().includes(q);
+    const matchesStatus =
+      filterStatus === "all" ? true :
+      filterStatus === "active" ? (u.subscription?.isActive && u.subscription.status === "active") :
+      filterStatus === "trial" ? (u.subscription?.isActive && u.subscription.status === "trial") :
+      filterStatus === "expired" ? (!u.subscription?.isActive) : true;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleSetPassword = () => {
     if (newPassword.length < 6) {
@@ -228,24 +247,57 @@ export default function Admin() {
 
         {/* Tabela de usuários */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-4 h-4" /> Usuários ({totalUsers})
-            </CardTitle>
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="w-4 h-4" /> Usuários ({filteredUsers.length}{filteredUsers.length !== totalUsers ? `/${totalUsers}` : ""})
+              </CardTitle>
+              <div className="flex flex-1 gap-2">
+                {/* Search input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome ou e-mail..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                {/* Status filter */}
+                <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
+                  <SelectTrigger className="w-36 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="active">Ativos</SelectItem>
+                    <SelectItem value="expired">Expirados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
-            ) : !users || users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                <p>Nenhum usuário encontrado</p>
+                <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                <p>{searchQuery || filterStatus !== "all" ? "Nenhum usuário encontrado para este filtro" : "Nenhum usuário cadastrado"}</p>
+                {(searchQuery || filterStatus !== "all") && (
+                  <button
+                    className="mt-2 text-xs text-primary hover:underline"
+                    onClick={() => { setSearchQuery(""); setFilterStatus("all"); }}
+                  >Limpar filtros</button>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <div key={u.id} className="flex flex-wrap items-center gap-3 px-6 py-4 hover:bg-muted/30 transition-colors">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">

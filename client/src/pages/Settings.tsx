@@ -13,8 +13,9 @@ import {
   ShoppingBag, ShoppingCart, Store, Package, Link2,
   Calendar, Clock, Terminal, Sticker, UserPlus, Youtube,
   ChevronRight, CheckCircle2, Settings as SettingsIcon,
-  Zap, Wrench, X, Plus, Trash2, Globe, Eye
+  Zap, Wrench, X, Plus, Trash2, Globe, Eye, KeyRound, Lock
 } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 // ─── Modal Shopee ────────────────────────────────────────────────────────────
 function ShopeeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -735,6 +736,7 @@ function ToolCard({
 
 // ─── Main Settings Page ──────────────────────────────────────────────────────
 export default function Settings() {
+  const { user } = useAuth();
   const { data: mlConfig } = trpc.mercadoLivre.getConfig.useQuery();
   const { data: shopeeConfig } = trpc.shopee.getConfig.useQuery();
   const { data: amazonConfig } = trpc.amazon.getConfig.useQuery();
@@ -745,6 +747,24 @@ export default function Settings() {
   const saveBotSettings = trpc.botSettings.save.useMutation({ onSuccess: () => refetchSettings() });
 
   const [modal, setModal] = useState<string | null>(null);
+
+  // ── Password change state ──────────────────────────────────────────────────
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const changePasswordMutation = trpc.auth.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success("Senha alterada com sucesso!");
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
+  const handleChangePassword = () => {
+    if (newPw.length < 6) { toast.error("A nova senha deve ter pelo menos 6 caracteres."); return; }
+    if (newPw !== confirmPw) { toast.error("As senhas não coincidem."); return; }
+    changePasswordMutation.mutate({ currentPassword: currentPw, newPassword: newPw });
+  };
 
   const sendGroups = groups?.filter(g => g.enviarOfertas) ?? [];
 
@@ -965,6 +985,68 @@ export default function Settings() {
           </div>
         </div>
 
+      </div>
+
+      {/* ── Conta e Segurança ──────────────────────────────────────────────── */}
+      <div className="rounded-xl bg-card border border-border p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
+            <Lock className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <p className="font-semibold">Conta e Segurança</p>
+            <p className="text-xs text-muted-foreground">{user?.email ?? "Sua conta"}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="current-pw" className="text-xs">Senha atual</Label>
+            <Input
+              id="current-pw"
+              type="password"
+              placeholder="Senha atual"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              className="bg-muted/30"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="new-pw" className="text-xs">Nova senha</Label>
+            <Input
+              id="new-pw"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              className="bg-muted/30"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="confirm-pw" className="text-xs">Confirmar nova senha</Label>
+            <Input
+              id="confirm-pw"
+              type="password"
+              placeholder="Repita a nova senha"
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              className="bg-muted/30"
+            />
+          </div>
+        </div>
+
+        {confirmPw && newPw !== confirmPw && (
+          <p className="text-xs text-destructive">As senhas não coincidem.</p>
+        )}
+
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+          onClick={handleChangePassword}
+          disabled={changePasswordMutation.isPending || newPw.length < 6 || newPw !== confirmPw}
+        >
+          <KeyRound className="w-4 h-4" />
+          {changePasswordMutation.isPending ? "Alterando..." : "Alterar Senha"}
+        </Button>
       </div>
 
       {/* Modals */}

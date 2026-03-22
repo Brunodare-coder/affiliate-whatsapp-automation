@@ -248,6 +248,25 @@ export const appRouter = router({
         await updateUserPassword(user.id, newHash);
         return { success: true };
       }),
+
+    // ── Change Password (logged in user) ─────────────────────────────────────
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1, "Informe a senha atual"),
+        newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await getUserById(ctx.user.id);
+        if (!user) throw new Error("Usuário não encontrado");
+        // If account has no password yet (OAuth migrated), allow setting without current password check
+        if (user.passwordHash) {
+          const valid = await verifyPassword(input.currentPassword, user.passwordHash);
+          if (!valid) throw new Error("Senha atual incorreta");
+        }
+        const newHash = await hashPassword(input.newPassword);
+        await updateUserPassword(user.id, newHash);
+        return { success: true };
+      }),
   }),
 
   // ── Campaigns ──────────────────────────────────────────────────────────

@@ -253,3 +253,9 @@
 - [ ] Atualizar procedure forgotPassword para enviar e-mail real
 - [ ] Criar painel admin para gerenciar/redefinir senhas de usuários
 - [ ] Adicionar procedure admin.setUserPassword no backend
+
+## Melhorias Fase 10
+
+- [x] Configurar RESEND_API_KEY via secrets para envio real de e-mails
+- [x] Adicionar troca de senha na página de Configurações do usuário
+- [x] Adicionar busca e filtro na tabela de usuários do painel Admin
