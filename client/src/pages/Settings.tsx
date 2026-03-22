@@ -13,9 +13,10 @@ import {
   ShoppingBag, ShoppingCart, Store, Package, Link2,
   Calendar, Clock, Terminal, Sticker, UserPlus, Youtube,
   ChevronRight, CheckCircle2, Settings as SettingsIcon,
-  Zap, Wrench, X, Plus, Trash2, Globe, Eye, KeyRound, Lock
+  Zap, Wrench, X, Plus, Trash2, Globe, Eye, KeyRound, Lock, ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Link } from "wouter";
 
 // ─── Modal Shopee ────────────────────────────────────────────────────────────
 function ShopeeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -783,49 +784,22 @@ export default function Settings() {
     <AppLayout title="Configurações">
       <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
 
-        {/* Feed Global */}
-        <div className="rounded-2xl border border-blue-500/20 p-5" style={{ background: "linear-gradient(135deg, oklch(0.58 0.20 220 / 0.08) 0%, oklch(0.12 0.018 250 / 0.6) 100%)" }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold">Feed Global</p>
-                <p className="text-xs text-muted-foreground">Receba links de todos os usuários do sistema</p>
-              </div>
+        {/* Feed Global — link para página dedicada */}
+        <div className="rounded-2xl border border-blue-500/20 p-4 flex items-center justify-between" style={{ background: "linear-gradient(135deg, oklch(0.58 0.20 220 / 0.08) 0%, oklch(0.12 0.018 250 / 0.6) 100%)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <Globe className="w-5 h-5 text-white" />
             </div>
-            <Switch
-              checked={botSettings?.feedGlobalEnabled ?? false}
-              onCheckedChange={(v) => saveBotSettings.mutate({ feedGlobalEnabled: v })}
-            />
+            <div>
+              <p className="font-semibold section-title">Feed Global</p>
+              <p className="text-xs text-muted-foreground">Receba links de afiliados de todos os usuários do sistema</p>
+            </div>
           </div>
-          {botSettings?.feedGlobalEnabled && (
-            <div className="mt-4 rounded-xl border border-blue-500/20 p-4 text-sm text-blue-300/80" style={{ background: "oklch(0.58 0.20 220 / 0.06)" }}>
-              <p className="font-semibold mb-1">O que é o Feed Global?</p>
-              <p>Quando ativado, você recebe automaticamente <strong>links de afiliado</strong> detectados em <strong>todos os grupos monitorados</strong> por outros usuários do sistema. Assim você não precisa configurar seus próprios grupos de monitoramento — aproveite os links que outras pessoas já encontraram!</p>
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {["Shopee", "AliExpress", "Mercado Livre", "Amazon", "Magazine Luiza"].map(s => (
-                  <span key={s} className="text-xs text-blue-300">✓ {s}</span>
-                ))}
-              </div>
-              {sendGroups.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-xs font-semibold mb-2">Grupos Alvo (opcional)</p>
-                  <div className="space-y-1">
-                    {sendGroups.map(g => (
-                      <label key={g.id} className="flex items-center gap-2 text-xs cursor-pointer">
-                        <input type="checkbox" className="rounded" />
-                        <span>{g.groupName || g.groupJid}</span>
-                        <Badge variant="outline" className="text-xs">GRUPO</Badge>
-                      </label>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Deixe todos desmarcados para enviar para todos os grupos de disparo.</p>
-                </div>
-              )}
-            </div>
-          )}
+          <Link href="/feed-global">
+            <button className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/15 text-blue-300 border border-blue-500/25 hover:bg-blue-500/25 transition-all flex items-center gap-1.5 flex-shrink-0">
+              Configurar <ExternalLink className="w-3 h-3" />
+            </button>
+          </Link>
         </div>
 
         {/* CREDENCIAIS */}

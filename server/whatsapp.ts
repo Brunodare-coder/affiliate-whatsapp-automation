@@ -29,6 +29,7 @@ import {
   createSendLog,
   updateSendLog,
   updateWhatsappInstance,
+  getSubscription,
 } from "./db";
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
@@ -730,6 +731,19 @@ export class WhatsAppManager extends EventEmitter {
             textWithoutUrls = textWithoutUrls.replace(url, '').trim();
           }
           processedText = textWithoutUrls + '\n\n' + urls.join('\n');
+        }
+      }
+
+      // Apply ad text for basic plan (hasAds)
+      if (processedText) {
+        try {
+          const subscription = await getSubscription(userId);
+          if (subscription?.hasAds && subscription.status === "active") {
+            const adText = "\n\n⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space";
+            processedText = processedText + adText;
+          }
+        } catch {
+          // ignore subscription fetch errors
         }
       }
 

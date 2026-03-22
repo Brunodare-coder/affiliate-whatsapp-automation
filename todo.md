@@ -300,3 +300,9 @@
 - [x] Admin: redesign com stats cards, tabela de usuários premium
 - [x] Campaigns: redesign com grid de cards premium
 - [x] CampaignDetail: redesign com cards de links premium
+
+## Correções e Investigações (Fase 11)
+- [x] Remover card Feed Global duplicado da página de Configurações (já existe página /feed-global)
+- [x] Implementar anúncios para plano R$50 (hasAds) no processamento de mensagens
+- [x] Verificar substituição de links de afiliado (ML, Amazon, Shopee, Magalu, AliExpress) - funcionando
+- [x] Documentar diferença entre Grupos e Automações para o usuário
