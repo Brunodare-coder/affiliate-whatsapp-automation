@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Activity, BarChart3, Bot, CheckCircle2, ChevronDown, ChevronUp, Clock, Globe, Link2, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
+import { Activity, BarChart3, Bot, CheckCircle2, ChevronDown, ChevronUp, Clock, Globe, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { useState } from "react";
 
 const PLATFORM_CONFIG: Record<string, { label: string; color: string; textColor: string; bg: string }> = {
@@ -13,27 +13,6 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string; textColor:
   magalu:       { label: "Mag. Luiza",    color: "border-blue-500/30",   textColor: "text-blue-400",   bg: "bg-blue-500/15" },
   aliexpress:   { label: "AliExpress",    color: "border-red-500/30",    textColor: "text-red-400",    bg: "bg-red-500/15" },
 };
-
-const ML_LINK_MODE_CONFIG: Record<string, { label: string; color: string; textColor: string; bg: string; title: string }> = {
-  long:    { label: "Link longo",   color: "border-green-500/30",  textColor: "text-green-400",  bg: "bg-green-500/15",  title: "Link longo com tag — produto abre diretamente" },
-  social:  { label: "Vitrine",      color: "border-blue-500/30",   textColor: "text-blue-400",   bg: "bg-blue-500/15",   title: "Encurtado via meli.la — abre vitrine social" },
-  tinyurl: { label: "TinyURL",      color: "border-purple-500/30", textColor: "text-purple-400", bg: "bg-purple-500/15", title: "Encurtado via TinyURL — produto específico" },
-};
-
-function MlLinkModeBadge({ mode }: { mode?: string | null }) {
-  if (!mode) return null;
-  const cfg = ML_LINK_MODE_CONFIG[mode];
-  if (!cfg) return null;
-  return (
-    <span
-      title={cfg.title}
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.textColor} ${cfg.color}`}
-    >
-      <Link2 className="w-3 h-3" />
-      {cfg.label}
-    </span>
-  );
-}
 
 function PlatformBadge({ platform }: { platform?: string | null }) {
   const cfg = platform ? PLATFORM_CONFIG[platform] : null;
@@ -200,8 +179,6 @@ export default function Logs() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <PlatformBadge platform={log.platform} />
-                        {/* ML Link Mode badge */}
-                        <MlLinkModeBadge mode={(log as any).mlLinkMode} />
                         {/* Source badge: Feed Global vs Bot */}
                         {(log as any).source === "global" ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/25">

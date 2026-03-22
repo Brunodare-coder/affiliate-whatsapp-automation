@@ -440,8 +440,7 @@ export class WhatsAppManager extends EventEmitter {
   private async _processIncomingMessage(instanceId: number, userId: number, msg: WhatsAppMessage, remoteJid: string): Promise<void> {
     try {
       // Check if this group is monitored with buscarOfertas active
-      // NOTE: Filter by userId only (not instanceId) — instanceId changes on every server restart
-      const monitoredGroupsList = await cachedGetMonitoredGroups(userId);
+      const monitoredGroupsList = await cachedGetMonitoredGroups(userId, instanceId);
       diagInfo(userId, 'GRUPOS', `${monitoredGroupsList.length} monitorados | buscarOfertas: ${monitoredGroupsList.filter(g => g.isActive && g.buscarOfertas).length} ativos`);
       const activeMonitored = monitoredGroupsList.filter(
         (g) => g.isActive && g.groupJid === remoteJid && g.buscarOfertas
@@ -480,11 +479,9 @@ export class WhatsAppManager extends EventEmitter {
       console.log(`[WhatsApp] Incoming message in monitored group: ${remoteJid} (${activeMonitored[0]?.groupName || 'unknown'})`);
 
       // Find automations for this group
-      // NOTE: Filter by sourceGroupId only (not instanceId) — instanceId in automations table may be stale
-      // after instance recreation. The actual running instance is identified by the socket connection.
       const allAutomations = await cachedGetAutomations(userId);
       const matchingAutomations = allAutomations.filter(
-        (a) => a.isActive && activeMonitored.some((g) => g.id === a.sourceGroupId)
+        (a) => a.isActive && a.instanceId === instanceId && activeMonitored.some((g) => g.id === a.sourceGroupId)
       );
       
       if (matchingAutomations.length === 0) {
@@ -716,7 +713,7 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null; linkMode?: string | null } | null = null,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null } | null = null,
     shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
     amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
     magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
@@ -741,7 +738,7 @@ export class WhatsAppManager extends EventEmitter {
       linksReplaced: 0,
     });
 
-    diagInfo(userId, 'AUTOMAÇÃO', `Processando | grupo=${sourceGroupJid} | texto=${text ? text.substring(0, 200) + (text.length > 200 ? '...' : '') : 'VAZIO'} | mídia=${mediaType || 'nenhuma'}`);
+    diagInfo(userId, 'AUTOMAÇÃO', `Processando | grupo=${sourceGroupJid} | texto=${text ? text.substring(0, 80) + '...' : 'VAZIO'} | mídia=${mediaType || 'nenhuma'}`);
     diagInfo(userId, 'CONFIG', `ML=${mlConfig?.isActive ? 'ativo (tag:' + mlConfig.tag + ')' : 'inativo'} | Shopee=${shopeeConfig?.isActive ? 'ativo' : 'inativo'} | Amazon=${amazonConfig?.isActive ? 'ativo' : 'inativo'} | Links=${links.length}`);
     try {
       let processedText = text || "";
@@ -750,7 +747,6 @@ export class WhatsAppManager extends EventEmitter {
       let selectedCampaignId: number | undefined;
       let selectedCampaignName: string | undefined;
       let llmSuggestion: string | undefined;
-      let usedMlLinkMode: "long" | "social" | "tinyurl" | undefined;
 
       // Use LLM to suggest campaign if enabled
       if (automation.useLlmSuggestion && text) {
@@ -798,35 +794,23 @@ export class WhatsAppManager extends EventEmitter {
 
       // Replace Mercado Livre links with affiliate tag
       if (mlConfig && mlConfig.isActive && mlConfig.tag && processedText) {
-        diagInfo(userId, 'LINKS', `Texto antes ML (500 chars): ${processedText.substring(0, 500)}`);
+        diagInfo(userId, 'LINKS', `Texto antes ML (150 chars): ${processedText.substring(0, 150)}`);
         const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
-        const linkMode = mlConfig.linkMode || 'long';
-        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'}, modo=${linkMode})`);
+        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
         if (mlResult.replaced > 0) {
-          if (linkMode === 'social') {
-            // Modo social: usa o link completo com forceInApp=true e ref= preservados
-            // O ref é um token criptografado ECIES gerado pelo servidor do ML que aponta para o produto
-            // específico. Não encurtar via API (meli.la não preserva o ref) — usar o link longo.
-            processedText = mlResult.text;
-            usedMlLinkMode = 'social';
-            diagSuccess(userId, 'LINKS', `ML modo=social: link completo com forceInApp+ref preservados: ${mlResult.replaced} link(s)`);
-          } else if (linkMode === 'tinyurl') {
-            // Modo tinyurl: encurtar via TinyURL (mantém produto específico)
+          // Se tiver cookies ML configurados, encurtar via API meli.la
+          if (mlConfig.cookieSsid && mlConfig.cookieCsrf) {
             try {
-              const shortenedText = await shortenMeliLinksWithTinyUrl(mlResult.text);
+              const shortenedText = await shortenMeliLinksInText(mlResult.text, mlConfig.tag, mlConfig.cookieSsid, mlConfig.cookieCsrf);
               processedText = shortenedText;
-              usedMlLinkMode = 'tinyurl';
-              diagSuccess(userId, 'LINKS', `ML modo=tinyurl: encurtado via TinyURL: ${mlResult.replaced} link(s)`);
+              diagSuccess(userId, 'LINKS', `ML encurtado via meli.la: ${mlResult.replaced} link(s)`);
             } catch (err) {
+              // Fallback: usar link longo com tag substituída
               processedText = mlResult.text;
-              usedMlLinkMode = 'long'; // fallback
-              diagWarn(userId, 'LINKS', `ML modo=tinyurl: falha ao encurtar via TinyURL, usando link longo: ${err}`);
+              diagWarn(userId, 'LINKS', `Falha ao encurtar via meli.la, usando link longo: ${err}`);
             }
           } else {
-            // Modo long (padrão): link longo com tag substituída
             processedText = mlResult.text;
-            usedMlLinkMode = 'long';
-            diagSuccess(userId, 'LINKS', `ML modo=long: link longo com tag substituída: ${mlResult.replaced} link(s)`);
           }
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
@@ -1018,13 +1002,12 @@ Regras:
         campaignId: selectedCampaignId,
         campaignName: selectedCampaignName,
         llmSuggestion,
-        mlLinkMode: usedMlLinkMode ?? null,
         status: "processed",
       });
 
       // Get destination groups via group_targets (sourceGroupId → target monitored groups with enviarOfertas)
-      // NOTE: No instanceId filter — resilient to stale instanceId after instance recreation
-      const sourceGroupRecord = (await getMonitoredGroups(userId)).find(
+      // The automation's sourceGroupId is a monitored_group id
+      const sourceGroupRecord = (await getMonitoredGroups(userId, instanceId)).find(
         (g) => g.id === automation.sourceGroupId
       );
 
@@ -1032,7 +1015,7 @@ Regras:
       // First try: group_targets (explicitly configured targets for this source group)
       const groupTargetsList = await getGroupTargets(userId, automation.sourceGroupId);
       if (groupTargetsList.length > 0) {
-        const allMonitored = await getMonitoredGroups(userId); // no instanceId filter
+        const allMonitored = await getMonitoredGroups(userId, instanceId);
         for (const gt of groupTargetsList) {
           const targetGroup = allMonitored.find((g) => g.id === gt.targetGroupId && g.isActive);
           if (targetGroup && targetGroup.groupJid) {
@@ -1053,15 +1036,12 @@ Regras:
           }
         }
       }
-      // Last fallback: all groups with enviarOfertas active (no instanceId filter — resilient to stale IDs)
+      // Last fallback: all groups with enviarOfertas active for this instance
       if (targetJids.length === 0) {
-        const allMonitored = await getMonitoredGroups(userId); // userId only, no instanceId filter
+        const allMonitored = await getMonitoredGroups(userId, instanceId);
         const enviarGroups = allMonitored.filter(
           (g) => g.isActive && g.enviarOfertas && g.groupJid !== sourceGroupRecord?.groupJid
         );
-        if (enviarGroups.length > 0) {
-          diagInfo(userId, 'ENVIO', `Fallback: encontrados ${enviarGroups.length} grupo(s) com enviarOfertas ativo (sem filtro de instância)`);
-        }
         for (const g of enviarGroups) {
           if (g.groupJid) {
             targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid, inviteLink: g.inviteLink });
@@ -1389,7 +1369,7 @@ export function replaceMercadoLivreLinks(
       const isSocialLink = urlObj.pathname.startsWith("/social/");
 
       if (isSocialLink) {
-        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO&forceInApp=true&ref=TOKEN
+        // Formato /social/CODIGO?matt_tool=ID&matt_word=CODIGO
         // Substituir o slug /social/OUTRO_USUARIO pelo slug do nosso usuário
         // Tratar 'NULL' (string literal) como ausente
         const validSocialTag = config.socialTag && config.socialTag !== 'NULL' && config.socialTag.trim() !== '' ? config.socialTag.trim() : null;
@@ -1399,9 +1379,9 @@ export function replaceMercadoLivreLinks(
         // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
         if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
         if (config.tag) urlObj.searchParams.set("matt_word", config.tag);
-        // PRESERVAR forceInApp e ref — são tokens criptografados gerados pelo servidor do ML
-        // que garantem o redirecionamento correto para o app. Não remover.
-        // (forceInApp e ref já estão presentes na URL original — não precisam ser adicionados)
+        // Remover rastreamento do afiliado original
+        urlObj.searchParams.delete("ref");
+        urlObj.searchParams.delete("forceInApp");
       } else {
         // Formato normal de produto: adicionar matt_from e matt_tool
         // Remove parâmetros de rastreamento de afiliados de terceiros
@@ -1730,43 +1710,5 @@ export async function shortenMeliLinksInText(
   urlMap.forEach((shortUrl, longUrl) => {
     result = result.split(longUrl).join(shortUrl);
   });
-  return result;
-}
-
-// ── Encurtamento de links via TinyURL ─────────────────────────────────────────
-/**
- * Encurta um único link via TinyURL API (gratuita, sem autenticação).
- * Retorna o link encurtado ou o original em caso de falha.
- */
-export async function shortenWithTinyUrl(longUrl: string): Promise<string> {
-  try {
-    const response = await fetch(
-      `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!response.ok) return longUrl;
-    const short = await response.text();
-    return short.trim().startsWith("https://tinyurl.com/") ? short.trim() : longUrl;
-  } catch {
-    return longUrl;
-  }
-}
-
-/**
- * Encurta todos os links mercadolivre.com.br no texto via TinyURL.
- * Retorna o texto com os links substituídos por tinyurl.com/XXXXX.
- */
-export async function shortenMeliLinksWithTinyUrl(text: string): Promise<string> {
-  const mlPattern = /https?:\/\/[a-z0-9-]*\.?mercadolivre\.com\.br\/[^\s<>"{}|\\^`[\]]*/gi;
-  const matches = Array.from(new Set(text.match(mlPattern) || []));
-  if (matches.length === 0) return text;
-
-  let result = text;
-  for (const longUrl of matches) {
-    const shortUrl = await shortenWithTinyUrl(longUrl);
-    if (shortUrl !== longUrl) {
-      result = result.split(longUrl).join(shortUrl);
-    }
-  }
   return result;
 }

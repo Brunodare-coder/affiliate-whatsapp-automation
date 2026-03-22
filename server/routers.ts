@@ -157,45 +157,6 @@ const adminRouter = router({
       return { success: true, emailSent: result.sent, fallback: result.fallback };
     }),
 
-  // ── Get user ML config (admin view) ─────────────────────────────────────────────────
-  getUserMlConfig: adminProcedure
-    .input(z.object({ userId: z.number() }))
-    .query(async ({ input }) => {
-      const config = await getMercadoLivreConfig(input.userId);
-      return config ?? null;
-    }),
-  // ── Update user ML config (admin can edit any user's credentials) ──────────────────
-  updateUserMlConfig: adminProcedure
-    .input(z.object({
-      userId: z.number(),
-      tag: z.string().optional(),
-      cookieSsid: z.string().optional(),
-      cookieCsrf: z.string().optional(),
-      mattToolId: z.string().optional(),
-      socialTag: z.string().optional(),
-      linkMode: z.enum(['long', 'social', 'tinyurl']).optional(),
-      isActive: z.boolean().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const { userId, ...data } = input;
-      await upsertMercadoLivreConfig(userId, {
-        tag: data.tag ?? null,
-        cookieSsid: data.cookieSsid ?? null,
-        cookieCsrf: data.cookieCsrf ?? null,
-        mattToolId: data.mattToolId ?? null,
-        socialTag: data.socialTag ?? null,
-        linkMode: data.linkMode ?? 'long',
-        isActive: data.isActive ?? true,
-      });
-      invalidateUserCache(userId);
-      return { success: true };
-    }),
-  // ── Get user WhatsApp instances (admin view) ────────────────────────────────────────
-  getUserInstances: adminProcedure
-    .input(z.object({ userId: z.number() }))
-    .query(async ({ input }) => {
-      return await getWhatsappInstancesLight(input.userId);
-    }),
   // ── Ad text configuration ─────────────────────────────────────────────────────────────
   getAdText: adminProcedure.query(async () => {
     const value = await getSystemSetting("ad_text");
@@ -805,7 +766,6 @@ export const appRouter = router({
           cookieCsrf: z.string().optional(),
           mattToolId: z.string().optional(),
           socialTag: z.string().optional(),
-          linkMode: z.enum(['long', 'social', 'tinyurl']).optional(),
           isActive: z.boolean().optional(),
         })
       )
@@ -816,7 +776,6 @@ export const appRouter = router({
           cookieCsrf: input.cookieCsrf || null,
           mattToolId: input.mattToolId || null,
           socialTag: input.socialTag || null,
-          linkMode: input.linkMode || 'long',
           isActive: input.isActive ?? true,
         });
         invalidateUserCache(ctx.user.id);
