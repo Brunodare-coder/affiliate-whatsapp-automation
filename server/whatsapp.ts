@@ -440,7 +440,8 @@ export class WhatsAppManager extends EventEmitter {
   private async _processIncomingMessage(instanceId: number, userId: number, msg: WhatsAppMessage, remoteJid: string): Promise<void> {
     try {
       // Check if this group is monitored with buscarOfertas active
-      const monitoredGroupsList = await cachedGetMonitoredGroups(userId, instanceId);
+      // NOTE: Filter by userId only (not instanceId) — instanceId changes on every server restart
+      const monitoredGroupsList = await cachedGetMonitoredGroups(userId);
       diagInfo(userId, 'GRUPOS', `${monitoredGroupsList.length} monitorados | buscarOfertas: ${monitoredGroupsList.filter(g => g.isActive && g.buscarOfertas).length} ativos`);
       const activeMonitored = monitoredGroupsList.filter(
         (g) => g.isActive && g.groupJid === remoteJid && g.buscarOfertas

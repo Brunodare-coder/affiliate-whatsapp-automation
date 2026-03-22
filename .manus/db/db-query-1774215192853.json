@@ -1,0 +1,15 @@
+{
+  "query": "UPDATE monitored_groups SET instanceId = 30004 WHERE instanceId = 30003; UPDATE monitored_groups SET instanceId = 30004 WHERE instanceId = 30002; SELECT instanceId, COUNT(*) as total, SUM(buscarOfertas) as comBuscarOfertas FROM monitored_groups GROUP BY instanceId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute UPDATE monitored_groups SET instanceId = 30004 WHERE instanceId = 30003; UPDATE monitored_groups SET instanceId = 30004 WHERE instanceId = 30002; SELECT instanceId, COUNT(*) as total, SUM(buscarOfertas) as comBuscarOfertas FROM monitored_groups GROUP BY instanceId;",
+  "rows": [
+    {
+      "instanceId": "30004",
+      "total": "91",
+      "comBuscarOfertas": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "instanceId\ttotal\tcomBuscarOfertas\n30004\t91\t5\n",
+  "stderr": "",
+  "execution_time_ms": 491
+}

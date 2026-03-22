@@ -524,3 +524,9 @@
 - [x] Botão "Credenciais ML" no painel admin com modal de edição por usuário
 - [x] Atalho de cole cookies no modal admin ML (extrai ssid e _csrf automaticamente)
 - [x] Cada usuário pode ter suas próprias credenciais ML (tag, ssid, csrf) independentes
+
+## Bug: Mensagens Recebidas Não Enviadas (Fase 44)
+- [x] Causa raiz: instanceId muda a cada reinício do servidor, grupos ficam com instanceId antigo
+- [x] Correção definitiva: remover filtro por instanceId em cachedGetMonitoredGroups — buscar apenas por userId
+- [x] Migrar grupos para instanceId=30004 (instância atual) no banco
+- [x] Verificar que links substituídos são encurtados via meli.la (função shortenMeliLinksInText já implementada e chamada corretamente)
