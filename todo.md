@@ -354,3 +354,6 @@
 - [x] Badges de Origem/Disparo nos cards de grupo
 - [x] Renomear "Configurar Alvos" para "Grupos de Disparo" com texto mais claro
 - [x] Modal Grupos de Disparo: explicar claramente origem vs destino
+
+## Melhoria Seção de Ajuda (Fase 19)
+- [x] Reescrever seção "Como usar" com fluxo passo a passo visual (Origem → Disparo)

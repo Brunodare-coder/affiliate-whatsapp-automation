@@ -490,14 +490,70 @@ function GroupsTab() {
         <details>
           <summary className="flex items-center gap-2 cursor-pointer text-sm font-bold text-green-400">
             <span className="w-5 h-5 rounded-lg bg-green-500/15 border border-green-500/20 flex items-center justify-center text-xs">ℹ</span>
-            Como usar as configurações
+            Como configurar o bot (leia antes de usar)
           </summary>
-          <div className="mt-3 space-y-2 text-sm text-muted-foreground pl-7">
-            <p>🔍 <strong className="text-foreground">Buscar Ofertas</strong> — monitora e captura links de produtos neste grupo</p>
-            <p>📤 <strong className="text-foreground">Enviar Ofertas</strong> — este grupo receberá as mensagens processadas com seus links de afiliado</p>
-            <p>🔗 <strong className="text-foreground">Configurar Alvos</strong> — define quais grupos de disparo receberão as mensagens deste grupo</p>
-            <p>🔄 <strong className="text-foreground">Espelhar</strong> — replica mensagens sem converter links (para canais de notícias)</p>
-            <p>🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
+          <div className="mt-4 space-y-4 text-sm">
+
+            {/* Fluxo visual */}
+            <div className="rounded-xl border border-white/8 overflow-hidden">
+              <div className="px-3 py-2 text-xs font-black uppercase tracking-wide text-muted-foreground" style={{ background: "oklch(0.09 0.012 250)" }}>
+                Fluxo do bot
+              </div>
+              <div className="flex items-center gap-0 p-3">
+                <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "oklch(0.14 0.04 145 / 0.5)", border: "1px solid oklch(0.5 0.15 145 / 0.3)" }}>
+                  <p className="text-xs font-black text-green-400 mb-1">🔍 ORIGEM</p>
+                  <p className="text-xs text-muted-foreground">Grupo de outros afiliados</p>
+                  <p className="text-xs text-green-300 mt-1 font-medium">Ativar: Buscar Ofertas</p>
+                </div>
+                <div className="px-2 text-muted-foreground text-lg">→</div>
+                <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "oklch(0.14 0.04 30 / 0.5)", border: "1px solid oklch(0.5 0.15 30 / 0.3)" }}>
+                  <p className="text-xs font-black text-orange-400 mb-1">🤖 BOT</p>
+                  <p className="text-xs text-muted-foreground">Troca o código de afiliado</p>
+                  <p className="text-xs text-orange-300 mt-1 font-medium">pelo seu código</p>
+                </div>
+                <div className="px-2 text-muted-foreground text-lg">→</div>
+                <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "oklch(0.14 0.04 250 / 0.5)", border: "1px solid oklch(0.5 0.15 250 / 0.3)" }}>
+                  <p className="text-xs font-black text-blue-400 mb-1">📤 DISPARO</p>
+                  <p className="text-xs text-muted-foreground">Seu grupo de ofertas</p>
+                  <p className="text-xs text-blue-300 mt-1 font-medium">Ativar: Enviar Ofertas</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Passo a passo */}
+            <div className="space-y-2">
+              <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">Passo a passo</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "oklch(0.14 0.04 145 / 0.3)", border: "1px solid oklch(0.5 0.15 145 / 0.2)" }}>
+                  <span className="w-5 h-5 rounded-full bg-green-500 text-black text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">No grupo de origem (outros afiliados)</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Ative <strong className="text-green-400">Buscar Ofertas</strong> e clique em <strong className="text-orange-400">Grupos de Disparo</strong> para selecionar seu grupo destino.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "oklch(0.14 0.04 250 / 0.3)", border: "1px solid oklch(0.5 0.15 250 / 0.2)" }}>
+                  <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">No seu grupo de ofertas (ex: Top Achados)</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Ative <strong className="text-orange-400">Enviar Ofertas</strong>. Este grupo receberá as mensagens com seu código de afiliado.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "oklch(0.12 0.015 250 / 0.5)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+                  <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Pronto! O bot trabalha sozinho</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Toda oferta que chegar no grupo de origem terá o link trocado pelo seu e será repostada no seu grupo automaticamente.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Outros toggles */}
+            <div className="space-y-1.5 border-t border-white/8 pt-3">
+              <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">Outros toggles</p>
+              <p className="text-xs text-muted-foreground">🔄 <strong className="text-foreground">Espelhar</strong> — copia a mensagem sem trocar links (para canais de notícias)</p>
+              <p className="text-xs text-muted-foreground">🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
+            </div>
           </div>
         </details>
       </div>
