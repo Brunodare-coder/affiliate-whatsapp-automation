@@ -14,6 +14,7 @@ import Automations from "./pages/Automations";
 import Logs from "./pages/Logs";
 import LogDetail from "./pages/LogDetail";
 import Settings from "./pages/Settings";
+import FeedGlobal from "./pages/FeedGlobal";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/logs" component={Logs} />
       <Route path="/logs/:id" component={LogDetail} />
       <Route path="/settings" component={Settings} />
+      <Route path="/feed-global" component={FeedGlobal} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

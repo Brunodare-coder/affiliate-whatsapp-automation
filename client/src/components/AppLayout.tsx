@@ -8,6 +8,7 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
+  Globe,
   Link2,
   LogOut,
   MessageSquare,
@@ -28,6 +29,7 @@ const navItems = [
   { path: "/whatsapp", label: "WhatsApp", icon: Smartphone },
   { path: "/groups", label: "Grupos & Destinos", icon: Users },
   { path: "/automations", label: "Automações", icon: Bot },
+  { path: "/feed-global", label: "Feed Global", icon: Globe },
   { path: "/logs", label: "Logs", icon: FileText },
   { path: "/settings", label: "Configurações", icon: Settings },
 ];

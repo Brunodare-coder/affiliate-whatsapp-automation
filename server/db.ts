@@ -522,3 +522,23 @@ export async function upsertBotSettings(userId: number, data: Partial<Omit<typeo
   if (!db) throw new Error("Database not available");
   await db.insert(botSettings).values({ userId, ...data } as any).onDuplicateKeyUpdate({ set: data as any });
 }
+
+// ── Feed Global ───────────────────────────────────────────────────────────────
+
+/**
+ * Returns all users that have Feed Global enabled.
+ * Used by the WhatsApp message processor to dispatch to Feed Global subscribers.
+ */
+export async function getUsersWithFeedGlobalEnabled(): Promise<Array<{ userId: number; targetGroupIds: number[]; clickablePreview: boolean }>> {
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db
+    .select()
+    .from(botSettings)
+    .where(eq(botSettings.feedGlobalEnabled, true));
+  return result.map((r) => ({
+    userId: r.userId,
+    targetGroupIds: (r.feedGlobalTargets as number[]) ?? [],
+    clickablePreview: r.clickablePreview,
+  }));
+}

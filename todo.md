@@ -148,3 +148,11 @@
 - [x] Implementar substituição de links Shopee via API
 - [x] Implementar substituição de links Amazon (tag de afiliado)
 - [x] Ordem do link: Primeiro/Último no grupo
+
+## Feed Global (Nova Funcionalidade)
+- [x] Schema: tabela global_feed_settings (userId, isActive, targetGroupIds JSON, clickablePreview)
+- [x] DB helpers: getGlobalFeedSettings, upsertGlobalFeedSettings
+- [x] tRPC procedures: globalFeed.get, globalFeed.save
+- [x] Página /feed-global com toggle, lista de grupos alvo (checkboxes) e Preview Clicável
+- [x] Integração no processamento: quando Feed Global ativo, replicar mensagens para grupos alvo selecionados
+- [x] Adicionar item de menu "Feed Global" no AppLayout

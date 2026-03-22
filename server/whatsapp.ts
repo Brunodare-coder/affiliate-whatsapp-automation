@@ -23,6 +23,7 @@ import {
   getAliexpressConfig,
   getBotSettings,
   getGroupTargets,
+  getUsersWithFeedGlobalEnabled,
   createPostLog,
   updatePostLog,
   createSendLog,
@@ -353,8 +354,133 @@ export class WhatsAppManager extends EventEmitter {
       for (const automation of matchingAutomations) {
         await this.processAutomation(instanceId, userId, automation, msg, text, mediaType, mediaUrl, links, remoteJid, mlConfig || null, shopeeConfig || null, amazonConfig || null, magaluConfig || null, aliConfig || null, botSettings || null);
       }
+
+      // ── Feed Global: dispatch to other users who have Feed Global enabled ──
+      await this.dispatchToFeedGlobalSubscribers(instanceId, userId, msg, text, mediaType, mediaUrl, remoteJid);
+
     } catch (err) {
       console.error("[WhatsApp] Error handling incoming message:", err);
+    }
+  }
+
+  /**
+   * When a message is detected in a monitored group, dispatch it to all other users
+   * that have Feed Global enabled, replacing affiliate links with their own configs.
+   */
+  private async dispatchToFeedGlobalSubscribers(
+    instanceId: number,
+    sourceUserId: number,
+    msg: WhatsAppMessage,
+    text: string | null,
+    mediaType: string,
+    mediaUrl: string | null,
+    sourceGroupJid: string,
+  ): Promise<void> {
+    try {
+      const subscribers = await getUsersWithFeedGlobalEnabled();
+      if (subscribers.length === 0) return;
+
+      for (const subscriber of subscribers) {
+        // Skip the user who owns the source group (they already receive via normal automation)
+        if (subscriber.userId === sourceUserId) continue;
+
+        try {
+          // Get subscriber's monitored groups
+          const subscriberGroups = await getMonitoredGroups(subscriber.userId);
+
+          // Determine target JIDs: either selected targets or all enviarOfertas groups
+          let targetJids: { jid: string; name: string }[] = [];
+
+          if (subscriber.targetGroupIds.length > 0) {
+            // Use explicitly selected target groups
+            for (const targetId of subscriber.targetGroupIds) {
+              const g = subscriberGroups.find((sg) => sg.id === targetId && sg.isActive);
+              if (g && g.groupJid) {
+                targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid });
+              }
+            }
+          } else {
+            // Fallback: all enviarOfertas groups
+            targetJids = subscriberGroups
+              .filter((g) => g.isActive && g.enviarOfertas)
+              .map((g) => ({ jid: g.groupJid, name: g.groupName || g.groupJid }));
+          }
+
+          if (targetJids.length === 0) continue;
+
+          // Get subscriber's affiliate configs
+          const subLinks = await getActiveAffiliateLinks(subscriber.userId);
+          const subMlConfig = await getMercadoLivreConfig(subscriber.userId);
+          const subShopeeConfig = await getShopeeConfig(subscriber.userId);
+          const subAmazonConfig = await getAmazonConfig(subscriber.userId);
+          const subMagaluConfig = await getMagazineLuizaConfig(subscriber.userId);
+          const subAliConfig = await getAliexpressConfig(subscriber.userId);
+
+          // Process text: replace links with subscriber's affiliate links
+          let processedText = text || "";
+          if (text && subLinks.length > 0) {
+            const result = replaceLinksInText(text, subLinks);
+            processedText = result.text;
+          }
+          if (subMlConfig?.isActive && subMlConfig.tag && processedText) {
+            const r = replaceMercadoLivreLinks(processedText, subMlConfig);
+            if (r.replaced > 0) processedText = r.text;
+          }
+          if (subShopeeConfig?.isActive && subShopeeConfig.appId && processedText) {
+            const r = replaceShopeeLinks(processedText, subShopeeConfig);
+            if (r.replaced > 0) processedText = r.text;
+          }
+          if (subAmazonConfig?.isActive && subAmazonConfig.tag && processedText) {
+            const r = replaceAmazonLinks(processedText, subAmazonConfig);
+            if (r.replaced > 0) processedText = r.text;
+          }
+          if (subMagaluConfig?.isActive && subMagaluConfig.tag && processedText) {
+            const r = replaceMagazineLuizaLinks(processedText, subMagaluConfig);
+            if (r.replaced > 0) processedText = r.text;
+          }
+          if (subAliConfig?.isActive && subAliConfig.trackId && processedText) {
+            const r = replaceAliexpressLinks(processedText, subAliConfig);
+            if (r.replaced > 0) processedText = r.text;
+          }
+
+          // Download media if present
+          let uploadedMediaUrl: string | null = null;
+          if ((mediaType === "image" || mediaType === "video") && msg.message) {
+            try {
+              const buffer = await downloadMediaMessage(msg as any, "buffer", {}) as Buffer;
+              if (buffer && buffer.length > 0) {
+                const ext = mediaType === "image" ? "jpg" : "mp4";
+                const mimeType = mediaType === "image" ? "image/jpeg" : "video/mp4";
+                const fileKey = `feed-global/${subscriber.userId}-${Date.now()}.${ext}`;
+                const { url } = await storagePut(fileKey, buffer, mimeType);
+                uploadedMediaUrl = url;
+              }
+            } catch (mediaErr) {
+              console.error(`[FeedGlobal] Failed to download media for user ${subscriber.userId}:`, mediaErr);
+            }
+          }
+
+          // Send to all target groups
+          for (const target of targetJids) {
+            try {
+              if (uploadedMediaUrl && mediaType === "image") {
+                await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+              } else if (uploadedMediaUrl && mediaType === "video") {
+                await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+              } else if (processedText) {
+                await this.sendTextMessage(instanceId, target.jid, processedText);
+              }
+              console.log(`[FeedGlobal] Sent to user ${subscriber.userId} group ${target.name}`);
+            } catch (sendErr: any) {
+              console.error(`[FeedGlobal] Failed to send to ${target.jid}:`, sendErr.message);
+            }
+          }
+        } catch (subErr) {
+          console.error(`[FeedGlobal] Error processing subscriber ${subscriber.userId}:`, subErr);
+        }
+      }
+    } catch (err) {
+      console.error("[FeedGlobal] Error dispatching to subscribers:", err);
     }
   }
 
