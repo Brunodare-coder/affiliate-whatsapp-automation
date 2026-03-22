@@ -25,9 +25,8 @@ import { toast } from "sonner";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { path: "/campaigns", label: "Campanhas", icon: Link2 },
   { path: "/whatsapp", label: "WhatsApp", icon: Smartphone },
-  { path: "/groups", label: "Grupos & Destinos", icon: Users },
+  { path: "/groups", label: "Configurar Ofertas", icon: Users },
   { path: "/automations", label: "Automações", icon: Bot },
   { path: "/feed-global", label: "Feed Global", icon: Globe },
   { path: "/logs", label: "Logs", icon: FileText },

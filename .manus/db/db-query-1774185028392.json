@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE `amazon_config` \n  ADD COLUMN IF NOT EXISTS `ubidAcbbr` TEXT,\n  ADD COLUMN IF NOT EXISTS `atAcbbr` TEXT,\n  ADD COLUMN IF NOT EXISTS `xAcbb` TEXT;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute \nALTER TABLE `amazon_config` \n  ADD COLUMN IF NOT EXISTS `ubidAcbbr` TEXT,\n  ADD COLUMN IF NOT EXISTS `atAcbbr` TEXT,\n  ADD COLUMN IF NOT EXISTS `xAcbb` TEXT;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1280
+}

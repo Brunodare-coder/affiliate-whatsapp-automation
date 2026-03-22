@@ -156,3 +156,12 @@
 - [x] Página /feed-global com toggle, lista de grupos alvo (checkboxes) e Preview Clicável
 - [x] Integração no processamento: quando Feed Global ativo, replicar mensagens para grupos alvo selecionados
 - [x] Adicionar item de menu "Feed Global" no AppLayout
+
+## Redesign Grupos + Credenciais (Fase 3)
+- [ ] Schema Amazon: adicionar campos ubidAcbbr, atAcbbr, xAcbb (3 cookies separados)
+- [ ] Migrar banco de dados com novos campos Amazon
+- [ ] Remover aba Campanhas do menu (AppLayout)
+- [ ] Redesenhar página de Grupos igual ao ProAfiliados (Buscar Ofertas, Enviar Ofertas, Configurar Alvos modal laranja, Espelhar, Substituir Imagem, Ordem do Link)
+- [ ] Corrigir modal Amazon: 3 campos de cookie (ubid_acbbr, at_acbbr, x_acbb)
+- [ ] Corrigir modal Shopee: AppID + Senha com instruções corretas
+- [ ] Corrigir modal Magazine Luiza: Tag com formato magazinevoce.com.br/SUA_TAG/produto/...

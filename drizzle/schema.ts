@@ -231,7 +231,10 @@ export const amazonConfig = mysqlTable("amazon_config", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
   tag: varchar("tag", { length: 255 }),
-  cookieSession: text("cookieSession"),
+  // 3 cookies separados conforme documentação Amazon Afiliados
+  ubidAcbbr: text("ubidAcbbr"),    // Cookie ubid-acbbr (ex: 132-1170792-6134451)
+  atAcbbr: text("atAcbbr"),        // Cookie at-acbbr (token longo)
+  xAcbb: text("xAcbb"),            // Cookie x-acbb (token longo)
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

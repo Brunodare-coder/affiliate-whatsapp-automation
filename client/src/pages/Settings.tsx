@@ -87,8 +87,9 @@ function AmazonModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   const save = trpc.amazon.saveConfig.useMutation({ onSuccess: () => { toast.success("Amazon salvo!"); onClose(); } });
   const del = trpc.amazon.deleteConfig.useMutation({ onSuccess: () => { toast.success("Amazon removido!"); onClose(); } });
   const [tag, setTag] = useState("");
-  const [cookieSession, setCookieSession] = useState("");
-
+  const [ubidAcbbr, setUbidAcbbr] = useState("");
+  const [atAcbbr, setAtAcbbr] = useState("");
+  const [xAcbb, setXAcbb] = useState("");
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[#0f172a] border-border max-w-lg">
@@ -104,8 +105,8 @@ function AmazonModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-3 text-sm text-amber-300 space-y-1">
             <p className="font-semibold text-amber-400">Como obter suas credenciais Amazon:</p>
             <p>1. Acesse <span className="font-semibold">associados.amazon.com.br</span> e faça login</p>
-            <p>2. Sua <span className="font-semibold">Tag</span> aparece no painel de afiliados</p>
-            <p>3. Para o Cookie: instale <span className="font-semibold">EditThisCookie</span> no navegador → acesse o site → copie o valor de <span className="font-semibold">session-id</span></p>
+            <p>2. Sua <span className="font-semibold">Tag</span> está em: conta → ID de rastreamento (ex: seusite-20)</p>
+            <p>3. Para os cookies: instale a extensão <span className="font-semibold underline">EditThisCookie</span> no seu navegador → acesse o site → clique no ícone da extensão → copie os valores de <span className="font-semibold">ubid-acbbr</span>, <span className="font-semibold">at-acbbr</span> e <span className="font-semibold">x-acbb</span></p>
           </div>
           <div>
             <Label className="text-sm font-medium">Tag</Label>
@@ -117,18 +118,38 @@ function AmazonModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             />
           </div>
           <div>
-            <Label className="text-sm font-medium">Cookie (session-id)</Label>
+            <Label className="text-sm font-medium">Cookie ubid_acbbr</Label>
+            <Input
+              className="mt-1 bg-muted/30 border-border"
+              placeholder={config?.ubidAcbbr || "Ex: 132-1170792-6134451"}
+              defaultValue={config?.ubidAcbbr || ""}
+              onChange={(e) => setUbidAcbbr(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Cookie at_acbbr</Label>
             <Input
               type="password"
               className="mt-1 bg-muted/30 border-border"
-              placeholder="Cole seu cookie de sessão"
-              onChange={(e) => setCookieSession(e.target.value)}
+              placeholder="Cole o valor do cookie at-acbbr"
+              defaultValue={config?.atAcbbr || ""}
+              onChange={(e) => setAtAcbbr(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Cookie x_acbb</Label>
+            <Input
+              type="password"
+              className="mt-1 bg-muted/30 border-border"
+              placeholder="Cole o valor do cookie x-acbb"
+              defaultValue={config?.xAcbb || ""}
+              onChange={(e) => setXAcbb(e.target.value)}
             />
           </div>
           <div className="flex gap-2 pt-2">
             <Button
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              onClick={() => save.mutate({ tag, cookieSession })}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              onClick={() => save.mutate({ tag, ubidAcbbr, atAcbbr, xAcbb })}
               disabled={save.isPending}
             >
               {save.isPending ? "Salvando..." : "✓ Salvar"}
@@ -164,17 +185,21 @@ function MagazineLuizaModal({ open, onClose }: { open: boolean; onClose: () => v
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+          <p className="text-sm text-muted-foreground">
+            O link do Magazine Voce tem o formato:{" "}
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">magazinevoce.com.br/SUA_TAG/produto/...</code>. Configure sua tag (ex: magazineproafiliados).
+          </p>
           <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-3 text-sm text-amber-300 space-y-1">
             <p className="font-semibold text-amber-400">Como obter sua Tag Magazine Luiza:</p>
-            <p>1. Acesse <span className="font-semibold">parceiros.magazineluiza.com.br</span> e faça login</p>
-            <p>2. Vá em <span className="font-semibold">Minha conta → Dados cadastrais</span></p>
-            <p>3. Copie sua <span className="font-semibold">Tag de rastreamento</span></p>
+            <p>1. Acesse <span className="font-semibold">magazinevoce.com.br</span> e faça login</p>
+            <p>2. Vá em <span className="font-semibold">Minha Conta → Dados de Afiliado</span></p>
+            <p>3. Copie seu <span className="font-semibold">código de afiliado</span> (Tag)</p>
           </div>
           <div>
-            <Label className="text-sm font-medium">Tag</Label>
+            <Label className="text-sm font-medium">Tag (primeiro segmento do link)</Label>
             <Input
               className="mt-1 bg-muted/30 border-border"
-              placeholder={config?.tag || "Ex: seutag123"}
+              placeholder={config?.tag || "Ex: magazineproafiliados"}
               defaultValue={config?.tag || ""}
               onChange={(e) => setTag(e.target.value)}
             />

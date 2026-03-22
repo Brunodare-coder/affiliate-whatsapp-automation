@@ -5,16 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import {
+  ChevronRight,
+  Copy,
   Download,
-  Info,
+  Image,
+  Link2,
   Loader2,
   Plus,
+  RefreshCw,
   Search,
   Smartphone,
   Target,
   Trash2,
   Users,
   X,
+  BarChart2,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
@@ -22,59 +28,7 @@ import { toast } from "sonner";
 
 type GroupFlag = "buscarOfertas" | "espelharConteudo" | "enviarOfertas" | "substituirImagem";
 
-const FLAG_INFO: Record<GroupFlag, { label: string; description: string; color: string; icon: string }> = {
-  buscarOfertas: {
-    label: "Buscar Ofertas",
-    description:
-      "Quando ativada, o sistema monitora e busca links nas mensagens recebidas neste grupo. Se estiver desativada, as mensagens são ignoradas. Ative nos grupos de onde você quer capturar mensagens com links de produtos (Shopee, AliExpress, Mercado Livre, Amazon, Magazine Luiza).",
-    color: "text-green-400",
-    icon: "🔍",
-  },
-  espelharConteudo: {
-    label: "Espelhar Conteúdo",
-    description:
-      "NÃO converte links! Quando ativado, replica todas as mensagens do grupo/canal para os grupos de disparo, sem processar ou converter links de lojas. Ideal para espelhar conteúdo de um canal para outro (ex: notícias, avisos, etc). Mensagens com links são ignoradas.",
-    color: "text-blue-400",
-    icon: "🔄",
-  },
-  enviarOfertas: {
-    label: "Enviar Ofertas",
-    description:
-      "Quando ativada, este grupo receberá as mensagens processadas dos grupos monitorados. Converte links encontrados nas mensagens monitoradas para links de afiliados. Ative nos grupos onde você quer receber as mensagens formatadas.",
-    color: "text-purple-400",
-    icon: "📤",
-  },
-  substituirImagem: {
-    label: "Substituir Imagem",
-    description:
-      "Quando ativada, o sistema busca imagens do site da loja e prioriza essas imagens sobre a imagem original da mensagem. Ative quando quiser garantir que a imagem do produto seja a do site oficial.",
-    color: "text-orange-400",
-    icon: "🖼️",
-  },
-};
-
-function FlagInfoModal({ flag, onClose }: { flag: GroupFlag | null; onClose: () => void }) {
-  if (!flag) return null;
-  const info = FLAG_INFO[flag];
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{info.icon}</span>
-            <h3 className={`font-bold text-lg ${info.color}`}>{info.label}</h3>
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">{info.description}</p>
-        <Button onClick={onClose} className="w-full mt-4">Entendi</Button>
-      </div>
-    </div>
-  );
-}
-
+// ─── Modal Configurar Grupos de Disparo (laranja, igual ao ProAfiliados) ──────
 function ConfigureTargetsModal({
   sourceGroup,
   allGroups,
@@ -100,21 +54,38 @@ function ConfigureTargetsModal({
     });
   };
 
+  const selectAll = () => setSelected(new Set(targets.map((g) => g.id)));
+  const selectNone = () => setSelected(new Set());
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div>
-            <h3 className="font-bold text-base">Configurar Alvos</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Origem: <strong>{sourceGroup.groupName || sourceGroup.groupJid}</strong>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-orange-500/30">
+        {/* Header laranja */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-bold text-white text-base">Configurar Grupos de Disparo</h3>
+              <p className="text-orange-100 text-sm mt-0.5 font-mono">
+                {sourceGroup.groupName || sourceGroup.groupJid}
+              </p>
+            </div>
+            <button onClick={onClose} className="text-orange-100 hover:text-white mt-0.5">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="bg-[#0f172a] p-5">
+          {/* Info box */}
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4">
+            <p className="text-sm text-orange-300">
+              <span className="font-semibold">Selecione</span> os grupos de disparo que receberão as mensagens
+              deste grupo monitorado. Se nenhum grupo for selecionado, as mensagens serão enviadas para{" "}
+              <strong>todos</strong> os grupos de disparo.
             </p>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-5">
+
           {targets.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <Users className="w-8 h-8 text-muted-foreground mx-auto" />
@@ -126,41 +97,79 @@ function ConfigureTargetsModal({
               </p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              <p className="text-xs text-muted-foreground mb-3">
-                Selecione os grupos que receberão as mensagens deste grupo. Se nenhum for selecionado, as mensagens serão enviadas para todos os grupos de disparo.
-              </p>
-              {targets.map((g) => (
-                <label
-                  key={g.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary hover:bg-secondary/80 cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(g.id)}
-                    onChange={() => toggle(g.id)}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <span className="text-sm font-medium">{g.groupName || g.groupJid}</span>
-                  <Badge variant="secondary" className="ml-auto text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
-                    Enviar Ofertas
-                  </Badge>
-                </label>
-              ))}
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {targets.map((g) => {
+                const isChecked = selected.has(g.id);
+                return (
+                  <label
+                    key={g.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors border ${
+                      isChecked
+                        ? "bg-orange-500/10 border-orange-500/40"
+                        : "bg-[#1e293b] border-[#1e293b] hover:border-border"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+                        isChecked ? "bg-orange-500 border-orange-500" : "border-muted-foreground"
+                      }`}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {g.groupName || g.groupJid}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Grupo</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggle(g.id)}
+                      className="sr-only"
+                    />
+                  </label>
+                );
+              })}
             </div>
           )}
         </div>
-        <div className="flex gap-3 p-5 border-t border-border">
-          <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={() => onSave(Array.from(selected))} className="flex-1">
-            Salvar Alvos {selected.size > 0 && `(${selected.size})`}
-          </Button>
+
+        {/* Footer */}
+        <div className="bg-[#0f172a] border-t border-border px-5 pb-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex gap-3">
+              <button onClick={selectAll} className="text-sm text-orange-400 hover:text-orange-300 font-medium">
+                Todos
+              </button>
+              <span className="text-muted-foreground">|</span>
+              <button onClick={selectNone} className="text-sm text-orange-400 hover:text-orange-300 font-medium">
+                Nenhum
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => onSave(Array.from(selected))}
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              ✓ Salvar
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// ─── Modal Adicionar Grupo ────────────────────────────────────────────────────
 function AddGroupModal({
   instances,
   onAdd,
@@ -236,9 +245,6 @@ function AddGroupModal({
               onChange={(e) => setGroupJid(e.target.value)}
               className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              Deixe em branco para gerar automaticamente.
-            </p>
           </div>
         </div>
         <div className="flex gap-3 p-5 border-t border-border">
@@ -250,10 +256,68 @@ function AddGroupModal({
   );
 }
 
+// ─── Linha de opção do grupo (igual ao ProAfiliados) ─────────────────────────
+function GroupOptionRow({
+  icon,
+  label,
+  sublabel,
+  sublabelColor,
+  checked,
+  onToggle,
+  rightContent,
+  onClick,
+  highlight,
+  targetCount,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sublabel?: string;
+  sublabelColor?: string;
+  checked?: boolean;
+  onToggle?: (v: boolean) => void;
+  rightContent?: React.ReactNode;
+  onClick?: () => void;
+  highlight?: boolean;
+  targetCount?: number;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 ${
+        onClick ? "cursor-pointer hover:bg-white/5 transition-colors" : ""
+      } ${highlight ? "bg-orange-500/5" : ""}`}
+      onClick={onClick}
+    >
+      <span className="text-muted-foreground flex-shrink-0">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${highlight ? "text-orange-400" : "text-foreground"}`}>{label}</p>
+        {sublabel && (
+          <p className={`text-xs mt-0.5 ${sublabelColor || "text-muted-foreground"}`}>{sublabel}</p>
+        )}
+      </div>
+      {targetCount !== undefined && targetCount > 0 && (
+        <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">
+          {targetCount}
+        </span>
+      )}
+      {rightContent}
+      {onToggle !== undefined && (
+        <Switch
+          checked={checked ?? false}
+          onCheckedChange={onToggle}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+      {onClick && !onToggle && (
+        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      )}
+    </div>
+  );
+}
+
+// ─── Página principal ─────────────────────────────────────────────────────────
 export default function Groups() {
   const { data: instances } = trpc.whatsapp.listInstances.useQuery();
   const [search, setSearch] = useState("");
-  const [infoFlag, setInfoFlag] = useState<GroupFlag | null>(null);
   const [targetSourceGroup, setTargetSourceGroup] = useState<{
     id: number;
     groupName: string | null;
@@ -264,19 +328,19 @@ export default function Groups() {
   const connectedInstances = instances?.filter((i) => i.status === "connected") || [];
   const firstConnectedId = connectedInstances[0]?.id ?? null;
 
-  // Load ALL saved groups from DB (no instanceId filter)
   const { data: savedGroups, refetch: refetchSaved, isLoading: loadingGroups } =
     trpc.whatsapp.listMonitoredGroups.useQuery({ instanceId: undefined });
 
   const { data: groupTargets, refetch: refetchTargets } =
     trpc.whatsapp.getGroupTargets.useQuery({ sourceGroupId: undefined });
 
+  const { data: botSettings, refetch: refetchBotSettings } = trpc.botSettings.get.useQuery();
+  const saveBotSettings = trpc.botSettings.save.useMutation({
+    onSuccess: () => { refetchBotSettings(); toast.success("Configuração salva!"); },
+  });
+
   const addGroup = trpc.whatsapp.addMonitoredGroup.useMutation({
-    onSuccess: () => {
-      refetchSaved();
-      setShowAddModal(false);
-      toast.success("Grupo adicionado!");
-    },
+    onSuccess: () => { refetchSaved(); setShowAddModal(false); toast.success("Grupo adicionado!"); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -285,10 +349,7 @@ export default function Groups() {
   });
 
   const removeGroup = trpc.whatsapp.removeMonitoredGroup.useMutation({
-    onSuccess: () => {
-      refetchSaved();
-      toast.success("Grupo removido!");
-    },
+    onSuccess: () => { refetchSaved(); toast.success("Grupo removido!"); },
   });
 
   const syncGroups = trpc.whatsapp.syncGroupsFromWA.useMutation({
@@ -307,14 +368,6 @@ export default function Groups() {
     },
   });
 
-  const { data: botSettings, refetch: refetchBotSettings } = trpc.botSettings.get.useQuery();
-  const saveBotSettings = trpc.botSettings.save.useMutation({
-    onSuccess: () => {
-      refetchBotSettings();
-      toast.success("Configuração salva!");
-    },
-  });
-
   const filteredGroups = useMemo(
     () =>
       (savedGroups || []).filter((g) =>
@@ -330,7 +383,6 @@ export default function Groups() {
   ) => {
     try {
       await updateGroup.mutateAsync({ id: group.id, [flag]: value });
-      toast.success(`${FLAG_INFO[flag].label} ${value ? "ativado" : "desativado"}`);
     } catch {
       toast.error("Erro ao atualizar configuração");
     }
@@ -355,21 +407,28 @@ export default function Groups() {
   }));
 
   const targetCurrentIds = targetSourceGroup
-    ? groupTargets
-        ?.filter((t) => t.sourceGroupId === targetSourceGroup.id)
-        .map((t) => t.targetGroupId) ?? []
+    ? groupTargets?.filter((t) => t.sourceGroupId === targetSourceGroup.id).map((t) => t.targetGroupId) ?? []
     : [];
 
   return (
-    <AppLayout title="Grupos">
+    <AppLayout title="Configurar Ofertas">
       <div className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h1 className="text-xl font-bold">Grupos do WhatsApp</h1>
-            <p className="text-sm text-muted-foreground">Configure como cada grupo participa da automação</p>
+            <h1 className="text-xl font-bold">Configurar Ofertas</h1>
+            <p className="text-sm text-muted-foreground">Configure como usar as ofertas de cada grupo</p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { refetchSaved(); refetchTargets(); }}
+              className="gap-2"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Atualizar
+            </Button>
             {firstConnectedId && (
               <Button
                 variant="outline"
@@ -392,6 +451,23 @@ export default function Groups() {
           </div>
         </div>
 
+        {/* Como usar */}
+        <div className="rounded-xl bg-card border border-border p-4">
+          <details>
+            <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
+              <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">ℹ</span>
+              Como usar as configurações
+            </summary>
+            <div className="mt-3 space-y-2 text-sm text-muted-foreground pl-7">
+              <p>🔍 <strong className="text-foreground">Buscar Ofertas</strong> — monitora e captura links de produtos neste grupo</p>
+              <p>📤 <strong className="text-foreground">Enviar Ofertas</strong> — este grupo receberá as mensagens processadas com seus links de afiliado</p>
+              <p>🔗 <strong className="text-foreground">Configurar Alvos</strong> — define quais grupos de disparo receberão as mensagens deste grupo</p>
+              <p>🔄 <strong className="text-foreground">Espelhar</strong> — replica mensagens sem converter links (para canais de notícias)</p>
+              <p>🖼️ <strong className="text-foreground">Substituir Imagem</strong> — busca a imagem oficial do produto no site da loja</p>
+            </div>
+          </details>
+        </div>
+
         {/* No WA connected banner */}
         {connectedInstances.length === 0 && (
           <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -402,56 +478,18 @@ export default function Groups() {
                 Você pode adicionar grupos manualmente agora e sincronizar depois que conectar.
               </p>
             </div>
-            <Button
-              asChild
-              size="sm"
-              className="bg-green-500 hover:bg-green-400 text-black font-semibold flex-shrink-0"
-            >
+            <Button asChild size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold flex-shrink-0">
               <Link href="/whatsapp">Conectar</Link>
             </Button>
           </div>
         )}
-
-        {/* Global Settings */}
-        <div className="rounded-xl bg-card border border-border p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Configurações Globais</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted/20 rounded-lg p-3">
-              <p className="text-sm font-medium mb-2">Ordem do Link</p>
-              <p className="text-xs text-muted-foreground mb-2">Posição do link de afiliado na mensagem</p>
-              <Select
-                value={botSettings?.linkOrder ?? 'first'}
-                onValueChange={(v) => saveBotSettings.mutate({ linkOrder: v as 'first' | 'last' })}
-              >
-                <SelectTrigger className="bg-background border-border h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="first">Primeiro (início)</SelectItem>
-                  <SelectItem value="last">Último (final)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="bg-muted/20 rounded-lg p-3">
-              <p className="text-sm font-medium mb-2">Preview Clicável</p>
-              <p className="text-xs text-muted-foreground mb-2">Substitui imagem pelo preview do produto</p>
-              <div className="flex items-center gap-2 mt-3">
-                <Switch
-                  checked={botSettings?.clickablePreview ?? false}
-                  onCheckedChange={(v) => saveBotSettings.mutate({ clickablePreview: v })}
-                />
-                <span className="text-xs">{botSettings?.clickablePreview ? 'Ativo' : 'Inativo'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar grupo..."
+            placeholder="Buscar grupos ou canais..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
@@ -484,12 +522,7 @@ export default function Groups() {
             </div>
             {!search && (
               <div className="flex gap-2 flex-wrap justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAddModal(true)}
-                  className="gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)} className="gap-2">
                   <Plus className="w-3.5 h-3.5" /> Adicionar Manualmente
                 </Button>
                 {firstConnectedId && (
@@ -499,11 +532,7 @@ export default function Groups() {
                     disabled={syncGroups.isPending}
                     className="gap-2"
                   >
-                    {syncGroups.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
+                    {syncGroups.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                     Sincronizar do WA
                   </Button>
                 )}
@@ -512,141 +541,129 @@ export default function Groups() {
           </div>
         )}
 
-        {/* Groups list */}
+        {/* Groups list — igual ao ProAfiliados */}
         {!loadingGroups && filteredGroups.length > 0 && (
-          <div className="space-y-2">
-            {filteredGroups.map((group) => (
-              <div key={group.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                {/* Group header */}
-                <div className="flex items-center gap-3 p-4 border-b border-border/50">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{group.groupName || group.groupJid}</p>
-                    <p className="text-xs text-muted-foreground font-mono truncate opacity-60">
-                      {group.groupJid}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 flex-wrap justify-end items-center">
-                    {group.buscarOfertas && (
-                      <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
-                        Buscar
-                      </Badge>
-                    )}
-                    {group.espelharConteudo && (
-                      <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                        Espelhar
-                      </Badge>
-                    )}
-                    {group.enviarOfertas && (
-                      <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
-                        Enviar
-                      </Badge>
-                    )}
+          <div className="space-y-3">
+            {filteredGroups.map((group) => {
+              const targetCount = getTargetCount(group.id);
+              const groupType = group.groupJid.endsWith("@broadcast") ? "CANAL" : "GRUPO";
+              const groupTypeColor = groupType === "CANAL" ? "text-green-400" : "text-blue-400";
+
+              return (
+                <div key={group.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                  {/* Group header */}
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[#0f172a]">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">
+                        {group.groupName || group.groupJid}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono truncate opacity-60">
+                        {group.groupJid}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs font-bold border-current flex-shrink-0 ${groupTypeColor}`}
+                    >
+                      {groupType}
+                    </Badge>
                     <button
                       onClick={() => {
                         if (confirm(`Remover "${group.groupName || group.groupJid}"?`)) {
                           removeGroup.mutate({ id: group.id });
                         }
                       }}
-                      className="ml-1 text-muted-foreground hover:text-destructive transition-colors"
+                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
 
-                {/* Flags */}
-                <div className="divide-y divide-border/50">
-                  {(
-                    ["buscarOfertas", "espelharConteudo", "enviarOfertas", "substituirImagem"] as GroupFlag[]
-                  ).map((flag, idx) => {
-                    const info = FLAG_INFO[flag];
-                    const isActive = group[flag];
-                    return (
-                      <div key={flag} className="flex items-center gap-3 px-4 py-3">
-                        <span className="text-base w-6 text-center">{info.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`text-sm font-medium ${isActive ? info.color : "text-foreground"}`}
-                            >
-                              {idx + 1}
-                            </span>
-                            <span
-                              className={`text-sm font-medium ${isActive ? info.color : "text-foreground"}`}
-                            >
-                              {info.label}
-                            </span>
-                            <button
-                              onClick={() => setInfoFlag(flag)}
-                              className="text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              <Info className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                        {flag === "buscarOfertas" && isActive && (
-                          <button
-                            onClick={() =>
-                              setTargetSourceGroup({
-                                id: group.id,
-                                groupName: group.groupName ?? null,
-                                groupJid: group.groupJid,
-                              })
-                            }
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors mr-2"
-                          >
-                            <Target className="w-3 h-3" />
-                            Alvos{" "}
-                            {getTargetCount(group.id) > 0 && `(${getTargetCount(group.id)})`}
-                          </button>
-                        )}
-                        <Switch
-                          checked={isActive}
-                          onCheckedChange={(v) => handleToggle(group, flag, v)}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  {/* Options rows */}
+                  <div className="divide-y divide-border/40 bg-[#1e293b]/50">
+                    {/* Buscar Ofertas */}
+                    <GroupOptionRow
+                      icon={<BarChart2 className="w-4 h-4" />}
+                      label="Buscar Ofertas"
+                      sublabel={group.buscarOfertas ? "● Busca links" : "○ Inativo"}
+                      sublabelColor={group.buscarOfertas ? "text-green-400" : "text-muted-foreground"}
+                      checked={group.buscarOfertas}
+                      onToggle={(v) => handleToggle(group, "buscarOfertas", v)}
+                    />
 
-        {/* Legend */}
-        {filteredGroups.length > 0 && (
-          <div className="rounded-xl bg-card border border-border p-4 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Como funciona
-            </p>
-            <div className="space-y-1.5 text-xs text-muted-foreground">
-              <p>
-                🔍 <strong className="text-foreground">Buscar Ofertas</strong> — captura links de
-                produtos neste grupo
-              </p>
-              <p>
-                🔄 <strong className="text-foreground">Espelhar Conteúdo</strong> — replica
-                mensagens sem converter links
-              </p>
-              <p>
-                📤 <strong className="text-foreground">Enviar Ofertas</strong> — recebe mensagens
-                processadas com seus links de afiliado
-              </p>
-              <p>
-                🖼️ <strong className="text-foreground">Substituir Imagem</strong> — usa imagem
-                oficial do produto no lugar da original
-              </p>
-            </div>
+                    {/* Enviar Ofertas */}
+                    <GroupOptionRow
+                      icon={<AlertTriangle className="w-4 h-4" />}
+                      label="Enviar Ofertas"
+                      sublabel={group.enviarOfertas ? "● Converte links" : "○ Inativo"}
+                      sublabelColor={group.enviarOfertas ? "text-yellow-400" : "text-muted-foreground"}
+                      checked={group.enviarOfertas}
+                      onToggle={(v) => handleToggle(group, "enviarOfertas", v)}
+                    />
+
+                    {/* Configurar Alvos */}
+                    <GroupOptionRow
+                      icon={<Link2 className="w-4 h-4 text-orange-400" />}
+                      label="Configurar Alvos"
+                      sublabel={targetCount > 0 ? `${targetCount} grupo(s) selecionado(s)` : undefined}
+                      sublabelColor="text-orange-300"
+                      highlight
+                      targetCount={targetCount > 0 ? targetCount : undefined}
+                      onClick={() =>
+                        setTargetSourceGroup({
+                          id: group.id,
+                          groupName: group.groupName ?? null,
+                          groupJid: group.groupJid,
+                        })
+                      }
+                    />
+
+                    {/* Espelhar */}
+                    <GroupOptionRow
+                      icon={<Copy className="w-4 h-4" />}
+                      label="Espelhar"
+                      sublabel={group.espelharConteudo ? "● Ativo" : "✕ sem links"}
+                      sublabelColor={group.espelharConteudo ? "text-blue-400" : "text-red-400"}
+                      checked={group.espelharConteudo}
+                      onToggle={(v) => handleToggle(group, "espelharConteudo", v)}
+                    />
+
+                    {/* Substituir Imagem */}
+                    <GroupOptionRow
+                      icon={<Image className="w-4 h-4 text-purple-400" />}
+                      label="Substituir Imagem"
+                      sublabel={group.substituirImagem ? "● Busca imagens" : "○ Inativo"}
+                      sublabelColor={group.substituirImagem ? "text-purple-400" : "text-muted-foreground"}
+                      checked={group.substituirImagem}
+                      onToggle={(v) => handleToggle(group, "substituirImagem", v)}
+                    />
+
+                    {/* Ordem do Link */}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <Target className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <p className="text-sm font-medium flex-1">Ordem do link</p>
+                      <Select
+                        value={botSettings?.linkOrder ?? "first"}
+                        onValueChange={(v) => saveBotSettings.mutate({ linkOrder: v as "first" | "last" })}
+                      >
+                        <SelectTrigger className="w-28 h-7 text-xs bg-[#0f172a] border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="first">Primeiro</SelectItem>
+                          <SelectItem value="last">Último</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Modals */}
-      <FlagInfoModal flag={infoFlag} onClose={() => setInfoFlag(null)} />
       {targetSourceGroup && (
         <ConfigureTargetsModal
           sourceGroup={targetSourceGroup}

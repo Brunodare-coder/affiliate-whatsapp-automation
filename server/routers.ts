@@ -501,9 +501,21 @@ export const appRouter = router({
       return config ?? null;
     }),
     saveConfig: protectedProcedure
-      .input(z.object({ tag: z.string().optional(), cookieSession: z.string().optional(), isActive: z.boolean().optional() }))
+      .input(z.object({
+        tag: z.string().optional(),
+        ubidAcbbr: z.string().optional(),
+        atAcbbr: z.string().optional(),
+        xAcbb: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
       .mutation(async ({ ctx, input }) => {
-        await upsertAmazonConfig(ctx.user.id, { tag: input.tag || null, cookieSession: input.cookieSession || null, isActive: input.isActive ?? true });
+        await upsertAmazonConfig(ctx.user.id, {
+          tag: input.tag || null,
+          ubidAcbbr: input.ubidAcbbr || null,
+          atAcbbr: input.atAcbbr || null,
+          xAcbb: input.xAcbb || null,
+          isActive: input.isActive ?? true,
+        });
         return { success: true };
       }),
     deleteConfig: protectedProcedure.mutation(async ({ ctx }) => {

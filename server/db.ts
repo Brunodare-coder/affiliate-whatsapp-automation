@@ -457,11 +457,11 @@ export async function getAmazonConfig(userId: number) {
   const result = await db.select().from(amazonConfig).where(eq(amazonConfig.userId, userId)).limit(1);
   return result[0] ?? null;
 }
-export async function upsertAmazonConfig(userId: number, data: { tag?: string | null; cookieSession?: string | null; isActive?: boolean }): Promise<void> {
+export async function upsertAmazonConfig(userId: number, data: { tag?: string | null; ubidAcbbr?: string | null; atAcbbr?: string | null; xAcbb?: string | null; isActive?: boolean }): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(amazonConfig).values({ userId, tag: data.tag, cookieSession: data.cookieSession, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
-    set: { tag: data.tag, cookieSession: data.cookieSession, isActive: data.isActive ?? true },
+  await db.insert(amazonConfig).values({ userId, tag: data.tag, ubidAcbbr: data.ubidAcbbr, atAcbbr: data.atAcbbr, xAcbb: data.xAcbb, isActive: data.isActive ?? true }).onDuplicateKeyUpdate({
+    set: { tag: data.tag, ubidAcbbr: data.ubidAcbbr, atAcbbr: data.atAcbbr, xAcbb: data.xAcbb, isActive: data.isActive ?? true },
   });
 }
 export async function deleteAmazonConfig(userId: number): Promise<void> {
