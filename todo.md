@@ -341,3 +341,8 @@
 - [x] Procedure updateMonitoredGroup: aceitar campo inviteLink
 - [x] UI Grupos: campo de input para link de convite (visível quando enviarOfertas + includeGroupLink ativos)
 - [x] whatsapp.ts: adicionar link de convite do grupo destino ao final da mensagem quando includeGroupLink=true
+
+## Simplificação Grupos (Fase 17)
+- [x] Remover aba Automações da página Groups.tsx
+- [x] Deixar página Grupos sem abas (só os cards de grupo com toggles)
+- [x] Processamento continua usando a lógica de Configurar Alvos (group_targets) - sem alteração no backend

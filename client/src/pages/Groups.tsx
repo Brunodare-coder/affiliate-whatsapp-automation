@@ -1019,38 +1019,12 @@ function AutomationsTab() {
   );
 }
 
-// ─── Página principal (com abas) ──────────────────────────────────────────────
+// ─── Página principal ─────────────────────────────────────────────────────
 export default function Groups() {
-  const [activeTab, setActiveTab] = useState<"grupos" | "automacoes">("grupos");
-
   return (
     <AppLayout title="Configurar Ofertas">
-      <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
-
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "oklch(0.10 0.015 250 / 0.8)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
-          {([
-            { id: "grupos", label: "Grupos", icon: Users },
-            { id: "automacoes", label: "Automações", icon: Bot },
-          ] as const).map((tab) => (
-            <button
-              key={tab.id}
-              data-tab={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                activeTab === tab.id
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-black shadow-lg shadow-green-500/20"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab content */}
-        {activeTab === "grupos" ? <GroupsTab /> : <AutomationsTab />}
+      <div className="p-4 md:p-6 max-w-3xl mx-auto">
+        <GroupsTab />
       </div>
     </AppLayout>
   );
