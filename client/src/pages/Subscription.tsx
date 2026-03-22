@@ -111,7 +111,11 @@ function PixModal({ txid, qrCodeImage, qrCodePayload, amount, plan, expiresAt, o
               {/* QR Code */}
               <div className="flex justify-center">
                 <div className="bg-white p-3 rounded-xl">
-                  <img src={qrCodeImage} alt="QR Code PIX" className="w-48 h-48" />
+                  <img
+                    src={qrCodeImage.startsWith("data:") ? qrCodeImage : `data:image/png;base64,${qrCodeImage}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48"
+                  />
                 </div>
               </div>
 

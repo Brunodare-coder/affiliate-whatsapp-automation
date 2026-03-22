@@ -23,6 +23,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/support" component={Support} />
       <Route path="/suporte" component={Support} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/404" component={NotFound} />
 
       {/* Protected routes — require authentication */}

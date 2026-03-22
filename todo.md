@@ -263,3 +263,16 @@
 ## Bug Fix
 
 - [x] Corrigir redirecionamento após login (usuário fica na tela de login após clicar em Entrar)
+
+## Pagamento PIX + Verificação de E-mail
+
+- [x] Configurar MERCADOPAGO_ACCESS_TOKEN via secrets
+- [x] Instalar SDK mercadopago
+- [x] Criar helper mercadopago.ts para gerar QR Code PIX via API MP
+- [x] Procedure subscription.createPayment - gera QR Code PIX via MP
+- [x] Procedure subscription.confirmPayment - verifica e confirma pagamento
+- [x] Webhook /api/webhooks/mercadopago - confirma pagamento automaticamente e ativa plano
+- [x] Página /subscription com QR Code, código copia e cola e timer
+- [x] Verificação de e-mail no cadastro (token + página /verify-email)
+- [x] Procedure auth.verifyEmail e auth.resendVerification
+- [x] Notificação ao admin quando novo usuário se cadastra

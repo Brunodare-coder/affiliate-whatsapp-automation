@@ -11,6 +11,7 @@ import { whatsappManager } from "../whatsapp";
 import { getDb } from "../db";
 import { whatsappInstances } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { registerMercadoPagoWebhook } from "../webhooks/mercadopago";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,6 +40,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Mercado Pago webhook for automatic PIX payment confirmation
+  registerMercadoPagoWebhook(app);
   // tRPC API
   app.use(
     "/api/trpc",

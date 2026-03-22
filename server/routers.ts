@@ -70,11 +70,12 @@ import {
   markPixPaymentPaid,
   isSubscriptionActive,
 } from "./db";
-import { generatePixQRCode, generateTxid } from "./pix";
+import { generateTxid } from "./pix";
+import { createPixPayment as createMpPixPayment, getPixPaymentStatus, PLAN_PRICES } from "./mercadopago";
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 import { invalidateUserCache } from "./cache";
-import { sendPasswordResetEmail } from "./email";
+import { sendPasswordResetEmail, sendEmail } from "./email";
 import {
   createLocalSessionToken,
   verifyPassword,
@@ -91,6 +92,9 @@ import {
   getUserByResetToken,
   updateUserResetToken,
   updateUserPassword,
+  setEmailVerifyToken,
+  getUserByEmailVerifyToken,
+  markEmailVerified,
 } from "./db";
 
 // ── Admin Router ────────────────────────────────────────────────────────
@@ -168,10 +172,80 @@ export const appRouter = router({
           const user = await registerUser(input);
           const token = await createLocalSessionToken(user.openId, user.name ?? "(sem nome)");
           setSessionCookie(ctx.res, ctx.req, token);
+
+          // Send email verification
+          const verifyToken = generateResetToken();
+          const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+          await setEmailVerifyToken(user.id, verifyToken, verifyExpiry);
+          const appUrl = process.env.APP_URL || "https://autoafiliado.manus.space";
+          await sendEmail({
+            to: input.email,
+            subject: "Confirme seu e-mail — AutoAfiliado",
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0f;padding:40px 20px;">
+  <div style="background:#111118;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#16a34a,#059669);padding:32px 40px;text-align:center;">
+      <span style="color:#fff;font-size:22px;font-weight:700;">AutoAfiliado</span>
+    </div>
+    <div style="padding:40px;">
+      <h1 style="color:#f1f5f9;font-size:22px;font-weight:700;margin:0 0 12px;">Confirme seu e-mail</h1>
+      <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0 0 24px;">
+        Olá, <strong style="color:#e2e8f0;">${user.name ?? "usuário"}</strong>!<br/><br/>
+        Clique no botão abaixo para confirmar seu endereço de e-mail. O link é válido por <strong>24 horas</strong>.
+      </p>
+      <div style="text-align:center;margin:32px 0;">
+        <a href="${appUrl}/verify-email?token=${verifyToken}" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#059669);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+          Confirmar e-mail
+        </a>
+      </div>
+      <p style="color:#64748b;font-size:12px;margin:0;">Se você não criou uma conta, ignore este e-mail.</p>
+    </div>
+  </div>
+</div>`,
+            text: `Confirme seu e-mail acessando: ${appUrl}/verify-email?token=${verifyToken}`,
+          });
+
+          // Notify owner about new registration
+          await notifyOwner({
+            title: "Novo usuário cadastrado!",
+            content: `${user.name ?? "(sem nome)"} (${input.email}) acabou de criar uma conta.`,
+          });
+
           return { success: true, userId: user.id };
         } catch (error: any) {
           throw new Error(error.message || "Erro ao criar conta");
         }
+      }),
+
+    // ── Verify Email ─────────────────────────────────────────────────────────────
+    verifyEmail: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        const user = await getUserByEmailVerifyToken(input.token);
+        if (!user) throw new Error("Token inválido ou expirado");
+        if (user.emailVerifyExpiry && new Date() > user.emailVerifyExpiry) {
+          throw new Error("Token expirado. Solicite um novo e-mail de verificação.");
+        }
+        await markEmailVerified(user.id);
+        return { success: true };
+      }),
+
+    // ── Resend verification email ─────────────────────────────────────────────────
+    resendVerification: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.emailVerified) return { success: true, alreadyVerified: true };
+        const verifyToken = generateResetToken();
+        const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await setEmailVerifyToken(ctx.user.id, verifyToken, verifyExpiry);
+        const appUrl = process.env.APP_URL || "https://autoafiliado.manus.space";
+        if (ctx.user.email) {
+          await sendEmail({
+            to: ctx.user.email,
+            subject: "Confirme seu e-mail — AutoAfiliado",
+            html: `<p>Confirme seu e-mail: <a href="${appUrl}/verify-email?token=${verifyToken}">Clique aqui</a></p>`,
+            text: `Confirme seu e-mail: ${appUrl}/verify-email?token=${verifyToken}`,
+          });
+        }
+        return { success: true, alreadyVerified: false };
       }),
 
     // ── Login (email + password) ─────────────────────────────────────────────────
@@ -830,41 +904,42 @@ export const appRouter = router({
       return { ...sub, isActive };
     }),
 
-    // Gera QR Code PIX para o plano escolhido
+    // Gera QR Code PIX via Mercado Pago
     createPayment: protectedProcedure
       .input(z.object({ plan: z.enum(["basic", "premium"]) }))
       .mutation(async ({ ctx, input }) => {
-        const amount = input.plan === "basic" ? 50.0 : 100.0;
         const txid = generateTxid();
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+        const amount = PLAN_PRICES[input.plan];
 
-        const { payload, qrCodeBase64 } = await generatePixQRCode({
-          pixKey: "41186875852",
-          amount,
-          merchantName: "ProAfiliados Bot",
-          merchantCity: "SAO PAULO",
-          txid,
-          description: input.plan === "basic" ? "Plano Basic 50" : "Plano Premium 100",
+        // Gera pagamento PIX dinamico via Mercado Pago
+        const mpResult = await createMpPixPayment({
+          plan: input.plan,
+          userId: ctx.user.id,
+          userEmail: ctx.user.email ?? "pagador@autoafiliado.com.br",
+          userName: ctx.user.name ?? "Usuario",
+          idempotencyKey: txid,
         });
 
-        const payment = await createPixPayment({
+        // Salva no banco com o ID do MP como pixKey para busca no webhook
+        await createPixPayment({
           userId: ctx.user.id,
           plan: input.plan,
           amount: amount * 100, // em centavos
-          pixKey: "41186875852",
+          pixKey: mpResult.mpPaymentId,
           txid,
-          qrCodePayload: payload,
-          qrCodeImage: qrCodeBase64,
-          expiresAt,
+          qrCodePayload: mpResult.qrCodePayload,
+          qrCodeImage: mpResult.qrCodeBase64,
+          expiresAt: mpResult.expiresAt,
         });
 
         return {
           txid,
-          qrCodePayload: payload,
-          qrCodeImage: qrCodeBase64,
+          qrCodePayload: mpResult.qrCodePayload,
+          qrCodeImage: mpResult.qrCodeBase64,
           amount,
-          expiresAt,
+          expiresAt: mpResult.expiresAt,
           plan: input.plan,
+          mpPaymentId: mpResult.mpPaymentId,
         };
       }),
 

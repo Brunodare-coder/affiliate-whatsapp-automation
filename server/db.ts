@@ -859,3 +859,35 @@ export async function adminRevokeSubscription(userId: number): Promise<void> {
     .set({ status: "expired", currentPeriodEnd: now, updatedAt: now })
       .where(eq(subscriptions.userId, userId));
 }
+
+
+// ── Email Verification ────────────────────────────────────────────────────────
+
+export async function setEmailVerifyToken(userId: number, token: string, expiry: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(users)
+    .set({ emailVerifyToken: token, emailVerifyExpiry: expiry })
+    .where(eq(users.id, userId));
+}
+
+export async function getUserByEmailVerifyToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(users)
+    .where(eq(users.emailVerifyToken, token))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function markEmailVerified(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(users)
+    .set({ emailVerified: true, emailVerifyToken: null, emailVerifyExpiry: null })
+    .where(eq(users.id, userId));
+}

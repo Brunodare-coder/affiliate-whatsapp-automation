@@ -144,3 +144,39 @@ Se você não solicitou a redefinição de senha, ignore este e-mail.
 
 — Equipe ${APP_NAME}`;
 }
+
+/**
+ * Generic email sender — use for transactional emails beyond password reset.
+ * Falls back to owner notification if Resend is not configured.
+ */
+export async function sendEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<{ sent: boolean; fallback: boolean }> {
+  const resend = getResend();
+
+  if (resend) {
+    try {
+      await resend.emails.send({
+        from: `${APP_NAME} <${FROM_EMAIL}>`,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        text: params.text,
+      });
+      return { sent: true, fallback: false };
+    } catch (err) {
+      console.error("[Email] Resend error:", err);
+    }
+  }
+
+  // Fallback: notify owner
+  await notifyOwner({
+    title: params.subject,
+    content: `Para: ${params.to}\n\n${params.text ?? "(sem texto alternativo)"}`,
+  });
+
+  return { sent: false, fallback: true };
+}
