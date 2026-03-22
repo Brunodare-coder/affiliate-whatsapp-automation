@@ -51,6 +51,15 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     onError: () => toast.error("Erro ao sair"),
   });
 
+  // Poll WhatsApp connection status every 5s for real-time indicator
+  const { data: waInstances } = trpc.whatsapp.listInstances.useQuery(undefined, {
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    enabled: isAuthenticated,
+  });
+  const waConnected = waInstances?.some((i) => i.status === "connected") ?? false;
+  const waConnecting = !waConnected && waInstances?.some((i) => i.status === "connecting" || i.status === "qr_pending");
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -123,6 +132,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           <nav className="px-2 space-y-0.5">
             {navItems.map((item) => {
               const isActive = location === item.path || location.startsWith(item.path + "/");
+              const isWhatsApp = item.path === "/whatsapp";
               return (
                 <Link key={item.path} href={item.path}>
                   <div
@@ -133,11 +143,25 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                     } ${collapsed ? "justify-center" : ""}`}
                     title={collapsed ? item.label : undefined}
                   >
-                    <item.icon className={`w-4.5 h-4.5 flex-shrink-0 transition-colors ${isActive ? "text-green-400" : `group-hover:${item.color}`}`} style={{ width: "18px", height: "18px" }} />
+                    <div className="relative flex-shrink-0">
+                      <item.icon className={`w-4.5 h-4.5 transition-colors ${isActive ? "text-green-400" : `group-hover:${item.color}`}`} style={{ width: "18px", height: "18px" }} />
+                      {isWhatsApp && waInstances !== undefined && (
+                        <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-[oklch(0.09_0.018_250)] ${
+                          waConnected ? "bg-green-400" : waConnecting ? "bg-yellow-400 animate-pulse" : "bg-red-400"
+                        }`} />
+                      )}
+                    </div>
                     {!collapsed && (
-                      <span className="text-sm font-medium truncate">{item.label}</span>
+                      <span className="text-sm font-medium truncate flex-1">{item.label}</span>
                     )}
-                    {isActive && !collapsed && (
+                    {!collapsed && isWhatsApp && waInstances !== undefined && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        waConnected ? "bg-green-500/20 text-green-400" : waConnecting ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/15 text-red-400"
+                      }`}>
+                        {waConnected ? "ON" : waConnecting ? "..." : "OFF"}
+                      </span>
+                    )}
+                    {isActive && !collapsed && !isWhatsApp && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
                     )}
                   </div>

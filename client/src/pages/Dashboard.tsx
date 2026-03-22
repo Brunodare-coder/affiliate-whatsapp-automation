@@ -44,7 +44,7 @@ function useTrialCountdown(trialEndsAt: Date | number | null | undefined) {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { data: instances } = trpc.whatsapp.listInstances.useQuery();
+  const { data: instances } = trpc.whatsapp.listInstances.useQuery(undefined, { refetchInterval: 5000, refetchIntervalInBackground: true });
   const { data: automations } = trpc.automations.list.useQuery();
   const { data: stats } = trpc.logs.stats.useQuery();
   const { data: sub } = trpc.subscription.get.useQuery(undefined, { refetchInterval: 30000 });

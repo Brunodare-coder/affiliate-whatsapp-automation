@@ -420,3 +420,10 @@
 - [x] Corrigido: agora substitui urlObj.pathname = /social/${config.socialTag} quando socialTag está configurado
 - [x] Testado: link /social/victorhugoborowski → /social/MEUTAG com matt_word e matt_tool corretos
 - [x] socialTag já estava no schema e retornado pelo getMercadoLivreConfig
+
+## Melhoria - Status WhatsApp mais rápido (Fase 29)
+- [x] AppLayout: query listInstances com refetchInterval 5s em todas as páginas
+- [x] Dashboard: refetchInterval 5s adicionado ao listInstances
+- [x] Sidebar: badge ON/OFF/... ao lado do item WhatsApp com cores verde/amarelo/vermelho
+- [x] Ícone WhatsApp: ponto colorido no canto superior direito do ícone (verde=conectado, amarelo=conectando, vermelho=desconectado)
+- [x] Badge pisca em amarelo quando está conectando/aguardando QR
