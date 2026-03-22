@@ -9,13 +9,78 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { getPixPayment, markPixPaymentPaid, activateSubscription } from "../db";
+import crypto from "crypto";
+import { markPixPaymentPaid, activateSubscription } from "../db";
 import { getPixPaymentStatus } from "../mercadopago";
 import { notifyOwner } from "../_core/notification";
 import { sendEmail } from "../email";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
-import { users } from "../../drizzle/schema";
+import { users, pixPayments } from "../../drizzle/schema";
+
+/**
+ * Validate Mercado Pago webhook signature.
+ * MP sends: x-signature header with ts=...;v1=HMAC_SHA256
+ * and x-request-id header.
+ * The signed string is: id;request-id;ts
+ */
+function validateMPSignature(req: Request): boolean {
+  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  if (!secret) {
+    // If no secret configured, skip validation (dev mode)
+    console.warn("[MP Webhook] No MERCADOPAGO_WEBHOOK_SECRET set, skipping signature validation");
+    return true;
+  }
+
+  try {
+    const xSignature = req.headers["x-signature"] as string;
+    const xRequestId = req.headers["x-request-id"] as string;
+
+    if (!xSignature) {
+      console.warn("[MP Webhook] Missing x-signature header");
+      return false;
+    }
+
+    // Parse ts and v1 from x-signature header
+    // Format: ts=1704908010;v1=618c85345248dd820d5fd456117c2ab2ef8eda45a0c9c4c8b8e5d8d6e3f8a7b2
+    const parts: Record<string, string> = {};
+    xSignature.split(";").forEach(part => {
+      const [key, value] = part.split("=");
+      if (key && value) parts[key.trim()] = value.trim();
+    });
+
+    const ts = parts["ts"];
+    const v1 = parts["v1"];
+
+    if (!ts || !v1) {
+      console.warn("[MP Webhook] Invalid x-signature format");
+      return false;
+    }
+
+    // Build the manifest string: id;request-id;ts
+    const dataId = req.query.id as string || req.body?.data?.id?.toString() || "";
+    const manifest = `id:${dataId};request-id:${xRequestId ?? ""};ts:${ts};`;
+
+    // Compute HMAC-SHA256
+    const hmac = crypto.createHmac("sha256", secret);
+    hmac.update(manifest);
+    const computed = hmac.digest("hex");
+
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(computed, "hex"),
+      Buffer.from(v1, "hex")
+    );
+
+    if (!isValid) {
+      console.warn(`[MP Webhook] Signature mismatch. Computed: ${computed}, Received: ${v1}`);
+    }
+
+    return isValid;
+  } catch (err) {
+    console.error("[MP Webhook] Signature validation error:", err);
+    return false;
+  }
+}
 
 export function registerMercadoPagoWebhook(app: Express) {
   /**
@@ -26,6 +91,12 @@ export function registerMercadoPagoWebhook(app: Express) {
    */
   app.post("/api/webhooks/mercadopago", async (req: Request, res: Response) => {
     try {
+      // Validate webhook signature
+      if (!validateMPSignature(req)) {
+        console.warn("[MP Webhook] Invalid signature — rejecting request");
+        return res.status(401).json({ error: "Invalid signature" });
+      }
+
       // Mercado Pago sends different notification types
       const { type, data, action } = req.body;
 
@@ -58,7 +129,6 @@ export function registerMercadoPagoWebhook(app: Express) {
         return res.status(500).json({ error: "Database unavailable" });
       }
 
-      const { pixPayments } = await import("../../drizzle/schema");
       const [payment] = await db
         .select()
         .from(pixPayments)
