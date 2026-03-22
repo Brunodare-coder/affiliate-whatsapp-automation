@@ -36,15 +36,15 @@ function getSessionSecret(): Uint8Array {
  * Creates a signed JWT session token for a local user.
  * Payload mirrors the Manus OAuth format so sdk.verifySession() still works.
  */
-export async function createLocalSessionToken(userId: number, name: string): Promise<string> {
+export async function createLocalSessionToken(openId: string, name: string): Promise<string> {
   const issuedAt = Date.now();
   const expiresInMs = ONE_YEAR_MS;
   const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
 
   return new SignJWT({
-    openId: `local:${userId}`,   // prefix to distinguish from OAuth openIds
+    openId,   // use the real openId so sdk.authenticateRequest finds the user
     appId: ENV.appId || "local",
-    name: name || "",
+    name: name || "(sem nome)",
   })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setExpirationTime(expirationSeconds)
@@ -103,7 +103,7 @@ export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
-}): Promise<{ id: number; name: string | null; email: string | null }> {
+}): Promise<{ id: number; openId: string; name: string | null; email: string | null }> {
   // Check if email already registered
   const existing = await db.getUserByEmail(data.email);
   if (existing) {

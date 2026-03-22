@@ -166,7 +166,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         try {
           const user = await registerUser(input);
-          const token = await createLocalSessionToken(user.id, user.name ?? "");
+          const token = await createLocalSessionToken(user.openId, user.name ?? "(sem nome)");
           setSessionCookie(ctx.res, ctx.req, token);
           return { success: true, userId: user.id };
         } catch (error: any) {
@@ -196,7 +196,9 @@ export const appRouter = router({
         if (!valid) {
           throw new Error("E-mail ou senha incorretos");
         }
-        const token = await createLocalSessionToken(user.id, user.name ?? "");
+        // Use the user's real openId (not "local:id") so sdk.authenticateRequest
+        // can find the user via getUserByOpenId correctly
+        const token = await createLocalSessionToken(user.openId, user.name ?? "(sem nome)");
         setSessionCookie(ctx.res, ctx.req, token);
         return { success: true, userId: user.id };
       }),
