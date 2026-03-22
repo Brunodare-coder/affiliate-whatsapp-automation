@@ -43,6 +43,7 @@ import {
   pixPayments,
   users,
   whatsappInstances,
+  systemSettings,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -890,4 +891,25 @@ export async function markEmailVerified(userId: number) {
     .update(users)
     .set({ emailVerified: true, emailVerifyToken: null, emailVerifyExpiry: null })
     .where(eq(users.id, userId));
+}
+
+// ── System Settings (Admin) ───────────────────────────────────────────────────
+export async function getSystemSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db
+    .select()
+    .from(systemSettings)
+    .where(eq(systemSettings.key, key))
+    .limit(1);
+  return row?.value ?? null;
+}
+
+export async function upsertSystemSetting(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .insert(systemSettings)
+    .values({ key, value })
+    .onDuplicateKeyUpdate({ set: { value } });
 }

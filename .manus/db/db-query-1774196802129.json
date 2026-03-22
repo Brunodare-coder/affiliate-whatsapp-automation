@@ -1,0 +1,9 @@
+{
+  "query": "INSERT IGNORE INTO `system_settings` (`key`, `value`) VALUES ('ad_text', '⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute INSERT IGNORE INTO `system_settings` (`key`, `value`) VALUES ('ad_text', '⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 370
+}

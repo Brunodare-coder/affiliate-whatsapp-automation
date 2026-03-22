@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,7 +29,9 @@ import {
   KeyRound,
   Loader2,
   Mail,
+  Megaphone,
   RefreshCw,
+  Save,
   Search,
   Shield,
   Users,
@@ -119,6 +122,19 @@ export default function Admin() {
     onError: (e) => toast.error(e.message),
   });
 
+  // ── Ad text state ─────────────────────────────────────────────────────────────────────
+  const { data: adTextData } = trpc.admin.getAdText.useQuery();
+  const [adText, setAdText] = useState<string | null>(null);
+  const adTextValue = adText ?? adTextData?.adText ?? "";
+
+  const saveAdTextMutation = trpc.admin.saveAdText.useMutation({
+    onSuccess: () => {
+      toast.success("Texto do anúncio salvo com sucesso!");
+      utils.admin.getAdText.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const sendResetLinkMutation = trpc.admin.sendPasswordResetLink.useMutation({
     onSuccess: (data) => {
       if (data.emailSent) {
@@ -205,6 +221,56 @@ export default function Admin() {
               <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Configuração do Texto do Anúncio */}
+        <div className="rounded-2xl border border-orange-500/20 p-5" style={{ background: "linear-gradient(135deg, oklch(0.65 0.20 50 / 0.07) 0%, oklch(0.12 0.018 250 / 0.6) 100%)" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center flex-shrink-0">
+              <Megaphone className="w-5 h-5 text-orange-400" />
+            </div>
+            <div>
+              <p className="font-bold section-title">Texto do Anúncio (Plano Basic)</p>
+              <p className="text-xs text-muted-foreground">Rodapé adicionado em cada mensagem enviada por usuários do plano R$50</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Texto do anúncio (máx. 500 caracteres)</Label>
+              <Textarea
+                value={adTextValue}
+                onChange={(e) => setAdText(e.target.value)}
+                placeholder="Ex: ⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space"
+                className="bg-white/5 border-white/10 focus:border-orange-500/40 resize-none text-sm min-h-[80px]"
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{adTextValue.length}/500 caracteres</p>
+            </div>
+
+            <div className="rounded-xl border border-orange-500/15 p-3" style={{ background: "oklch(0.65 0.20 50 / 0.06)" }}>
+              <p className="text-xs font-semibold text-orange-300 mb-1">Pré-visualização da mensagem</p>
+              <p className="text-xs text-muted-foreground italic">
+                “Produto incrível! https://www.amazon.com.br/dp/B08XYZ?tag=meutag-20”
+              </p>
+              {adTextValue && (
+                <p className="text-xs text-orange-300/80 mt-1 italic whitespace-pre-wrap">{adTextValue}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                onClick={() => saveAdTextMutation.mutate({ adText: adTextValue })}
+                disabled={saveAdTextMutation.isPending}
+                className="bg-orange-500/15 text-orange-300 border border-orange-500/25 hover:bg-orange-500/25 gap-2"
+                variant="outline"
+              >
+                {saveAdTextMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                Salvar Texto
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Tabela de usuários */}

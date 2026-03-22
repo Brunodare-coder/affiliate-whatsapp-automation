@@ -30,6 +30,7 @@ import {
   updateSendLog,
   updateWhatsappInstance,
   getSubscription,
+  getSystemSetting,
 } from "./db";
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
@@ -739,8 +740,9 @@ export class WhatsAppManager extends EventEmitter {
         try {
           const subscription = await getSubscription(userId);
           if (subscription?.hasAds && subscription.status === "active") {
-            const adText = "\n\n⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space";
-            processedText = processedText + adText;
+            const configuredAdText = await getSystemSetting("ad_text");
+            const adText = configuredAdText ?? "⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space";
+            processedText = processedText + "\n\n" + adText;
           }
         } catch {
           // ignore subscription fetch errors

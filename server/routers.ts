@@ -95,6 +95,8 @@ import {
   setEmailVerifyToken,
   getUserByEmailVerifyToken,
   markEmailVerified,
+  getSystemSetting,
+  upsertSystemSetting,
 } from "./db";
 
 // ── Admin Router ────────────────────────────────────────────────────────
@@ -140,7 +142,7 @@ const adminRouter = router({
       return { success: true };
     }),
 
-  // ── Send password reset link to user email ───────────────────────────────
+  // ── Send password reset link to user email ─────────────────────────────────────
   sendPasswordResetLink: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ input }) => {
@@ -151,6 +153,21 @@ const adminRouter = router({
       await updateUserResetToken(user.id, token, expiresAt);
       const result = await sendPasswordResetEmail({ to: user.email, name: user.name, token });
       return { success: true, emailSent: result.sent, fallback: result.fallback };
+    }),
+
+  // ── Ad text configuration ─────────────────────────────────────────────────────────────
+  getAdText: adminProcedure.query(async () => {
+    const value = await getSystemSetting("ad_text");
+    return { adText: value ?? "⚠️ _Mensagem enviada pelo AutoAfiliado_ | autoafiliado.manus.space" };
+  }),
+
+  saveAdText: adminProcedure
+    .input(z.object({
+      adText: z.string().max(500, "Texto do anúncio deve ter no máximo 500 caracteres"),
+    }))
+    .mutation(async ({ input }) => {
+      await upsertSystemSetting("ad_text", input.adText);
+      return { success: true };
     }),
 });
 

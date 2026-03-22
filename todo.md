@@ -306,3 +306,10 @@
 - [x] Implementar anúncios para plano R$50 (hasAds) no processamento de mensagens
 - [x] Verificar substituição de links de afiliado (ML, Amazon, Shopee, Magalu, AliExpress) - funcionando
 - [x] Documentar diferença entre Grupos e Automações para o usuário
+
+## Personalização do Anúncio no Admin (Fase 12)
+- [x] Schema: tabela system_settings com campo ad_text (texto do anúncio configurável)
+- [x] DB helpers: getSystemSetting, upsertSystemSetting
+- [x] tRPC procedures: admin.getAdText, admin.saveAdText (protegido por role=admin)
+- [x] Painel Admin: seção "Configurações do Anúncio" com textarea + preview + botão salvar
+- [x] whatsapp.ts: buscar ad_text do banco em vez de usar texto fixo

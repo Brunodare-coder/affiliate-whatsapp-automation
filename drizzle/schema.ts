@@ -348,3 +348,13 @@ export const pixPayments = mysqlTable("pix_payments", {
 
 export type PixPayment = typeof pixPayments.$inferSelect;
 export type InsertPixPayment = typeof pixPayments.$inferInsert;
+
+// ── Configurações do Sistema (Admin) ────────────────────────────────────────
+export const systemSettings = mysqlTable("system_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 128 }).notNull().unique(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;
