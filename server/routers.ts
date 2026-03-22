@@ -76,6 +76,7 @@ import { createPixPayment as createMpPixPayment, getPixPaymentStatus, PLAN_PRICE
 import { whatsappManager } from "./whatsapp";
 import { notifyOwner } from "./_core/notification";
 import { invalidateUserCache } from "./cache";
+import { getDiagLogs, clearDiagLogs } from "./diagLogger";
 import { sendPasswordResetEmail, sendEmail } from "./email";
 import {
   createLocalSessionToken,
@@ -1088,6 +1089,21 @@ export const appRouter = router({
           }
         }
         return { success: true, sentCount };
+      }),
+  }),
+
+  // ── Diagnóstico em tempo real ──────────────────────────────────────────────
+  diag: router({
+    getLogs: protectedProcedure
+      .input(z.object({ since: z.number().optional() }))
+      .query(({ ctx, input }) => {
+        const logs = getDiagLogs(ctx.user.id, input.since);
+        return { logs };
+      }),
+    clearLogs: protectedProcedure
+      .mutation(({ ctx }) => {
+        clearDiagLogs(ctx.user.id);
+        return { success: true };
       }),
   }),
 });

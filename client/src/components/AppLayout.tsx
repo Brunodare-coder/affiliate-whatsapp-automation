@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   BarChart3,
+  Activity,
   Bot,
   ChevronLeft,
   ChevronRight,
@@ -29,6 +30,7 @@ const navItems = [
   { path: "/groups", label: "Configurar Ofertas", icon: Users, color: "text-blue-400" },
   { path: "/feed-global", label: "Feed Global", icon: Globe, color: "text-cyan-400" },
   { path: "/logs", label: "Logs", icon: FileText, color: "text-purple-400" },
+  { path: "/diagnostico", label: "Diagnóstico", icon: Activity, color: "text-pink-400" },
   { path: "/subscription", label: "Assinatura", icon: Shield, color: "text-yellow-400" },
   { path: "/settings", label: "Configurações", icon: Settings, color: "text-orange-400" },
 ];

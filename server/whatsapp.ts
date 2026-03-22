@@ -36,6 +36,7 @@ import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
 import { botCache, cacheKey, TTL } from "./cache";
 import { notifyOwner } from "./_core/notification";
+import { diagInfo, diagWarn, diagError, diagSuccess } from "./diagLogger";
 
 const SESSION_DIR = process.env.SESSION_DIR || "/tmp/whatsapp-sessions";
 
@@ -299,6 +300,13 @@ export class WhatsAppManager extends EventEmitter {
         if (type !== "notify") return;
         for (const msg of messages) {
           if (msg.key.fromMe) continue;
+          const jid = msg.key.remoteJid || 'unknown';
+          const isGroup = jid.endsWith('@g.us');
+          diagInfo(userId, 'MSG', `Recebida | grupo=${isGroup} | jid=${jid} | temConteúdo=${!!msg.message}`);
+          if (!isGroup) {
+            diagInfo(userId, 'MSG', `Ignorando: não é grupo (${jid})`);
+            continue;
+          }
           await this.handleIncomingMessage(instanceId, userId, msg as WhatsAppMessage);
         }
       });
@@ -433,9 +441,15 @@ export class WhatsAppManager extends EventEmitter {
     try {
       // Check if this group is monitored with buscarOfertas active
       const monitoredGroupsList = await cachedGetMonitoredGroups(userId, instanceId);
+      diagInfo(userId, 'GRUPOS', `${monitoredGroupsList.length} monitorados | buscarOfertas: ${monitoredGroupsList.filter(g => g.isActive && g.buscarOfertas).length} ativos`);
       const activeMonitored = monitoredGroupsList.filter(
         (g) => g.isActive && g.groupJid === remoteJid && g.buscarOfertas
       );
+      if (activeMonitored.length > 0) {
+        diagSuccess(userId, 'GRUPOS', `Grupo ${remoteJid} está monitorado com buscarOfertas ativo ✓`);
+      } else {
+        diagWarn(userId, 'GRUPOS', `Grupo ${remoteJid} NÃO está configurado para buscar ofertas. Grupos configurados: ${monitoredGroupsList.filter(g=>g.buscarOfertas).map(g => g.groupName || g.groupJid).join(', ') || 'nenhum'}`);
+      }
       if (activeMonitored.length === 0) {
         // Also check espelharConteudo groups
         const mirrorGroups = monitoredGroupsList.filter(
@@ -724,6 +738,8 @@ export class WhatsAppManager extends EventEmitter {
       linksReplaced: 0,
     });
 
+    diagInfo(userId, 'AUTOMAÇÃO', `Processando | grupo=${sourceGroupJid} | texto=${text ? text.substring(0, 80) + '...' : 'VAZIO'} | mídia=${mediaType || 'nenhuma'}`);
+    diagInfo(userId, 'CONFIG', `ML=${mlConfig?.isActive ? 'ativo (tag:' + mlConfig.tag + ')' : 'inativo'} | Shopee=${shopeeConfig?.isActive ? 'ativo' : 'inativo'} | Amazon=${amazonConfig?.isActive ? 'ativo' : 'inativo'} | Links=${links.length}`);
     try {
       let processedText = text || "";
       let linksFound = 0;
@@ -767,6 +783,13 @@ export class WhatsAppManager extends EventEmitter {
         processedText = result.text;
         linksFound = result.linksFound;
         linksReplaced = result.linksReplaced;
+        if (result.linksReplaced > 0) {
+          diagSuccess(userId, 'LINKS', `${result.linksFound} links encontrados, ${result.linksReplaced} substituídos por links de afiliado`);
+        } else {
+          diagWarn(userId, 'LINKS', `${result.linksFound} links encontrados mas nenhum substituído (verifique os links de campanha)`);
+        }
+      } else {
+        diagWarn(userId, 'LINKS', `Nenhum link de campanha configurado ou texto vazio`);
       }
 
       // Replace Mercado Livre links with affiliate tag
@@ -989,11 +1012,12 @@ Regras:
       }
 
       if (targetJids.length === 0) {
-        console.log(`[WhatsApp] No target groups found for automation ${automation.id} (sourceGroupId=${automation.sourceGroupId}). Skipping.`);
+        diagWarn(userId, 'ENVIO', `Nenhum grupo de destino encontrado para a automação ${automation.id}. Configure grupos com "Enviar Ofertas" ativo.`);
         await updatePostLog(logId, { status: "skipped" });
         return;
       }
 
+      diagInfo(userId, 'ENVIO', `Enviando para ${targetJids.length} grupo(s): ${targetJids.map(t => t.name).join(', ')}`);
       console.log(`[WhatsApp] Dispatching to ${targetJids.length} groups:`, targetJids.map(t => t.name));
 
       // Download media from WhatsApp if present, upload to S3 for reliable reuse
@@ -1107,9 +1131,15 @@ Regras:
             status: sent ? "sent" : "failed",
             sentAt: sent ? new Date() : undefined,
           });
+          if (sent) {
+            diagSuccess(userId, 'ENVIO', `✓ Enviado para "${target.name}" (${target.jid})`);
+          } else {
+            diagError(userId, 'ENVIO', `✗ Falha ao enviar para "${target.name}" (${target.jid})`);
+          }
           if (!sent) allSent = false;
         } catch (err: any) {
           console.error(`[WhatsApp] Failed to send to ${target.jid}:`, err.message);
+          diagError(userId, 'ENVIO', `✗ Erro ao enviar para "${target.name}": ${err.message}`);
           await updateSendLog(sendLogId, { status: "failed", errorMessage: err.message });
           allSent = false;
         }

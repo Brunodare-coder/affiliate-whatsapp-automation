@@ -448,3 +448,14 @@
 - [x] Backend dispatchToFeedGlobalSubscribers: agora cria postLog + sendLog com source='global' para cada envio
 - [x] Feed Global: logs de envio agora aparecem na página /logs com origem identificada
 - [x] UI Logs.tsx: badge azul 'Feed Global' (ícone Globe) e badge roxo 'Bot' (ícone Bot) em cada card
+
+## Bug Fix - Bot não detecta links (Fase 33)
+- [x] Diagnosticado: bot recebia mensagens mas nenhum grupo estava configurado com buscarOfertas ativo
+- [x] Logs de diagnóstico confirmaram: [Diag][GRUPOS] 0 monitorados | buscarOfertas: 0 ativos
+
+## Logs de Diagnóstico (Fase 33b)
+- [x] Criado módulo diagLogger.ts com logs em memória por usuário (200 entradas max)
+- [x] Adicionado diagInfo/diagWarn/diagError/diagSuccess no fluxo completo do whatsapp.ts
+- [x] Procedure tRPC diag.getLogs e diag.clearLogs adicionadas ao routers.ts
+- [x] Página /diagnostico criada com terminal ao vivo, filtros por categoria e auto-scroll
+- [x] Item Diagnóstico adicionado na sidebar do AppLayout (badge rosa, ícone Activity)

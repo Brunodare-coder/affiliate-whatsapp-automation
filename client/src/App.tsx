@@ -19,6 +19,7 @@ import FeedGlobal from "./pages/FeedGlobal";
 import Subscription from "./pages/Subscription";
 import Admin from "./pages/Admin";
 import Support from "./pages/Support";
+import Diagnostico from "./pages/Diagnostico";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -77,6 +78,9 @@ function Router() {
       </Route>
       <Route path="/admin">
         <ProtectedRoute><Admin /></ProtectedRoute>
+      </Route>
+      <Route path="/diagnostico">
+        <ProtectedRoute><Diagnostico /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />
