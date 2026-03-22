@@ -1,4 +1,4 @@
-import { and, desc, eq, like, sql } from "drizzle-orm";
+import { and, desc, eq, like, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   AffiliateLink,
@@ -972,4 +972,25 @@ export async function upsertSystemSetting(key: string, value: string): Promise<v
     .insert(systemSettings)
     .values({ key, value })
     .onDuplicateKeyUpdate({ set: { value } });
+}
+
+// ── Instance Migration ────────────────────────────────────────────────────────
+/**
+ * When a user connects a new WhatsApp instance, migrate all their monitored groups
+ * and automations from any old instanceId to the new one.
+ * This prevents the "Grupos configurados: nenhum" bug when instanceId changes.
+ */
+export async function migrateUserGroupsToInstance(userId: number, newInstanceId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Update all monitored_groups for this user that are NOT already on the new instance
+  await db
+    .update(monitoredGroups)
+    .set({ instanceId: newInstanceId })
+    .where(and(eq(monitoredGroups.userId, userId), ne(monitoredGroups.instanceId, newInstanceId)));
+  // Update all automations for this user that are NOT already on the new instance
+  await db
+    .update(automations)
+    .set({ instanceId: newInstanceId })
+    .where(and(eq(automations.userId, userId), ne(automations.instanceId, newInstanceId)));
 }

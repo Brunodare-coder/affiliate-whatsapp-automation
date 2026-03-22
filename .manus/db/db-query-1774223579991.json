@@ -1,0 +1,64 @@
+{
+  "query": "SELECT id, groupJid, groupName, isActive, buscarOfertas, enviarOfertas, instanceId FROM monitored_groups WHERE buscarOfertas = 1 OR enviarOfertas = 1 ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute SELECT id, groupJid, groupName, isActive, buscarOfertas, enviarOfertas, instanceId FROM monitored_groups WHERE buscarOfertas = 1 OR enviarOfertas = 1 ORDER BY id;",
+  "rows": [
+    {
+      "id": "14",
+      "groupJid": "120363424916448075@g.us",
+      "groupName": "Top Achados",
+      "isActive": "1",
+      "buscarOfertas": "0",
+      "enviarOfertas": "1",
+      "instanceId": "30005"
+    },
+    {
+      "id": "20",
+      "groupJid": "120363399706522399@g.us",
+      "groupName": "Achados Promocionais  do mercado Livre.  😱",
+      "isActive": "1",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30005"
+    },
+    {
+      "id": "26",
+      "groupJid": "120363404265871262@g.us",
+      "groupName": "Clube Trend Line | Saúde & Bem estar 💪🏻🍃",
+      "isActive": "1",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30005"
+    },
+    {
+      "id": "27",
+      "groupJid": "120363403753474842@g.us",
+      "groupName": "🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️",
+      "isActive": "1",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30005"
+    },
+    {
+      "id": "28",
+      "groupJid": "120363405844728563@g.us",
+      "groupName": "@sopromosoriginais 943",
+      "isActive": "1",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30005"
+    },
+    {
+      "id": "29",
+      "groupJid": "120363406198839283@g.us",
+      "groupName": "OFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS",
+      "isActive": "1",
+      "buscarOfertas": "1",
+      "enviarOfertas": "0",
+      "instanceId": "30005"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tgroupJid\tgroupName\tisActive\tbuscarOfertas\tenviarOfertas\tinstanceId\n14\t120363424916448075@g.us\tTop Achados\t1\t0\t1\t30005\n20\t120363399706522399@g.us\tAchados Promocionais  do mercado Livre.  😱\t1\t1\t0\t30005\n26\t120363404265871262@g.us\tClube Trend Line | Saúde & Bem estar 💪🏻🍃\t1\t1\t0\t30005\n27\t120363403753474842@g.us\t🛍️OFERTAS RELÂMPAGO🛍/AMAZON/ML/SHOPPE 🛍️\t1\t1\t0\t30005\n28\t120363405844728563@g.us\t@sopromosoriginais 943\t1\t1\t0\t30005\n29\t120363406198839283@g.us\tOFERTAS PROMOÇÕES CUPONS ACHADINHOS DESCONTOS MERCADO LIVRE AMAZON SHOPEE ALIEXPRESS\t1\t1\t0\t30005\n",
+  "stderr": "",
+  "execution_time_ms": 379
+}

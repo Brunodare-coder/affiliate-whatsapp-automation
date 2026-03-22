@@ -31,10 +31,11 @@ import {
   updateWhatsappInstance,
   getSubscription,
   getSystemSetting,
+  migrateUserGroupsToInstance,
 } from "./db";
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
-import { botCache, cacheKey, TTL } from "./cache";
+import { botCache, cacheKey, TTL, invalidateUserCache } from "./cache";
 import { notifyOwner } from "./_core/notification";
 import { diagInfo, diagWarn, diagError, diagSuccess } from "./diagLogger";
 
@@ -288,6 +289,13 @@ export class WhatsAppManager extends EventEmitter {
             phoneNumber,
             lastConnectedAt: new Date(),
           });
+          // Migrate all user's monitored groups and automations to this instanceId
+          // This fixes the "Grupos configurados: nenhum" bug when instanceId changes
+          migrateUserGroupsToInstance(userId, instanceId).catch((err) =>
+            console.error(`[WhatsApp] Failed to migrate groups to instance ${instanceId}:`, err)
+          );
+          // Invalidate cache so new instanceId is picked up immediately
+          invalidateUserCache(userId);
           this.qrCodes.delete(instanceId);
           this.emit("connected", instanceId, phoneNumber);
           console.log(`[WhatsApp] Instance ${instanceId} connected as ${phoneNumber}`);
