@@ -572,6 +572,7 @@ export const appRouter = router({
           espelharConteudo: z.boolean().optional(),
           enviarOfertas: z.boolean().optional(),
           substituirImagem: z.boolean().optional(),
+          inviteLink: z.string().max(500).nullable().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {

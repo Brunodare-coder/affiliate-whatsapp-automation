@@ -326,3 +326,18 @@
 - [ ] Testar com exemplo: mercadolivre.com.br/social/bq20260201142328?matt_tool=78912023&matt_word=bq20260201142328
 - [x] replaceMercadoLivreLinks: substituir matt_tool e matt_word pelo do usuário em links /social/CODIGO
 - [x] Verificar e testar expansão de amzn.to + aplicação do tag Amazon (dib, dib_tag, sbo removidos)
+
+## Limpeza de Mensagens (Fase 15)
+- [ ] Remover automaticamente links chat.whatsapp.com das mensagens antes de repostar
+- [ ] Verificar expansão de meli.la para /social/ vs produto direto
+- [ ] Corrigir: remover links chat.whatsapp.com de terceiros mas adicionar o link do grupo configurado pelo usuário
+- [ ] Verificar onde o inviteLink do grupo destino é adicionado na mensagem enviada
+
+## Correção Link de Convite e Limpeza de Mensagens (Fase 16)
+- [x] Remover links chat.whatsapp.com de terceiros das mensagens antes de repostar
+- [x] Verificar expansão de meli.la: confirma que cai em /social/ (correto)
+- [x] Schema: adicionar campo inviteLink na tabela monitored_groups
+- [x] Migrar banco com ALTER TABLE monitored_groups ADD COLUMN inviteLink
+- [x] Procedure updateMonitoredGroup: aceitar campo inviteLink
+- [x] UI Grupos: campo de input para link de convite (visível quando enviarOfertas + includeGroupLink ativos)
+- [x] whatsapp.ts: adicionar link de convite do grupo destino ao final da mensagem quando includeGroupLink=true

@@ -730,6 +730,42 @@ export class WhatsAppManager extends EventEmitter {
         }
       }
 
+      // Remove links de convite do WhatsApp (chat.whatsapp.com) antes de repostar
+      // Esses links pertencem ao grupo de origem e não devem ser divulgados
+      if (processedText) {
+        const WA_LINK_RE = /https?:\/\/chat\.whatsapp\.com\/[^\s<>"{}|\\^`[\]]*/gi;
+        const INVITE_KEYWORD_RE = /(?:participe|entre no grupo|acesse o grupo|grupo\s*:)/i;
+
+        // Processar cada linha individualmente para remover apenas o trecho de convite
+        processedText = processedText
+          .split('\n')
+          .map(line => {
+            if (!WA_LINK_RE.test(line)) return line; // linha sem link WhatsApp: preservar
+            WA_LINK_RE.lastIndex = 0;
+
+            // Se a linha contém palavra-chave de convite: remover apenas o trecho após a última URL de produto
+            // Estratégia: dividir por 2+ espaços e remover segmentos que contêm o link WhatsApp
+            const segments = line.split(/(\s{2,})/);
+            const filtered = segments.filter(seg => !WA_LINK_RE.test(seg) || !INVITE_KEYWORD_RE.test(seg));
+            WA_LINK_RE.lastIndex = 0;
+
+            // Se ainda houver link WhatsApp (sem palavra-chave), removê-lo diretamente
+            const joined = filtered.join('');
+            return joined.replace(WA_LINK_RE, '').trim();
+          })
+          .filter(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return false;
+            // Remover linhas que ficaram só com texto de convite sem link
+            const isOrphanInvite = INVITE_KEYWORD_RE.test(trimmed) && !trimmed.includes('http');
+            return !isOrphanInvite;
+          })
+          .join('\n')
+          .trim();
+
+        processedText = processedText.replace(/\n{3,}/g, '\n\n').trim();
+      }
+
       // Apply link order (first or last)
       if (botSettings?.linkOrder === 'last' && processedText) {
         // Move links to end of message
@@ -780,8 +816,7 @@ export class WhatsAppManager extends EventEmitter {
         (g) => g.id === automation.sourceGroupId
       );
 
-      let targetJids: { jid: string; name: string }[] = [];
-
+       let targetJids: { jid: string; name: string; inviteLink?: string | null }[] = [];
       // First try: group_targets (explicitly configured targets for this source group)
       const groupTargetsList = await getGroupTargets(userId, automation.sourceGroupId);
       if (groupTargetsList.length > 0) {
@@ -789,11 +824,10 @@ export class WhatsAppManager extends EventEmitter {
         for (const gt of groupTargetsList) {
           const targetGroup = allMonitored.find((g) => g.id === gt.targetGroupId && g.isActive);
           if (targetGroup && targetGroup.groupJid) {
-            targetJids.push({ jid: targetGroup.groupJid, name: targetGroup.groupName || targetGroup.groupJid });
+            targetJids.push({ jid: targetGroup.groupJid, name: targetGroup.groupName || targetGroup.groupJid, inviteLink: targetGroup.inviteLink });
           }
         }
       }
-
       // Fallback: automation_targets → send_targets (legacy path)
       if (targetJids.length === 0) {
         const automationTargetsList = await getAutomationTargets(automation.id);
@@ -807,7 +841,6 @@ export class WhatsAppManager extends EventEmitter {
           }
         }
       }
-
       // Last fallback: all groups with enviarOfertas active for this instance
       if (targetJids.length === 0) {
         const allMonitored = await getMonitoredGroups(userId, instanceId);
@@ -816,7 +849,7 @@ export class WhatsAppManager extends EventEmitter {
         );
         for (const g of enviarGroups) {
           if (g.groupJid) {
-            targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid });
+            targetJids.push({ jid: g.groupJid, name: g.groupName || g.groupJid, inviteLink: g.inviteLink });
           }
         }
       }
@@ -869,24 +902,32 @@ export class WhatsAppManager extends EventEmitter {
       // Send to all target groups
       let allSent = true;
       for (const target of targetJids) {
+        // Adicionar link de convite do grupo destino se configurado e habilitado
+        let finalText = processedText;
+        if (botSettings?.includeGroupLink && target.inviteLink && finalText) {
+          const inviteUrl = target.inviteLink.startsWith('http')
+            ? target.inviteLink
+            : `https://chat.whatsapp.com/${target.inviteLink}`;
+          finalText = `${finalText}\n\n🚀 *Participe do grupo:* ${inviteUrl}`;
+        }
+
         const sendLogId = await createSendLog({
           postLogId: logId,
           userId,
           platform: detectedPlatform || undefined,
           targetJid: target.jid,
           targetName: target.name,
-          messageContent: processedText || text || undefined,
+          messageContent: finalText || text || undefined,
           status: "pending",
         });
-
         let sent = false;
         try {
           if (uploadedMediaUrl && mediaType === "image") {
-            sent = await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
+            sent = await this.sendImageMessage(instanceId, target.jid, uploadedMediaUrl, finalText || undefined);
           } else if (uploadedMediaUrl && mediaType === "video") {
-            sent = await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, processedText || undefined);
-          } else if (processedText) {
-            sent = await this.sendTextMessage(instanceId, target.jid, processedText);
+            sent = await this.sendVideoMessage(instanceId, target.jid, uploadedMediaUrl, finalText || undefined);
+          } else if (finalText) {
+            sent = await this.sendTextMessage(instanceId, target.jid, finalText);
           } else {
             // Forward original message as-is
             const sock = this.sockets.get(instanceId);

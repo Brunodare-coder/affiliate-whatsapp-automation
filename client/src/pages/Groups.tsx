@@ -309,6 +309,7 @@ function GroupsTab() {
     groupJid: string;
   } | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingInviteLink, setEditingInviteLink] = useState<Record<number, string>>({});
 
   const connectedInstances = instances?.filter((i) => i.status === "connected") || [];
   const firstConnectedId = connectedInstances[0]?.id ?? null;
@@ -365,6 +366,16 @@ function GroupsTab() {
       await updateGroup.mutateAsync({ id: group.id, [flag]: value });
     } catch {
       toast.error("Erro ao atualizar configuração");
+    }
+  };
+
+  const handleSaveInviteLink = async (group: NonNullable<typeof savedGroups>[0]) => {
+    const link = editingInviteLink[group.id] ?? group.inviteLink ?? "";
+    try {
+      await updateGroup.mutateAsync({ id: group.id, inviteLink: link || null });
+      toast.success("Link de convite salvo!");
+    } catch {
+      toast.error("Erro ao salvar link de convite");
     }
   };
 
@@ -553,6 +564,24 @@ function GroupsTab() {
                     checked={group.enviarOfertas}
                     onToggle={(v) => handleToggle(group, "enviarOfertas", v)}
                   />
+                  {group.enviarOfertas && botSettings?.includeGroupLink && (
+                    <div className="flex items-center gap-2 px-4 py-3 border-t border-white/5">
+                      <Link2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+                      <input
+                        type="text"
+                        placeholder="https://chat.whatsapp.com/..."
+                        value={editingInviteLink[group.id] ?? group.inviteLink ?? ""}
+                        onChange={(e) => setEditingInviteLink((prev) => ({ ...prev, [group.id]: e.target.value }))}
+                        className="flex-1 text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-green-500/50"
+                      />
+                      <button
+                        onClick={() => handleSaveInviteLink(group)}
+                        className="text-xs px-2 py-1.5 rounded-lg bg-green-500/15 hover:bg-green-500/25 text-green-400 font-medium transition-colors"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  )}
                   <GroupOptionRow
                     icon={<Link2 className="w-4 h-4 text-orange-400" />}
                     label="Configurar Alvos"
