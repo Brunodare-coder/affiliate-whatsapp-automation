@@ -476,3 +476,6 @@
 ## Bug Fix - buscarOfertas não reconhecido (Fase 35)
 - [ ] Investigar por que grupos com buscarOfertas=true não são reconhecidos pelo bot
 - [ ] Corrigir a query de busca de grupos monitorados
+
+## Navegação Rápida (Fase 36)
+- [x] Dashboard: adicionar botão/link "Ver Logs" que navega para a página /logs

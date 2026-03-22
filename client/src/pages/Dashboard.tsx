@@ -446,9 +446,9 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
+              { href: "/logs", icon: BarChart3, label: "Ver Logs", desc: "Histórico de envios", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/15", hover: "hover:border-blue-500/30" },
               { href: "/groups", icon: Settings, label: "Configurar Ofertas", desc: "Grupos de monitoramento", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/15", hover: "hover:border-pink-500/30" },
               { href: "/settings", icon: Link2, label: "Envio Manual", desc: "Cole um link e envie já", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/15", hover: "hover:border-orange-500/30" },
-              { href: "/settings", icon: Users, label: "Envio em Massa", desc: "Texto/foto para grupos", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/15", hover: "hover:border-green-500/30" },
               { href: "/feed-global", icon: Globe, label: "Feed Global", desc: "Links de todos os usuários", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/15", hover: "hover:border-cyan-500/30" },
             ].map((action) => (
               <Link key={action.href + action.label} href={action.href}>
