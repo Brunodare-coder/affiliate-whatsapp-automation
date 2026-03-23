@@ -26,7 +26,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
   const [form, setForm] = useState({
     tag: "",
     cookieSsid: "",
-    mattToolId: "",
     socialTag: "",
   });
 
@@ -35,7 +34,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       setForm({
         tag: config.tag || "",
         cookieSsid: config.cookieSsid || "",
-        mattToolId: config.mattToolId || "",
         socialTag: config.socialTag || "",
       });
     }
@@ -63,7 +61,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
     saveMutation.mutate({
       tag: form.tag.trim() || undefined,
       cookieSsid: form.cookieSsid.trim() || undefined,
-      mattToolId: form.mattToolId.trim() || undefined,
       socialTag: form.socialTag.trim() || undefined,
       isActive: true,
     });
@@ -127,20 +124,6 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
               onChange={(e) => setForm({ ...form, cookieSsid: e.target.value })}
               rows={2}
               className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 resize-none font-mono text-xs"
-            />
-          </div>
-
-          {/* Matt Tool ID */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium text-white">Matt Tool ID</Label>
-              <span className="text-xs text-muted-foreground">(opcional — para links de listas/ofertas)</span>
-            </div>
-            <Input
-              placeholder="Ex: 78912023"
-              value={form.mattToolId}
-              onChange={(e) => setForm({ ...form, mattToolId: e.target.value })}
-              className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50"
             />
           </div>
 
