@@ -1375,23 +1375,22 @@ export function replaceMercadoLivreLinks(
           // Se não houver socialTag, usar a tag de afiliado no slug
           urlObj.pathname = `/social/${config.tag}`;
         }
-        // Substituir matt_tool pelo ID do usuário e matt_word pelo tag do usuário
-        if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+        // Substituir apenas matt_word (tag do afiliado) — preservar matt_tool original
+        // matt_tool muda com cada link/produto e não deve ser sobrescrito
         if (config.tag) urlObj.searchParams.set("matt_word", config.tag);
         // PRESERVAR ref e forceInApp — são tokens do ML que apontam para o produto
         // específico. Removê-los faz o link abrir apenas a vitrine geral.
         // urlObj.searchParams.delete("ref");       // NÃO remover
         // urlObj.searchParams.delete("forceInApp"); // NÃO remover
       } else {
-        // Formato normal de produto: adicionar matt_from e matt_tool
-        // Remove parâmetros de rastreamento de afiliados de terceiros
+        // Formato normal de produto: substituir apenas a tag de afiliado
+        // PRESERVAR matt_tool original — muda com cada link/produto
         urlObj.searchParams.delete("matt_word");   // nome do afiliado original
         urlObj.searchParams.delete("ref");          // token de rastreamento externo
         urlObj.searchParams.delete("forceInApp");   // parâmetro interno do ML
         // Adiciona nosso tag de rastreamento (sobrescreve se já existir)
         if (config.tag) urlObj.searchParams.set("matt_from", config.tag);
-        // Adiciona Matt Tool ID se disponível (sobrescreve o do afiliado original)
-        if (config.mattToolId) urlObj.searchParams.set("matt_tool", config.mattToolId);
+        // NÃO sobrescrever matt_tool — é único por link/produto
       }
 
       replaced++;
