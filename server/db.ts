@@ -509,6 +509,7 @@ export async function upsertMercadoLivreConfig(userId: number, data: Omit<Insert
       cookieCsrf: data.cookieCsrf,
       mattToolId: data.mattToolId,
       socialTag: data.socialTag,
+      linkMode: data.linkMode,
       isActive: data.isActive,
     },
   });

@@ -774,6 +774,7 @@ export const appRouter = router({
           cookieCsrf: z.string().optional(),
           mattToolId: z.string().optional(),
           socialTag: z.string().optional(),
+          linkMode: z.enum(["long", "social", "tinyurl", "meli"]).optional(),
           isActive: z.boolean().optional(),
         })
       )
@@ -784,6 +785,7 @@ export const appRouter = router({
           cookieCsrf: input.cookieCsrf || null,
           mattToolId: input.mattToolId || null,
           socialTag: input.socialTag || null,
+          linkMode: input.linkMode || "long",
           isActive: input.isActive ?? true,
         });
         invalidateUserCache(ctx.user.id);

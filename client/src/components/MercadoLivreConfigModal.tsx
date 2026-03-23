@@ -26,7 +26,9 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
   const [form, setForm] = useState({
     tag: "",
     cookieSsid: "",
+    cookieCsrf: "",
     socialTag: "",
+    linkMode: "long" as "long" | "social" | "tinyurl" | "meli",
   });
 
   useEffect(() => {
@@ -34,7 +36,9 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       setForm({
         tag: config.tag || "",
         cookieSsid: config.cookieSsid || "",
+        cookieCsrf: (config as any).cookieCsrf || "",
         socialTag: config.socialTag || "",
+        linkMode: ((config as any).linkMode || "long") as "long" | "social" | "tinyurl" | "meli",
       });
     }
   }, [config]);
@@ -92,7 +96,9 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
     saveMutation.mutate({
       tag: form.tag.trim() || undefined,
       cookieSsid: form.cookieSsid.trim() || undefined,
+      cookieCsrf: form.cookieCsrf.trim() || undefined,
       socialTag: form.socialTag.trim() || undefined,
+      linkMode: form.linkMode,
       isActive: true,
     });
   }
@@ -244,6 +250,48 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
               )}
             </div>
           </div>
+
+          {/* Modo de Link */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-white">Modo de Link</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: "long", label: "Link Longo", desc: "URL completa com tag" },
+                { value: "social", label: "Vitrine /social/", desc: "Link de perfil social" },
+                { value: "meli", label: "meli.la (encurtado)", desc: "Requer cookie ssid+csrf" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, linkMode: opt.value })}
+                  className={`text-left p-3 rounded-lg border transition-all ${
+                    form.linkMode === opt.value
+                      ? "border-yellow-500 bg-yellow-500/10"
+                      : "border-[#2a3555] bg-[#0f1628] hover:border-[#3a4565]"
+                  }`}
+                >
+                  <p className={`text-xs font-semibold ${
+                    form.linkMode === opt.value ? "text-yellow-400" : "text-white"
+                  }`}>{opt.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cookie CSRF (apenas para modo meli) */}
+          {form.linkMode === "meli" && (
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-white">Cookie (_csrf)</Label>
+              <p className="text-xs text-muted-foreground">Valor do cookie <code className="bg-[#2a3555] px-1 rounded">_csrf</code> — necessário para gerar links meli.la.</p>
+              <Input
+                placeholder="Ex: ydndjbaKNq7RaiotOBUN26Kd"
+                value={form.cookieCsrf}
+                onChange={(e) => setForm({ ...form, cookieCsrf: e.target.value })}
+                className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 font-mono text-xs"
+              />
+            </div>
+          )}
 
           {/* Tag do Perfil Social */}
           <div className="space-y-1.5">

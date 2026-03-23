@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `mercado_livre_config` MODIFY COLUMN `link_mode` ENUM('long', 'social', 'tinyurl', 'meli') NOT NULL DEFAULT 'long';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 35L7q6jEd6akg49.root --database cTskjyF8t4ZYZoNMwpD42P --execute ALTER TABLE `mercado_livre_config` MODIFY COLUMN `link_mode` ENUM('long', 'social', 'tinyurl', 'meli') NOT NULL DEFAULT 'long';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 840
+}

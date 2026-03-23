@@ -722,7 +722,7 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null; cookieStatus?: string | null } | null = null,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null; cookieStatus?: string | null; linkMode?: string | null } | null = null,
     shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
     amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
     magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
@@ -804,22 +804,64 @@ export class WhatsAppManager extends EventEmitter {
       // Replace Mercado Livre links with affiliate tag
       if (mlConfig && mlConfig.isActive && mlConfig.tag && processedText) {
         diagInfo(userId, 'LINKS', `Texto antes ML (150 chars): ${processedText.substring(0, 150)}`);
-        const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
-        diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
-        if (mlResult.replaced > 0) {
-          // Usar link longo com tag substituída (encurtamento via API desativado
-          // pois a API do ML bloqueia produtos específicos com erro 111)
-          processedText = mlResult.text;
-          linksFound = Math.max(linksFound, mlResult.found);
-          linksReplaced += mlResult.replaced;
-          diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
-          // Marcar cookie como OK se estava expirado
-          if (mlConfig.cookieStatus === 'expired') {
-            updateMlCookieStatus(userId, 'ok').catch(() => {});
-            invalidateUserCache(userId);
+
+        // Modo meli: encurtar via API createLink (GET linkbuilder + POST createLink)
+        if (mlConfig.linkMode === 'meli' && mlConfig.cookieSsid && mlConfig.cookieCsrf) {
+          try {
+            const shortened = await shortenMeliLinksInText(
+              processedText,
+              mlConfig.tag,
+              mlConfig.cookieSsid,
+              mlConfig.cookieCsrf
+            );
+            if (shortened !== processedText) {
+              const countShortened = (shortened.match(/meli\.la\/[^\s]+/g) || []).length;
+              processedText = shortened;
+              linksFound = Math.max(linksFound, countShortened);
+              linksReplaced += countShortened;
+              diagSuccess(userId, 'LINKS', `ML meli.la: ${countShortened} link(s) encurtado(s) com tag ${mlConfig.tag}`);
+              // Marcar cookie como OK
+              if (mlConfig.cookieStatus === 'expired') {
+                updateMlCookieStatus(userId, 'ok').catch(() => {});
+                invalidateUserCache(userId);
+              }
+            } else {
+              diagWarn(userId, 'LINKS', `ML meli.la: nenhum link encurtado (resposta igual ao original)`);
+            }
+          } catch (err: unknown) {
+            const statusCode = (err as { statusCode?: number }).statusCode;
+            if (statusCode === 401 || statusCode === 403) {
+              diagWarn(userId, 'LINKS', `ML meli.la: cookie expirado (${statusCode}) - marcando como expirado`);
+              updateMlCookieStatus(userId, 'expired').catch(() => {});
+              invalidateUserCache(userId);
+            } else {
+              diagWarn(userId, 'LINKS', `ML meli.la: erro ao encurtar (${statusCode || 'desconhecido'}) - usando link longo`);
+            }
+            // Fallback: usar link longo com tag
+            const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
+            if (mlResult.replaced > 0) {
+              processedText = mlResult.text;
+              linksFound = Math.max(linksFound, mlResult.found);
+              linksReplaced += mlResult.replaced;
+            }
           }
-        } else if (mlResult.found > 0) {
-          diagWarn(userId, 'LINKS', `ML: ${mlResult.found} link(s) encontrado(s) mas não substituído(s) - verifique a configuração`);
+        } else {
+          // Modos long, social, tinyurl: usar replaceMercadoLivreLinks
+          const mlResult = replaceMercadoLivreLinks(processedText, mlConfig);
+          diagInfo(userId, 'LINKS', `ML: ${mlResult.found} encontrados, ${mlResult.replaced} substituídos (tag=${mlConfig.tag}, socialTag=${mlConfig.socialTag || 'não configurado'})`);
+          if (mlResult.replaced > 0) {
+            processedText = mlResult.text;
+            linksFound = Math.max(linksFound, mlResult.found);
+            linksReplaced += mlResult.replaced;
+            diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
+            // Marcar cookie como OK se estava expirado
+            if (mlConfig.cookieStatus === 'expired') {
+              updateMlCookieStatus(userId, 'ok').catch(() => {});
+              invalidateUserCache(userId);
+            }
+          } else if (mlResult.found > 0) {
+            diagWarn(userId, 'LINKS', `ML: ${mlResult.found} link(s) encontrado(s) mas não substituído(s) - verifique a configuração`);
+          }
         }
       } else if (processedText && /mercadolivre\.com\.br/i.test(processedText)) {
         diagWarn(userId, 'LINKS', `Link ML detectado mas configuração ML inativa ou sem tag`);
@@ -1660,7 +1702,36 @@ async function fetchAmazonImage(productUrl: string): Promise<string | null> {
 
 // ── Encurtamento de links ML via API meli.la ─────────────────────────────────
 /**
- * Encurta todos os links mercadolivre.com.br no texto via API oficial do ML.
+ * Mescla dois conjuntos de cookies: string base + array de Set-Cookie headers.
+ * Cookies do Set-Cookie sobrescrevem os da string base.
+ */
+function mergeCookies(baseCookieStr: string, setCookieArray: string[]): string {
+  const cookieMap: Record<string, string> = {};
+  // Parse base cookies
+  baseCookieStr.split(';').forEach(c => {
+    const idx = c.indexOf('=');
+    if (idx > 0) {
+      const key = c.slice(0, idx).trim();
+      const val = c.slice(idx + 1).trim();
+      if (key) cookieMap[key] = val;
+    }
+  });
+  // Merge Set-Cookie headers (sobrescrevem)
+  setCookieArray.forEach(sc => {
+    const part = sc.split(';')[0];
+    const idx = part.indexOf('=');
+    if (idx > 0) {
+      const key = part.slice(0, idx).trim();
+      const val = part.slice(idx + 1).trim();
+      if (key) cookieMap[key] = val;
+    }
+  });
+  return Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
+/**
+ * Encurta todos os links mercadolivre.com.br no texto via API interna do ML.
+ * Fluxo: GET /afiliados/linkbuilder (renovar cookies) → POST createLink.
  * Retorna o texto com os links substituídos por meli.la/XXXXX.
  */
 export async function shortenMeliLinksInText(
@@ -1676,18 +1747,73 @@ export async function shortenMeliLinksInText(
   // Coletar URLs únicas para encurtar
   const uniqueUrls = Array.from(new Set(matches.map(m => m[0])));
 
-  // Chamar API createLink do ML
+  // Cookie base: ssid + csrf + headers de browser para parecer legítimo
+  const baseCookie = `ssid=${cookieSsid}; _csrf=${cookieCsrf}`;
+  const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0";
+
+  // Passo 1: GET /afiliados/linkbuilder para renovar cookies de sessão
+  let mergedCookie = baseCookie;
+  let csrfToken = cookieCsrf;
+  try {
+    const refreshResp = await fetch(
+      "https://www.mercadolivre.com.br/afiliados/linkbuilder",
+      {
+        method: "GET",
+        headers: {
+          "Cookie": baseCookie,
+          "User-Agent": UA,
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        },
+        redirect: "follow",
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    // Coletar Set-Cookie headers
+    const setCookieHeaders: string[] = [];
+    refreshResp.headers.forEach((value, name) => {
+      if (name.toLowerCase() === 'set-cookie') setCookieHeaders.push(value);
+    });
+    if (setCookieHeaders.length > 0) {
+      mergedCookie = mergeCookies(baseCookie, setCookieHeaders);
+    }
+    // Tentar extrair x-csrf-token da página HTML
+    const html = await refreshResp.text();
+    const csrfMatch = html.match(/["']?x-csrf-token["']?\s*[=:,]\s*["']([^"']+)["']/i)
+      || html.match(/name=["']csrf-token["'][^>]+content=["']([^"']+)["']/i);
+    if (csrfMatch) csrfToken = csrfMatch[1];
+  } catch {
+    // Se GET falhar, continuar com cookie base
+  }
+
+  // Passo 2: POST createLink com cookies atualizados
   const response = await fetch(
     "https://www.mercadolivre.com.br/affiliate-program/api/v2/affiliates/createLink",
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Cookie": `ssid=${cookieSsid}; _csrf=${cookieCsrf}`,
-        "X-CSRF-Token": cookieCsrf,
-        "Origin": "https://www.mercadolivre.com.br",
-        "Referer": "https://www.mercadolivre.com.br/afiliados/linkbuilder",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "content-type": "application/json",
+        "device-memory": "8",
+        "dnt": "1",
+        "downlink": "10",
+        "dpr": "1",
+        "ect": "4g",
+        "origin": "https://www.mercadolivre.com.br",
+        "priority": "u=1, i",
+        "referer": "https://www.mercadolivre.com.br/afiliados/linkbuilder",
+        "rtt": "100",
+        "sec-ch-ua": '"Not(A:Brand";v="8", "Chromium";v="144", "Microsoft Edge";v="144"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "user-agent": UA,
+        "viewport-width": "953",
+        "x-csrf-token": csrfToken,
+        "cookie": mergedCookie,
       },
       body: JSON.stringify({ urls: uniqueUrls, tag }),
       signal: AbortSignal.timeout(15000),

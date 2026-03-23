@@ -555,3 +555,10 @@
 - [x] Frontend: exibir status de conexão OAuth (conectado/desconectado + nickname da conta)
 - [x] Frontend: toast de sucesso/erro ao retornar do OAuth callback
 - [ ] Integrar geração de links via OAuth no fluxo do bot (substituir método de cookie)
+
+## Geração de Links meli.la via createLink (Fase 48)
+- [x] Implementar função shortenMeliLinksInText em server/whatsapp.ts (GET linkbuilder + merge cookies + POST createLink)
+- [x] Integrar shortenMeliLinksInText no fluxo do bot (whatsapp.ts) como modo 'meli'
+- [x] Adicionar linkMode ao schema, banco e procedure saveConfig
+- [x] Detectar 401/403 no createLink e atualizar cookieStatus para 'expired' com fallback para link longo
+- [x] UI: seletor de modo de link (long/social/meli) e campo cookieCsrf no MercadoLivreConfigModal
