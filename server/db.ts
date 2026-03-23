@@ -517,6 +517,18 @@ export async function deleteMercadoLivreConfig(userId: number): Promise<void> {
   if (!db) return;
   await db.delete(mercadoLivreConfig).where(eq(mercadoLivreConfig.userId, userId));
 }
+
+export async function updateMlCookieStatus(
+  userId: number,
+  status: "ok" | "expired" | "unknown"
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(mercadoLivreConfig)
+    .set({ cookieStatus: status, cookieLastCheckedAt: new Date() })
+    .where(eq(mercadoLivreConfig.userId, userId));
+}
 // ── Shopee Config ──────────────────────────────────────────────────────────
 export async function getShopeeConfig(userId: number) {
   const db = await getDb();

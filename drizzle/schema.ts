@@ -221,6 +221,8 @@ export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
   mattToolId: varchar("mattToolId", { length: 100 }),      // Matt Tool ID (para links de listas/ofertas)
   socialTag: varchar("socialTag", { length: 255 }),        // Tag do Perfil Social (/social/SLUG)
   linkMode: mysqlEnum("link_mode", ["long", "social", "tinyurl"]).default("long").notNull(), // Modo de envio: long=link longo, social=meli.la vitrine, tinyurl=encurtado
+  cookieStatus: mysqlEnum("cookie_status", ["ok", "expired", "unknown"]).default("unknown").notNull(), // Status do cookie ssid
+  cookieLastCheckedAt: timestamp("cookie_last_checked_at"),  // Última vez que o cookie foi verificado
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -32,6 +32,7 @@ import {
   getSubscription,
   getSystemSetting,
   migrateUserGroupsToInstance,
+  updateMlCookieStatus,
 } from "./db";
 import { processMessageWithLLM } from "./llm-processor";
 import { storagePut } from "./storage";
@@ -721,7 +722,7 @@ export class WhatsAppManager extends EventEmitter {
     mediaUrl: string | null,
     links: any[],
     sourceGroupJid: string,
-    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null } | null = null,
+    mlConfig: { tag?: string | null; mattToolId?: string | null; socialTag?: string | null; isActive?: boolean; cookieSsid?: string | null; cookieCsrf?: string | null; cookieStatus?: string | null } | null = null,
     shopeeConfig: { appId?: string | null; isActive?: boolean } | null = null,
     amazonConfig: { tag?: string | null; isActive?: boolean } | null = null,
     magaluConfig: { tag?: string | null; isActive?: boolean } | null = null,
@@ -812,6 +813,11 @@ export class WhatsAppManager extends EventEmitter {
           linksFound = Math.max(linksFound, mlResult.found);
           linksReplaced += mlResult.replaced;
           diagSuccess(userId, 'LINKS', `ML substituído: ${mlResult.replaced} link(s) com tag ${mlConfig.tag}`);
+          // Marcar cookie como OK se estava expirado
+          if (mlConfig.cookieStatus === 'expired') {
+            updateMlCookieStatus(userId, 'ok').catch(() => {});
+            invalidateUserCache(userId);
+          }
         } else if (mlResult.found > 0) {
           diagWarn(userId, 'LINKS', `ML: ${mlResult.found} link(s) encontrado(s) mas não substituído(s) - verifique a configuração`);
         }
@@ -1689,7 +1695,10 @@ export async function shortenMeliLinksInText(
   );
 
   if (!response.ok) {
-    throw new Error(`API meli.la retornou ${response.status}: ${await response.text()}`);
+    const errText = await response.text();
+    const err = new Error(`API meli.la retornou ${response.status}: ${errText}`) as Error & { statusCode?: number };
+    err.statusCode = response.status;
+    throw err;
   }
 
   const data = await response.json() as {

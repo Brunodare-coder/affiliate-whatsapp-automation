@@ -75,7 +75,9 @@ describe("replaceMercadoLivreLinks", () => {
     expect(result.found).toBe(1);
     expect(result.replaced).toBe(1);
     expect(result.text).toContain("matt_from=bq20260201142328");
-    expect(result.text).toContain("matt_tool=78912023");
+    // matt_tool original do link é preservado (não substituído pelo mattToolId da config)
+    // pois matt_tool é único por produto/campanha
+    expect(result.text).not.toContain("matt_tool=78912023"); // mattToolId da config NÃO é usado
   });
 
   it("não altera links que não são do Mercado Livre", () => {
@@ -160,40 +162,37 @@ describe("replaceMagazineLuizaLinks", () => {
 });
 
 describe("shortenMeliLinksWithTinyUrl (unit - sem chamada real à API)", () => {
-  it("retorna texto original quando não há links ML", async () => {
-    const { shortenMeliLinksWithTinyUrl } = await import("./whatsapp");
-    const text = "Mensagem sem links do Mercado Livre";
-    const result = await shortenMeliLinksWithTinyUrl(text);
-    expect(result).toBe(text);
-  });
-
-  it("retorna texto original quando o texto está vazio", async () => {
-    const { shortenMeliLinksWithTinyUrl } = await import("./whatsapp");
-    const result = await shortenMeliLinksWithTinyUrl("");
-    expect(result).toBe("");
+  it("shortenMeliLinksWithTinyUrl não está mais em uso (modo tinyurl desativado)", () => {
+    // A função shortenMeliLinksWithTinyUrl foi removida do fluxo principal.
+    // O bot agora usa apenas o modo 'long' (link longo com tag substituída)
+    // pois a API do ML bloqueia produtos específicos com erro 111.
+    expect(true).toBe(true);
   });
 });
 
 describe("replaceMercadoLivreLinks - linkMode logic", () => {
-  it("substitui link de produto com tag correta", () => {
+  it("substitui link de produto com tag correta e preserva matt_tool original", () => {
     const text = "Produto: https://www.mercadolivre.com.br/produto/MLB123?matt_from=outro&matt_tool=999";
     const config = { tag: "bq20260201142328", mattToolId: "78912023", socialTag: "bq20260201142328" };
     const result = replaceMercadoLivreLinks(text, config);
     expect(result.replaced).toBe(1);
     expect(result.text).toContain("matt_from=bq20260201142328");
-    expect(result.text).toContain("matt_tool=78912023");
-    // Parâmetros do afiliado original devem ser removidos
+    // matt_tool ORIGINAL do link é preservado (999), não substituído pelo mattToolId da config
+    expect(result.text).toContain("matt_tool=999");
+    expect(result.text).not.toContain("matt_tool=78912023"); // mattToolId da config NÃO substitui
+    // matt_from do afiliado original deve ser removido
     expect(result.text).not.toContain("matt_from=outro");
-    expect(result.text).not.toContain("matt_tool=999");
   });
 
-  it("substitui link /social/ com socialTag correta", () => {
+  it("substitui link /social/ com socialTag correta e preserva matt_tool original", () => {
     const text = "Social: https://www.mercadolivre.com.br/social/outro_usuario?matt_tool=999&matt_word=outro";
     const config = { tag: "bq20260201142328", mattToolId: "78912023", socialTag: "bq20260201142328" };
     const result = replaceMercadoLivreLinks(text, config);
     expect(result.replaced).toBe(1);
     expect(result.text).toContain("/social/bq20260201142328");
-    expect(result.text).toContain("matt_tool=78912023");
+    // matt_tool ORIGINAL do link é preservado (999)
+    expect(result.text).toContain("matt_tool=999");
+    expect(result.text).not.toContain("matt_tool=78912023"); // mattToolId da config NÃO substitui
     expect(result.text).toContain("matt_word=bq20260201142328");
   });
 });

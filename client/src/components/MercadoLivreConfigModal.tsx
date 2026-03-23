@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Settings, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, HelpCircle, Loader2, RefreshCw, Settings, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -38,6 +38,20 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       });
     }
   }, [config]);
+
+  const validateCookie = trpc.mercadoLivre.validateCookie.useMutation({
+    onSuccess: (result) => {
+      utils.mercadoLivre.getConfig.invalidate();
+      if (result.status === 'expired') {
+        toast.error('Cookie ssid expirado! Atualize o valor abaixo.');
+      } else if (result.status === 'ok') {
+        toast.success('Cookie ssid válido e funcionando!');
+      } else {
+        toast.warning(result.message || 'Não foi possível verificar o cookie.');
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const saveMutation = trpc.mercadoLivre.saveConfig.useMutation({
     onSuccess: () => {
@@ -117,7 +131,38 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
 
           {/* Cookie ssid */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-white">Cookie (ssid)</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-white">Cookie (ssid)</Label>
+              {/* Status badge + botão verificar */}
+              <div className="flex items-center gap-2">
+                {config?.cookieSsid && (
+                  <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                    config.cookieStatus === 'ok'
+                      ? 'bg-green-500/15 text-green-400'
+                      : config.cookieStatus === 'expired'
+                      ? 'bg-red-500/15 text-red-400'
+                      : 'bg-white/10 text-muted-foreground'
+                  }`}>
+                    {config.cookieStatus === 'ok' ? <CheckCircle2 className="w-3 h-3" /> :
+                     config.cookieStatus === 'expired' ? <AlertTriangle className="w-3 h-3" /> :
+                     <HelpCircle className="w-3 h-3" />}
+                    {config.cookieStatus === 'ok' ? 'Válido' :
+                     config.cookieStatus === 'expired' ? 'Expirado' : 'Não verificado'}
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-xs border-[#2a3555] text-muted-foreground hover:text-white hover:bg-[#2a3555]"
+                  onClick={() => validateCookie.mutate()}
+                  disabled={validateCookie.isPending || !config?.cookieSsid}
+                >
+                  {validateCookie.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  <span className="ml-1">Verificar</span>
+                </Button>
+              </div>
+            </div>
             <Textarea
               placeholder="ghy-032106-SVxCWVuF97Ohv9YBCpigenHQEoV8cp-__-..."
               value={form.cookieSsid}
@@ -125,6 +170,12 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
               rows={2}
               className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 resize-none font-mono text-xs"
             />
+            {config?.cookieStatus === 'expired' && (
+              <p className="text-xs text-red-400 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Cookie expirado. Cole um novo valor de ssid e salve.
+              </p>
+            )}
           </div>
 
           {/* Tag do Perfil Social */}

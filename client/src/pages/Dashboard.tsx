@@ -10,10 +10,12 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Cookie,
   Globe,
   Link2,
   Loader2,
   Mail,
+  RefreshCw,
   Settings,
   Shield,
   Smartphone,
@@ -48,6 +50,20 @@ export default function Dashboard() {
   const { data: automations } = trpc.automations.list.useQuery();
   const { data: stats } = trpc.logs.stats.useQuery();
   const { data: sub } = trpc.subscription.get.useQuery(undefined, { refetchInterval: 30000 });
+  const { data: mlConfig } = trpc.mercadoLivre.getConfig.useQuery(undefined, { refetchInterval: 60000 });
+  const validateCookie = trpc.mercadoLivre.validateCookie.useMutation({
+    onSuccess: (result) => {
+      if (result.status === 'expired') {
+        import("sonner").then(({ toast }) => toast.error("Cookie ssid do ML expirado! Atualize nas configurações."));
+      } else if (result.status === 'ok') {
+        import("sonner").then(({ toast }) => toast.success("Cookie ssid do ML está válido."));
+      } else {
+        import("sonner").then(({ toast }) => toast.warning(result.message || "Não foi possível verificar o cookie."));
+      }
+    },
+    onError: (e) => import("sonner").then(({ toast }) => toast.error(e.message)),
+  });
+  const [ssidBannerDismissed, setSsidBannerDismissed] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
@@ -77,6 +93,39 @@ export default function Dashboard() {
   return (
     <AppLayout title="Dashboard">
       <div className="p-4 md:p-6 space-y-5 max-w-4xl mx-auto">
+
+        {/* ── BANNER SSID ML EXPIRADO ───────────────────────────── */}
+        {mlConfig && mlConfig.cookieSsid && mlConfig.cookieStatus === 'expired' && !ssidBannerDismissed && (
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-500/8 border border-orange-500/25 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+                <Cookie className="w-4.5 h-4.5 text-orange-400" style={{ width: "18px", height: "18px" }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-orange-300">Cookie ssid do Mercado Livre expirado</p>
+                <p className="text-xs text-orange-400/70">
+                  Acesse as <span className="font-medium text-orange-300">Configurações ML</span> e atualize o cookie ssid para continuar substituindo links.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10 text-xs h-8"
+                asChild
+              >
+                <Link href="/settings">
+                  <Settings className="w-3 h-3 mr-1" />
+                  Atualizar
+                </Link>
+              </Button>
+              <button onClick={() => setSsidBannerDismissed(true)} className="text-orange-400/50 hover:text-orange-400 transition-colors p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── BANNER E-MAIL NÃO VERIFICADO ─────────────────────── */}
         {user && !user.emailVerified && !emailBannerDismissed && (

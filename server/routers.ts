@@ -47,6 +47,7 @@ import {
   deleteMercadoLivreConfig,
   getMercadoLivreConfig,
   upsertMercadoLivreConfig,
+  updateMlCookieStatus,
   getGroupTargets,
   setGroupTargets,
   getShopeeConfig,
@@ -793,6 +794,46 @@ export const appRouter = router({
       invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
+
+    // Valida o cookie ssid do ML fazendo uma requisição à API e atualiza o status
+    validateCookie: protectedProcedure.mutation(async ({ ctx }) => {
+      const config = await getMercadoLivreConfig(ctx.user.id);
+      if (!config || !config.cookieSsid) {
+        return { status: 'unknown' as const, message: 'Nenhum cookie configurado.' };
+      }
+      try {
+        // Faz uma requisição leve à API ML para verificar se o cookie é válido
+        const response = await fetch(
+          'https://www.mercadolivre.com.br/affiliate-program/api/v2/affiliates/me',
+          {
+            method: 'GET',
+            headers: {
+              'Cookie': `ssid=${config.cookieSsid}`,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+              'Origin': 'https://www.mercadolivre.com.br',
+              'Referer': 'https://www.mercadolivre.com.br/afiliados/linkbuilder',
+            },
+            signal: AbortSignal.timeout(10000),
+          }
+        );
+        if (response.status === 401 || response.status === 403) {
+          await updateMlCookieStatus(ctx.user.id, 'expired');
+          invalidateUserCache(ctx.user.id);
+          return { status: 'expired' as const, message: 'Cookie ssid expirado. Atualize nas configurações do ML.' };
+        }
+        if (response.ok || response.status === 404) {
+          // 404 pode ocorrer se o endpoint não existir mas o cookie é válido (autenticado)
+          await updateMlCookieStatus(ctx.user.id, 'ok');
+          invalidateUserCache(ctx.user.id);
+          return { status: 'ok' as const, message: 'Cookie ssid válido.' };
+        }
+        // Outro erro (ex: 500) — não alterar o status
+        return { status: 'unknown' as const, message: `Erro ao verificar: HTTP ${response.status}` };
+      } catch (err) {
+        return { status: 'unknown' as const, message: 'Não foi possível verificar o cookie (timeout ou erro de rede).' };
+      }
+    }),
+
     // Gera um link de afiliado ML a partir de uma URL de produto
     generateLink: protectedProcedure
       .input(z.object({ productUrl: z.string().url() }))
