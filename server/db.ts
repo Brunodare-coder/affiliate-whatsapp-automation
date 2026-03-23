@@ -1,5 +1,8 @@
 import { and, desc, eq, like, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createRequire } from "module";
+const _require = createRequire(import.meta.url);
+const { createPool } = _require("mysql2/promise") as typeof import("mysql2/promise");
 import {
   AffiliateLink,
   Automation,
@@ -48,13 +51,24 @@ import {
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: ReturnType<typeof createPool> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_pool && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _pool = createPool({
+        uri: process.env.DATABASE_URL,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
+      });
+      _db = drizzle(_pool as any);
+      console.log("[Database] Connection pool created.");
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.warn("[Database] Failed to create pool:", error);
+      _pool = null;
       _db = null;
     }
   }
