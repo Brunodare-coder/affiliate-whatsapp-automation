@@ -903,6 +903,36 @@ export const appRouter = router({
         );
         return { affiliateUrl };
       }),
+
+    // Testa a geração de link meli.la com o ssid/csrf atual
+    testMeliLink: protectedProcedure
+      .input(z.object({ productUrl: z.string().url().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const config = await getMercadoLivreConfig(ctx.user.id);
+        if (!config || !config.cookieSsid) {
+          throw new Error("Configure o Cookie ssid do Mercado Livre primeiro.");
+        }
+        if (!config.tag) {
+          throw new Error("Configure sua Tag do Mercado Livre primeiro.");
+        }
+        const testUrl = input.productUrl || "https://www.mercadolivre.com.br/televisor-smart-tv-samsung-43-4k-uhd-crystal-un43cu8000gxzd/p/MLB25069827";
+        const { shortenMeliLinksInText } = await import("./whatsapp");
+        const result = await shortenMeliLinksInText(
+          testUrl,
+          config.tag,
+          config.cookieSsid,
+          config.cookieCsrf || ""
+        );
+        const shortened = result !== testUrl ? result : null;
+        return {
+          success: shortened !== null,
+          originalUrl: testUrl,
+          shortUrl: shortened,
+          message: shortened
+            ? `Link gerado com sucesso: ${shortened}`
+            : "Não foi possível encurtar o link. Verifique o cookie ssid.",
+        };
+      }),
   }),
 
   // ── Shopee Config ────────────────────────────────────────────────────────

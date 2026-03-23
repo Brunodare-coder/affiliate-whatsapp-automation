@@ -60,6 +60,20 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
     window.location.href = '/api/oauth/ml/start';
   }
 
+  const [testResult, setTestResult] = useState<{ success: boolean; shortUrl: string | null; message: string } | null>(null);
+
+  const testMeliLink = trpc.mercadoLivre.testMeliLink.useMutation({
+    onSuccess: (result) => {
+      setTestResult(result);
+      if (result.success) {
+        toast.success('Link meli.la gerado com sucesso!');
+      } else {
+        toast.error(result.message);
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const validateCookie = trpc.mercadoLivre.validateCookie.useMutation({
     onSuccess: (result) => {
       utils.mercadoLivre.getConfig.invalidate();
@@ -279,17 +293,58 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
             </div>
           </div>
 
-          {/* Cookie CSRF (apenas para modo meli) */}
+          {/* Cookie CSRF + Teste (apenas para modo meli) */}
           {form.linkMode === "meli" && (
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-white">Cookie (_csrf)</Label>
-              <p className="text-xs text-muted-foreground">Valor do cookie <code className="bg-[#2a3555] px-1 rounded">_csrf</code> — necessário para gerar links meli.la.</p>
-              <Input
-                placeholder="Ex: ydndjbaKNq7RaiotOBUN26Kd"
-                value={form.cookieCsrf}
-                onChange={(e) => setForm({ ...form, cookieCsrf: e.target.value })}
-                className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 font-mono text-xs"
-              />
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-white">Cookie (_csrf)</Label>
+                  <span className="text-xs text-muted-foreground">Extraído automaticamente — opcional</span>
+                </div>
+                <p className="text-xs text-muted-foreground">O <code className="bg-[#2a3555] px-1 rounded">_csrf</code> é extraído automaticamente do linkbuilder. Preencha apenas se a extração automática falhar.</p>
+                <Input
+                  placeholder="Ex: ydndjbaKNq7RaiotOBUN26Kd (opcional)"
+                  value={form.cookieCsrf}
+                  onChange={(e) => setForm({ ...form, cookieCsrf: e.target.value })}
+                  className="bg-[#0f1628] border-[#2a3555] text-white placeholder:text-muted-foreground focus:border-yellow-500/50 font-mono text-xs"
+                />
+              </div>
+
+              {/* Botão de teste */}
+              <div className="rounded-lg bg-[#0f1628] border border-[#2a3555] p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-white">Testar geração de link</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Verifica se o ssid está válido gerando um link real</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10 hover:text-yellow-300 gap-1.5"
+                    onClick={() => { setTestResult(null); testMeliLink.mutate({}); }}
+                    disabled={testMeliLink.isPending || !config?.cookieSsid}
+                  >
+                    {testMeliLink.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />}
+                    {testMeliLink.isPending ? 'Testando...' : 'Testar link'}
+                  </Button>
+                </div>
+                {testResult && (
+                  <div className={`rounded p-2.5 text-xs space-y-1 ${
+                    testResult.success ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'
+                  }`}>
+                    <p className={testResult.success ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+                      {testResult.success ? '✓ Sucesso!' : '✗ Falhou'}
+                    </p>
+                    {testResult.shortUrl && (
+                      <p className="text-white font-mono break-all">{testResult.shortUrl}</p>
+                    )}
+                    {!testResult.success && (
+                      <p className="text-muted-foreground">{testResult.message}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

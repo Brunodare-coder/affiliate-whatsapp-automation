@@ -562,3 +562,8 @@
 - [x] Adicionar linkMode ao schema, banco e procedure saveConfig
 - [x] Detectar 401/403 no createLink e atualizar cookieStatus para 'expired' com fallback para link longo
 - [x] UI: seletor de modo de link (long/social/meli) e campo cookieCsrf no MercadoLivreConfigModal
+
+## Melhorias meli.la (Fase 49)
+- [x] Extração automática do csrf via GET /afiliados/linkbuilder (campo manual _csrf agora é opcional)
+- [x] Procedure mercadoLivre.testMeliLink: gera link de teste com ssid atual e retorna resultado
+- [x] UI: botão "Testar link" nas configurações ML que exibe o link meli.la gerado
