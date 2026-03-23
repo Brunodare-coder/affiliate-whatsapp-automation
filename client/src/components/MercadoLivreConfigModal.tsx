@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { AlertTriangle, CheckCircle2, HelpCircle, Loader2, RefreshCw, Settings, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, HelpCircle, Link2, Link2Off, Loader2, RefreshCw, Settings, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -38,6 +38,23 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
       });
     }
   }, [config]);
+
+  const { data: oauthStatus, refetch: refetchOAuth } = trpc.mercadoLivre.getOAuthStatus.useQuery(undefined, {
+    enabled: open,
+  });
+
+  const disconnectOAuth = trpc.mercadoLivre.disconnectOAuth.useMutation({
+    onSuccess: () => {
+      refetchOAuth();
+      toast.success('Conta ML desconectada.');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function handleConnectML() {
+    // Redireciona para a rota OAuth ML no servidor
+    window.location.href = '/api/oauth/ml/start';
+  }
 
   const validateCookie = trpc.mercadoLivre.validateCookie.useMutation({
     onSuccess: (result) => {
@@ -176,6 +193,56 @@ export default function MercadoLivreConfigModal({ open, onClose }: Props) {
                 Cookie expirado. Cole um novo valor de ssid e salve.
               </p>
             )}
+          </div>
+
+          {/* Conexão OAuth ML */}
+          <div className="rounded-lg bg-[#0f1628] border border-[#2a3555] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">Conta ML via OAuth</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Conecte sua conta para gerar links de afiliado via API oficial</p>
+              </div>
+              {oauthStatus?.connected ? (
+                <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-green-500/15 text-green-400">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Conectado
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/10 text-muted-foreground">
+                  <Link2Off className="w-3.5 h-3.5" />
+                  Desconectado
+                </span>
+              )}
+            </div>
+            {oauthStatus?.connected && oauthStatus.nickname && (
+              <p className="text-xs text-muted-foreground">
+                Conta: <span className="text-white font-medium">{oauthStatus.nickname}</span>
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold gap-2"
+                onClick={handleConnectML}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {oauthStatus?.connected ? 'Reconectar conta ML' : 'Conectar conta ML'}
+              </Button>
+              {oauthStatus?.connected && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-red-500/40 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 gap-2"
+                  onClick={() => disconnectOAuth.mutate()}
+                  disabled={disconnectOAuth.isPending}
+                >
+                  <Link2Off className="w-3.5 h-3.5" />
+                  Desconectar
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Tag do Perfil Social */}

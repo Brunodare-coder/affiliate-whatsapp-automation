@@ -1,6 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { getValidMlAccessToken, generateMlAffiliateLink } from "./mlOAuth";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -843,6 +844,61 @@ export const appRouter = router({
           throw new Error("Configure sua Tag do Mercado Livre primeiro.");
         }
         const affiliateUrl = buildMercadoLivreAffiliateUrl(input.productUrl, config);
+        return { affiliateUrl };
+      }),
+
+    // Retorna o status da conexão OAuth ML
+    getOAuthStatus: protectedProcedure.query(async ({ ctx }) => {
+      const config = await getMercadoLivreConfig(ctx.user.id);
+      if (!config || !config.mlAccessToken) {
+        return { connected: false, nickname: null, expiresAt: null };
+      }
+      const isExpired = config.mlTokenExpiresAt
+        ? config.mlTokenExpiresAt.getTime() < Date.now()
+        : true;
+      return {
+        connected: !isExpired,
+        nickname: config.mlNickname ?? null,
+        mlUserId: config.mlUserId ?? null,
+        expiresAt: config.mlTokenExpiresAt ?? null,
+      };
+    }),
+
+    // Desconecta a conta ML OAuth (remove tokens)
+    disconnectOAuth: protectedProcedure.mutation(async ({ ctx }) => {
+      const db = await import("./db").then(m => m.getDb());
+      if (!db) throw new Error("Database unavailable");
+      const { mercadoLivreConfig: mlConfigTable } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      await db
+        .update(mlConfigTable)
+        .set({
+          mlAccessToken: null,
+          mlRefreshToken: null,
+          mlTokenExpiresAt: null,
+          mlUserId: null,
+          mlNickname: null,
+        })
+        .where(eq(mlConfigTable.userId, ctx.user.id));
+      invalidateUserCache(ctx.user.id);
+      return { success: true };
+    }),
+
+    // Gera link de afiliado usando OAuth ML (encurta via API)
+    generateAffiliateLinkOAuth: protectedProcedure
+      .input(z.object({ productUrl: z.string().url() }))
+      .mutation(async ({ ctx, input }) => {
+        const config = await getMercadoLivreConfig(ctx.user.id);
+        const accessToken = await getValidMlAccessToken(ctx.user.id);
+        if (!accessToken || !config?.mlUserId) {
+          throw new Error("Conta ML não conectada via OAuth. Conecte sua conta nas configurações.");
+        }
+        const affiliateUrl = await generateMlAffiliateLink(
+          accessToken,
+          config.mlUserId,
+          input.productUrl,
+          config.tag
+        );
         return { affiliateUrl };
       }),
   }),

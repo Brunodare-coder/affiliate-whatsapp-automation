@@ -1,6 +1,6 @@
 import AppLayout from "@/components/AppLayout";
 import MercadoLivreConfigModal from "@/components/MercadoLivreConfigModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -759,6 +759,22 @@ export default function Settings() {
   const saveBotSettings = trpc.botSettings.save.useMutation({ onSuccess: () => refetchSettings() });
 
   const [modal, setModal] = useState<string | null>(null);
+
+  // ── Tratar retorno do OAuth ML ────────────────────────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mlSuccess = params.get('ml_oauth_success');
+    const mlError = params.get('ml_oauth_error');
+    if (mlSuccess === '1') {
+      toast.success('Conta Mercado Livre conectada com sucesso!');
+      setModal('ml');
+      // Limpar parâmetros da URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (mlError) {
+      toast.error(`Erro ao conectar conta ML: ${decodeURIComponent(mlError)}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   // ── Password change state ──────────────────────────────────────────────────
   const [currentPw, setCurrentPw] = useState("");

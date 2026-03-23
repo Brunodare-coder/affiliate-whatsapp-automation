@@ -12,6 +12,7 @@ import { getDb } from "../db";
 import { whatsappInstances } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { registerMercadoPagoWebhook } from "../webhooks/mercadopago";
+import { handleMlOAuthStart, handleMlOAuthCallback } from "../mlOAuth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,6 +43,9 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Mercado Pago webhook for automatic PIX payment confirmation
   registerMercadoPagoWebhook(app);
+  // Mercado Livre OAuth2 PKCE routes
+  app.get("/api/oauth/ml/start", handleMlOAuthStart);
+  app.get("/api/oauth/ml/callback", handleMlOAuthCallback);
   // tRPC API
   app.use(
     "/api/trpc",

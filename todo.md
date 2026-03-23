@@ -541,3 +541,17 @@
 - [ ] Modo 'social': chamar API createLink do ML e enviar meli.la/XXXXX (vitrine do afiliado)
 - [ ] Modo 'tinyurl': encurtar link longo com tag via TinyURL e enviar link curto
 - [ ] UI: seletor de modo na tela de configurações ML com descrição de cada opção
+
+## OAuth2 ML com PKCE para Geração de Links de Afiliado (Fase 47)
+- [x] Schema: adicionar mlAccessToken, mlRefreshToken, mlTokenExpiresAt, mlUserId na tabela mercadoLivreConfig
+- [x] Migração SQL para adicionar as novas colunas
+- [x] Backend: rota GET /api/oauth/ml/start (gera PKCE code_verifier/challenge, salva em sessão, redireciona para ML)
+- [x] Backend: rota GET /api/oauth/ml/callback (troca code por access_token, salva no banco)
+- [x] Backend: helper getMlAccessToken (retorna token válido, refresha automaticamente se expirado)
+- [x] Backend: procedure mercadoLivre.generateAffiliateLinkOAuth (usa access_token para chamar API ML)
+- [x] Backend: procedure mercadoLivre.getOAuthStatus (retorna se conta ML está conectada)
+- [x] Backend: procedure mercadoLivre.disconnectOAuth (remove tokens do banco)
+- [x] Frontend: botão "Conectar conta ML" nas configurações ML
+- [x] Frontend: exibir status de conexão OAuth (conectado/desconectado + nickname da conta)
+- [x] Frontend: toast de sucesso/erro ao retornar do OAuth callback
+- [ ] Integrar geração de links via OAuth no fluxo do bot (substituir método de cookie)

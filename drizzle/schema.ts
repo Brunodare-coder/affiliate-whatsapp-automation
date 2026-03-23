@@ -223,6 +223,12 @@ export const mercadoLivreConfig = mysqlTable("mercado_livre_config", {
   linkMode: mysqlEnum("link_mode", ["long", "social", "tinyurl"]).default("long").notNull(), // Modo de envio: long=link longo, social=meli.la vitrine, tinyurl=encurtado
   cookieStatus: mysqlEnum("cookie_status", ["ok", "expired", "unknown"]).default("unknown").notNull(), // Status do cookie ssid
   cookieLastCheckedAt: timestamp("cookie_last_checked_at"),  // Última vez que o cookie foi verificado
+  // OAuth2 ML tokens (Authorization Code + PKCE)
+  mlAccessToken: text("ml_access_token"),         // access_token OAuth2 ML
+  mlRefreshToken: text("ml_refresh_token"),        // refresh_token OAuth2 ML
+  mlTokenExpiresAt: timestamp("ml_token_expires_at"), // quando o access_token expira
+  mlUserId: varchar("ml_user_id", { length: 50 }), // user_id retornado pelo ML
+  mlNickname: varchar("ml_nickname", { length: 255 }), // nickname da conta ML
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
