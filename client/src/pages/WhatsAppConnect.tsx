@@ -29,7 +29,7 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
     },
   });
 
-  const { data, isLoading, refetch } = trpc.whatsapp.getQRCode.useQuery(
+  const { data, isLoading, error, refetch } = trpc.whatsapp.getQRCode.useQuery(
     { instanceId },
     {
       // Poll every 1.5s while connecting/waiting for QR, every 3s when QR is shown
@@ -42,8 +42,21 @@ function QRCodeDisplay({ instanceId }: { instanceId: number }) {
       // Start polling immediately even before first data arrives
       refetchIntervalInBackground: true,
       staleTime: 0,
+      retry: false,
     }
   );
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 gap-3">
+        <WifiOff className="w-10 h-10 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground text-center">Instância não encontrada.<br/>Tente reconectar.</p>
+        <Button size="sm" variant="outline" onClick={() => refetch()} className="border-white/10 bg-white/5 hover:bg-white/10">
+          <RefreshCw className="w-3 h-3 mr-1.5" /> Tentar novamente
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
